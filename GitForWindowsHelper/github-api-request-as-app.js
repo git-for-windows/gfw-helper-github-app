@@ -1,4 +1,4 @@
-module.exports = async (context, appId, requestMethod, requestPath, body) => {
+module.exports = async (context, requestMethod, requestPath, body) => {
     const header = {
         "alg": "RS256",
         "typ": "JWT"
@@ -12,7 +12,7 @@ module.exports = async (context, appId, requestMethod, requestPath, body) => {
         // JWT expiration time (10 minute maximum)
         exp: now + (10 * 60),
         // GitHub App's identifier
-        iss: appId
+        iss: process.env['GITHUB_APP_ID']
     }
 
     const toBase64 = (obj) => Buffer.from(JSON.stringify(obj), "utf-8").toString("base64url")

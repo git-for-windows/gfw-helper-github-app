@@ -26,6 +26,7 @@ Then, configure [the `GITHUB_*` variables](#some-environment-variables) locally,
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AzureWebJobsStorage": "<storage-key>",
+    "GITHUB_APP_ID": "<app-id>",
     "GITHUB_APP_CLIENT_ID": "<client-id>",
     "GITHUB_APP_CLIENT_SECRET": "<client-secret>",
     "GITHUB_APP_PRIVATE_KEY": "<private-key>",

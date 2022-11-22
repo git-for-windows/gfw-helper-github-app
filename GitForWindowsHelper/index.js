@@ -25,7 +25,7 @@ module.exports = async function (context, req) {
 
     if (req.headers['x-github-event'] === 'installation' && req.body.action === 'created') {
         try {
-            const res = await gitHubApiRequestAsApp(context, req.body.installation.app_id, 'DELETE', `/app/installations/${req.body.installation.id}`)
+            const res = await gitHubApiRequestAsApp(context, 'DELETE', `/app/installations/${req.body.installation.id}`)
             context.log(`Deleted installation ${req.body.installation.id} on ${req.body.repositories.map(e => e.full_name).join(", ")}`)
             context.log(res)
             context.res = {
