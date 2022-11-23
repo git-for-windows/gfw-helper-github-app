@@ -1,8 +1,5 @@
 const validateGitHubWebHook = require('./validate-github-webhook')
 
-/** Sends a JWT-authenticated GitHub API request */
-const gitHubApiRequestAsApp = require('./github-api-request-as-app')
-
 module.exports = async function (context, req) {
     const withStatus = (status, headers, body) => {
         context.res = {
@@ -21,22 +18,6 @@ module.exports = async function (context, req) {
     } catch (e) {
         context.log(e)
         return withStatus(403, undefined, `Go away, you are not a valid GitHub webhook: ${e}`)
-    }
-
-    if (req.headers['x-github-event'] === 'installation' && req.body.action === 'created') {
-        try {
-            const res = await gitHubApiRequestAsApp(context, 'DELETE', `/app/installations/${req.body.installation.id}`)
-            context.log(`Deleted installation ${req.body.installation.id} on ${req.body.repositories.map(e => e.full_name).join(", ")}`)
-            context.log(res)
-            context.res = {
-                status: 200,
-                body: `Deleted installation`,
-            }
-        } catch (e) {
-            context.log(e)
-            return withStatus(500, undefined, `Error:\n${e}`)
-        }
-        return
     }
 
     context.log("Got headers")
