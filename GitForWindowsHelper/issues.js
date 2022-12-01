@@ -20,6 +20,19 @@ const getIssueComment = async (context, token, owner, repo, comment_id) => {
     return await sendGitHubAPIRequest(context, token, 'GET', `/repos/${owner}/${repo}/issues/comments/${comment_id}`)
 }
 
+const appendToIssueComment = async (context, token, owner, repo, comment_id, append) => {
+    const data = await getIssueComment(context, token, owner, repo, comment_id)
+    const answer = await sendGitHubAPIRequest(
+        context,
+        token,
+        'PATCH',
+        `/repos/${owner}/${repo}/issues/comments/${comment_id}`, {
+            body: `${data.body}${data.body.endsWith('\n\n') ? '' : '\n\n'}${append}`
+        }
+    )
+    return answer.id
+}
+
 // `reaction` can be one of `+1`, `-1`, `laugh`, `confused`, `heart`, `hooray`, `rocket`, `eyes`
 const createReactionForIssueComment = async (context, token, owner, repo, comment_id, reaction) => {
     const answer = await sendGitHubAPIRequest(
@@ -37,5 +50,6 @@ module.exports = {
     addIssueComment,
     getIssue,
     getIssueComment,
+    appendToIssueComment,
     createReactionForIssueComment
 }
