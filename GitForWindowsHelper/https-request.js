@@ -35,11 +35,11 @@ module.exports = async (context, hostname, method, requestPath, body, headers) =
                 res.on('end', () => {
                     const json = Buffer.concat(chunks).toString('utf-8')
                     if (res.statusCode > 299) {
-                        context.log('FAILED HTTPS request!')
-                        context.log(options)
                         reject({
                             statusCode: res.statusCode,
                             statusMessage: res.statusMessage,
+                            requestMethod: options.method,
+                            requestPath: options.path,
                             body: json,
                             json: gently(() => JSON.parse(json))
                         })
