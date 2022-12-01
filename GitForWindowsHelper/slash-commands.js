@@ -59,7 +59,8 @@ module.exports = async (context, req) => {
                 'open-pr.yml',
                 'main', {
                     package: package_name,
-                    version
+                    version,
+                    actor: commenter
                 }
             )
             const { appendToIssueComment } = require('./issues')
