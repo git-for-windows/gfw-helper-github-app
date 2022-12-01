@@ -20,6 +20,12 @@ module.exports = async function (context, req) {
         return withStatus(403, undefined, `Go away, you are not a valid GitHub webhook: ${e}`)
     }
 
+    const slashCommand = require('./slash-commands')
+    if (req.headers['x-github-event'] === 'issue_comment'
+        && req.body.action === 'created'
+        && req.body.comment?.body
+        && req.body.comment.body.startsWith('/')) return ok(await slashCommand(context, req))
+
     context.log("Got headers")
     context.log(req.headers)
     context.log("Got body")
