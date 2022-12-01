@@ -1,4 +1,5 @@
 const githubApiRequest = require('./github-api-request')
+const githubApiRequestAsApp = require('./github-api-request-as-app')
 
 const sleep = async (milliseconds) => {
   return new Promise((resolve) => {
@@ -7,8 +8,14 @@ const sleep = async (milliseconds) => {
 }
 
 const getActorForToken = async (context, token) => {
-  const { login } = await githubApiRequest(context, token, 'GET', '/user')
-  return login
+  try {
+    const { login } = await githubApiRequest(context, token, 'GET', '/user')
+    return login
+  } catch (e) {
+    if (e.statusCode !== 403 || e.json?.message !== 'Resource not accessible by integration') throw e
+    const answer = await githubApiRequestAsApp(context, 'GET', '/app')
+    return `${answer.slug}[bot]`
+  }
 }
 
 const waitForWorkflowRun = async (context, owner, repo, workflow_id, after, token, actor) => {
