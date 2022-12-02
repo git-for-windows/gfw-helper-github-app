@@ -14,6 +14,40 @@ const guessComponentUpdateDetails = (title) => {
     return { package_name, version }
 }
 
+const prettyPackageName = (name) => {
+    return {
+        'git-credential-manager': 'Git Credential Manager',
+        'git-lfs': 'Git LFS',
+        'msys2-runtime': 'MSYS2 runtime',
+        bash: 'Bash',
+        curl: 'cURL',
+        gnutls: 'GNU TLS',
+        heimdal: 'Heimdal',
+        mintty: 'MinTTY',
+        openssh: 'OpenSSH',
+        openssl: 'OpenSSL',
+        perl: 'Perl',
+        tig: 'Tig',
+    }[name] || name
+}
+const guessReleaseNotes = (issue) => {
+    if (issue.labels.filter(label => label.name === 'component-update').length !== 1) throw new Error(`Cannot determine release note from issue ${issue.number}`)
+    let { package_name, version } = guessComponentUpdateDetails(issue.title)
+
+    package_name = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
+
+    const urlMatch = issue.pull_request
+        ? issue.body.match(/See (https:\/\/\S+) for details/)
+        : issue.body.match(/(^|\n)(https:\/\/\S+)$/)
+    if (!urlMatch) throw new Error(`Could not determine URL from issue ${issue.number}`)
+    return {
+        type: 'feature',
+        message: `Comes with [${package_name} v${version}](${urlMatch[2]}).`
+    }
+}
+
 module.exports = {
-    guessComponentUpdateDetails
+    guessComponentUpdateDetails,
+    guessReleaseNotes,
+    prettyPackageName
 }

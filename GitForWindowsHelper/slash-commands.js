@@ -123,6 +123,41 @@ module.exports = async (context, req) => {
             const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
             return `I edited the comment: ${answer2.html_url}`
         }
+
+        const relNotesMatch = command.match(/^\/add (relnote|release ?note)((blurb|feature|bug) ([^]*))?$/i)
+        if (relNotesMatch) {
+            if (owner !== 'git-for-windows'
+             || !['git', 'build-extra', 'MINGW-packages', 'MSYS2-packages'].includes(repo)) {
+                return `Ignoring ${command} in unexpected repo: ${commentURL}`
+             }
+
+            await checkPermissions()
+
+            let [ , , , type, message ] = relNotesMatch
+            if (!type) {
+                const { guessReleaseNotes } = require('./component-updates');
+                ({ type, message } = await guessReleaseNotes(req.body.issue))
+            }
+
+            const { createReactionForIssueComment } = require('./issues')
+            await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, '+1')
+
+            const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+            const answer = await triggerWorkflowDispatch(
+                context,
+                await getToken(),
+                'git-for-windows',
+                'build-extra',
+                'add-release-note.yml',
+                'main', {
+                    type,
+                    message
+                }
+            )
+            const { appendToIssueComment } = require('./issues')
+            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
+            return `I edited the comment: ${answer2.html_url}`
+        }
     } catch (e) {
         const { createReactionForIssueComment } = require('./issues')
         await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, 'confused')
