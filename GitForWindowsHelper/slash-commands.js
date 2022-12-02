@@ -72,4 +72,6 @@ module.exports = async (context, req) => {
         await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, 'confused')
         throw e
     }
+
+    return `Ignoring slash command ${command} in ${commentURL}`
 }
