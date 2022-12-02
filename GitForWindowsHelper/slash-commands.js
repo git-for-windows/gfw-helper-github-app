@@ -45,11 +45,8 @@ module.exports = async (context, req) => {
 
             await checkPermissions()
 
-            let [ , package_name, version ] = req.body.issue.title.match(/^\[New (\S+) version\] (\S+)/) || []
-            if (!package_name || !version) throw new Error(`Could not parse ${req.issue.title} in ${commentURL}`)
-
-            if (package_name == 'git-lfs') package_name = `mingw-w64-${package_name}`
-            if (version.startsWith('v')) version = version.substring(1)
+            const { guessComponentUpdateDetails } = require('./component-updates')
+            const { package_name, version } = guessComponentUpdateDetails(req.body.issue.title)
 
             const { createReactionForIssueComment } = require('./issues')
             await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, '+1')
