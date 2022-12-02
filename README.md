@@ -80,7 +80,7 @@ As Webhook URL, the URL of the Azure Function was used, which can be copied in t
 
 The value stored in the Azure Function as `GITHUB_WEBHOOK_SECRET` was used as Webhook secret.
 
-A whole slur of repository permissions was selected (in the least, Contents, Issues, Pull Requests and Workflows as read/write), and also a slur of read-only account permissions.
+A whole slew of repository permissions was selected (in the least, Contents, Issues, Pull Requests and Workflows as read/write), and also a slew of read-only account permissions.
 
 The GitHub App was subscribed to quite a few events, it would probably have made more sense to start with none at all.
 
