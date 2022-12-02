@@ -13,7 +13,10 @@ const addIssueComment = async (context, token, owner, repo, issue_number, commen
             body: comment
         }
     )
-    return answer.id
+    return {
+        id: answer.id,
+        html_url: answer.html_url
+    }
 }
 
 const getIssueComment = async (context, token, owner, repo, comment_id) => {
@@ -30,7 +33,10 @@ const appendToIssueComment = async (context, token, owner, repo, comment_id, app
             body: `${data.body}${data.body.endsWith('\n\n') ? '' : '\n\n'}${append}`
         }
     )
-    return answer.id
+    return {
+        id: answer.id,
+        html_url: answer.html_url
+    }
 }
 
 // `reaction` can be one of `+1`, `-1`, `laugh`, `confused`, `heart`, `hooray`, `rocket`, `eyes`
