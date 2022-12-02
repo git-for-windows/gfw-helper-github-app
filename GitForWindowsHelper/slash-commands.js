@@ -4,8 +4,8 @@ module.exports = async (context, req) => {
     const repo = req.body.repository.name
     const issueNumber = req.body.issue.number
     const commenter = req.body.comment.user.login
-    const commentId = req.body.comment.id
-    const commentURL = req.body.comment.html_url
+    let commentId = req.body.comment.id
+    let commentURL = req.body.comment.html_url
 
     if (command === '/hi') {
         const comment = `Hi @${commenter}!`
@@ -51,22 +51,30 @@ module.exports = async (context, req) => {
             const { createReactionForIssueComment } = require('./issues')
             await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, '+1')
 
-            const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
-            const answer = await triggerWorkflowDispatch(
-                context,
-                await getToken(),
-                'git-for-windows',
-                'git-for-windows-automation',
-                'open-pr.yml',
-                'main', {
-                    package: package_name,
-                    version,
-                    actor: commenter
-                }
-            )
-            const { appendToIssueComment } = require('./issues')
-            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
-            return `I edited the comment: ${answer2.html_url}`
+            const openPR = async (package_name, packageType) => {
+                const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+                const answer = await triggerWorkflowDispatch(
+                    context,
+                    await getToken(),
+                    'git-for-windows',
+                    'git-for-windows-automation',
+                    'open-pr.yml',
+                    'main', {
+                        package: package_name,
+                        version,
+                        actor: commenter
+                    }
+                )
+                const { appendToIssueComment } = require('./issues');
+                ({ html_url: commentURL, id: commentId } = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The${packageType ? ` ${packageType}` : ''} workflow run [was started](${answer.html_url})`))
+            }
+            if (!['openssl', 'curl', 'gnutls'].includes(package_name)) {
+                await openPR(package_name)
+            } else {
+                await openPR(package_name, 'MSYS')
+                await openPR(`mingw-w64-${package_name}`, 'MINGW')
+            }
+            return `I edited the comment: ${commentURL}`
         }
 
         if (command == '/deploy') {
