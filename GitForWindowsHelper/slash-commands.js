@@ -5,6 +5,7 @@ module.exports = async (context, req) => {
     const issueNumber = req.body.issue.number
     const commenter = req.body.comment.user.login
     const commentId = req.body.comment.id
+    const commentURL = req.body.comment.html_url
 
     if (command === '/hi') {
         const comment = `Hi @${commenter}!`
@@ -43,9 +44,10 @@ module.exports = async (context, req) => {
             await checkPermissions()
 
             let [ , package_name, version ] = req.body.issue.title.match(/^\[New (\S+) version\] (\S+)/) || []
+            if (!package_name || !version) throw new Error(`Could not parse ${req.issue.title} in ${commentURL}`)
+
             if (package_name == 'git-lfs') package_name = `mingw-w64-${package_name}`
             if (version.startsWith('v')) version = version.substring(1)
-            if (!package_name || !version) throw new Error(`Could not parse ${req.issue.title}`)
 
             const { createReactionForIssueComment } = require('./issues')
             await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, '+1')
