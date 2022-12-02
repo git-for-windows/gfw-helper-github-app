@@ -13,9 +13,9 @@ module.exports = async (context, req) => {
         const token = await getInstallationAccessToken(context, req.body.installation.id)
 
         const { addIssueComment } = require('./issues')
-        await addIssueComment(context, token, owner, repo, issueNumber, comment)
+        const answer = await addIssueComment(context, token, owner, repo, issueNumber, comment)
 
-        return 'I said hi!'
+        return `I said hi! ${answer.html_url}`
     }
 
     const getToken = (() => {
@@ -64,7 +64,8 @@ module.exports = async (context, req) => {
                 }
             )
             const { appendToIssueComment } = require('./issues')
-            await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
+            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
+            return `I edited the comment: ${answer2.html_url}`
         }
     } catch (e) {
         const { createReactionForIssueComment } = require('./issues')
