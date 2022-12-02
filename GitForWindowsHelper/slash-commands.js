@@ -41,6 +41,8 @@ module.exports = async (context, req) => {
 
     try {
         if (command == '/open pr') {
+            if (owner !== 'git-for-windows' || repo !== 'git') return `Ignoring ${command} in unexpected repo: ${commentURL}`
+
             await checkPermissions()
 
             let [ , package_name, version ] = req.body.issue.title.match(/^\[New (\S+) version\] (\S+)/) || []
