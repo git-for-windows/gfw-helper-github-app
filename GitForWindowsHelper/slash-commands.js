@@ -71,6 +71,53 @@ module.exports = async (context, req) => {
             const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
             return `I edited the comment: ${answer2.html_url}`
         }
+
+        if (command == '/deploy') {
+            if (owner !== 'git-for-windows'
+             || !req.body.issue.pull_request
+             || !['build-extra', 'MINGW-packages', 'MSYS2-packages'].includes(repo)) {
+                return `Ignoring ${command} in unexpected repo: ${commentURL}`
+             }
+
+            await checkPermissions()
+
+            let [ , package_name, version ] = req.body.issue.title.match(/^(\S+): update to (\S+)/) || []
+            if (!package_name || !version) throw new Error(`Could not parse ${req.issue.title} in ${commentURL}`)
+            if (package_name == 'git-lfs') package_name = `mingw-w64-${package_name}`
+            if (version.startsWith('v')) version = version.substring(1)
+
+            // The commit hash of the tip commit is sadly not part of the
+            // "comment.created" webhook's payload. Therefore, we have to get it
+            // "by hand"
+            const githubApiRequest = require('./github-api-request')
+            const { head: { sha: ref } } = await githubApiRequest(
+                console,
+                null,
+                'GET',
+                `/repos/${owner}/${repo}/pulls/${issueNumber}`
+            )
+
+            const { createReactionForIssueComment } = require('./issues')
+            await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, '+1')
+
+            const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+            const answer = await triggerWorkflowDispatch(
+                context,
+                await getToken(),
+                'git-for-windows',
+                'git-for-windows-automation',
+                'build-and-deploy.yml',
+                'main', {
+                    package: package_name,
+                    repo,
+                    ref,
+                    actor: commenter
+                }
+            )
+            const { appendToIssueComment } = require('./issues')
+            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
+            return `I edited the comment: ${answer2.html_url}`
+        }
     } catch (e) {
         const { createReactionForIssueComment } = require('./issues')
         await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, 'confused')
