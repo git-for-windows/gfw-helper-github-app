@@ -124,6 +124,25 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${answer2.html_url}`
         }
 
+        if (command == '/git-artifacts') {
+            if (owner !== 'git-for-windows'
+             || repo !== 'git'
+             || !req.body.issue.pull_request
+             || !req.body.issue.title.match(/^Rebase to v?[1-9]\S*$/)
+             ) {
+                return `Ignoring ${command} in unexpected repo: ${commentURL}`
+             }
+
+            await checkPermissions()
+
+            const triggerGitArtifacts = require('./trigger-git-artifacts')
+            const answer = await triggerGitArtifacts(context, req.body.issue.number)
+
+            const { appendToIssueComment } = require('./issues')
+            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The Azure Pipeline run [was started](${answer.url})`)
+            return `I edited the comment: ${answer2.html_url}`
+        }
+
         const relNotesMatch = command.match(/^\/add (relnote|release ?note)((blurb|feature|bug) ([^]*))?$/i)
         if (relNotesMatch) {
             if (owner !== 'git-for-windows'
