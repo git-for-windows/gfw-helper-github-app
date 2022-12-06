@@ -39,6 +39,13 @@ module.exports = async (context, req) => {
         if (!['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission.toString())) throw new Error(`@${commenter} has no permissions to do that`)
     }
 
+    const react = async (reaction) => {
+        const { createReactionForIssueComment } = require('./issues')
+        await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, reaction)
+    }
+
+    const thumbsUp = async () => react('+1')
+
     try {
         if (command == '/open pr') {
             if (owner !== 'git-for-windows' || repo !== 'git') return `Ignoring ${command} in unexpected repo: ${commentURL}`
@@ -48,8 +55,7 @@ module.exports = async (context, req) => {
             const { guessComponentUpdateDetails } = require('./component-updates')
             const { package_name, version } = guessComponentUpdateDetails(req.body.issue.title)
 
-            const { createReactionForIssueComment } = require('./issues')
-            await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, '+1')
+            await thumbsUp()
 
             const openPR = async (package_name, packageType) => {
                 const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
@@ -102,8 +108,7 @@ module.exports = async (context, req) => {
                 `/repos/${owner}/${repo}/pulls/${issueNumber}`
             )
 
-            const { createReactionForIssueComment } = require('./issues')
-            await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, '+1')
+            await thumbsUp()
 
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
             const answer = await triggerWorkflowDispatch(
@@ -158,8 +163,7 @@ module.exports = async (context, req) => {
                 ({ type, message } = await guessReleaseNotes(req.body.issue))
             }
 
-            const { createReactionForIssueComment } = require('./issues')
-            await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, '+1')
+            await thumbsUp()
 
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
             const answer = await triggerWorkflowDispatch(
@@ -178,8 +182,7 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${answer2.html_url}`
         }
     } catch (e) {
-        const { createReactionForIssueComment } = require('./issues')
-        await createReactionForIssueComment(console, await getToken(), owner, repo, commentId, 'confused')
+        await react('confused')
         throw e
     }
 
