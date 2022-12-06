@@ -139,6 +139,7 @@ module.exports = async (context, req) => {
              }
 
             await checkPermissions()
+            await thumbsUp()
 
             const triggerGitArtifacts = require('./trigger-git-artifacts')
             const answer = await triggerGitArtifacts(context, req.body.issue.number)
