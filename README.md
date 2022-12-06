@@ -25,6 +25,7 @@ Then, configure [the `GITHUB_*` variables](#some-environment-variables) locally,
   "IsEncrypted": false,
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AZURE_PIPELINE_TRIGGER_TOKEN": "<personal-access-token>",
     "AzureWebJobsStorage": "<storage-key>",
     "GITHUB_APP_ID": "<app-id>",
     "GITHUB_APP_CLIENT_ID": "<client-id>",
@@ -58,7 +59,7 @@ After the deployment succeeded, in the "Overview" tab, there is a "Get publish p
 
 A few environment variables will have to be configured for use with the Azure Function. This can be done on the "Configuration" tab, which is in the "Settings" group.
 
-Concretely, the environment variables `GITHUB_WEBHOOK_SECRET`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_CLIENT_ID` and `GITHUB_APP_ID` need to be set. For the first, a generated random string was used. The private key, client secret and ID of the GitHub App are not known at this time, though, therefore they will have to be set in the Azure Function Configuration later.
+Concretely, the environment variables `AZURE_PIPELINE_TRIGGER_TOKEN`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_CLIENT_ID` and `GITHUB_APP_ID` need to be set. For the first, a generated random string was used. The private key, client secret and ID of the GitHub App are not known at this time, though, therefore they will have to be set in the Azure Function Configuration later.
 
 ### The repository
 
