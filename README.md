@@ -1,5 +1,10 @@
 # GitForWindowsHelper GitHub App
 
+<p align="center">
+<img alt="Git for Windows Helper GitHub App logo" src="git-for-windows-helper.svg" />
+</p>
+
+
 The purpose of this GitHub App is to serve the needs of the Git for Windows project, implementing all kinds of useful automation.
 
 ## Tips & Tricks for developing this GitHub App
