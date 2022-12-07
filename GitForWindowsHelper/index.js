@@ -20,11 +20,15 @@ module.exports = async function (context, req) {
         return withStatus(403, undefined, `Go away, you are not a valid GitHub webhook: ${e}`)
     }
 
-    const slashCommand = require('./slash-commands')
-    if (req.headers['x-github-event'] === 'issue_comment'
-        && req.body.action === 'created'
-        && req.body.comment?.body
-        && req.body.comment.body.startsWith('/')) return ok(await slashCommand(context, req))
+    try {
+        const slashCommand = require('./slash-commands')
+        if (req.headers['x-github-event'] === 'issue_comment'
+            && req.body.action === 'created'
+            && req.body.comment?.body
+            && req.body.comment.body.startsWith('/')) return ok(await slashCommand(context, req))
+    } catch (e) {
+        return withStatus(500, undefined, e.toString('utf-8'))
+    }
 
     context.log("Got headers")
     context.log(req.headers)
