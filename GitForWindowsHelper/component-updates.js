@@ -29,6 +29,7 @@ const prettyPackageName = (name) => {
         mintty: 'MinTTY',
         openssh: 'OpenSSH',
         openssl: 'OpenSSL',
+        pcre2: 'PCRE2',
         perl: 'Perl',
         tig: 'Tig',
     }[name] || name
