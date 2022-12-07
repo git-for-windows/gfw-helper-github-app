@@ -1,5 +1,8 @@
 const guessComponentUpdateDetails = (title) => {
-    let [ , package_name, , version ] = title.match(/^\[New (\S+) version\] ([^0-9]+\s+)?(\S+)/) || []
+    let [ , package_name, version ] =
+        title.match(/^\[New (\S+) version\] (?:[^0-9]+\s+)?(\S+)/) ||
+        title.match(/^(\S+): update to v?(\d[0-9.]\S*)/) ||
+        []
     if (!package_name || !version) throw new Error(`Could not guess component-update details from title '${title}'`)
 
     if (['git-lfs', 'pcre2'].includes(package_name)) package_name = `mingw-w64-${package_name}`
@@ -31,7 +34,8 @@ const prettyPackageName = (name) => {
     }[name] || name
 }
 const guessReleaseNotes = (issue) => {
-    if (issue.labels.filter(label => label.name === 'component-update').length !== 1) throw new Error(`Cannot determine release note from issue ${issue.number}`)
+    if (!issue.pull_request
+        &&issue.labels.filter(label => label.name === 'component-update').length !== 1) throw new Error(`Cannot determine release note from issue ${issue.number}`)
     let { package_name, version } = guessComponentUpdateDetails(issue.title)
 
     package_name = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
