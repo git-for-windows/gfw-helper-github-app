@@ -42,11 +42,11 @@ const guessReleaseNotes = (issue) => {
 
     const urlMatch = issue.pull_request
         ? issue.body.match(/See (https:\/\/\S+) for details/)
-        : issue.body.match(/(^|\n)(https:\/\/\S+)$/)
+        : issue.body.match(/(?:^|\n)(https:\/\/\S+)$/)
     if (!urlMatch) throw new Error(`Could not determine URL from issue ${issue.number}`)
     return {
         type: 'feature',
-        message: `Comes with [${package_name} v${version}](${urlMatch[2]}).`
+        message: `Comes with [${package_name} v${version}](${urlMatch[1]}).`
     }
 }
 
