@@ -2,5 +2,18 @@
     "azureFunctions.deploySubpath": ".",
     "azureFunctions.projectLanguage": "JavaScript",
     "azureFunctions.projectRuntime": "~4",
-    "debug.internalConsoleOptions": "neverOpen"
+    "debug.internalConsoleOptions": "neverOpen",
+    "cSpell.words": [
+        "cygwin",
+        "gnutls",
+        "Heimdal",
+        "MSYS",
+        "relnote"
+    ],
+    "cSpell.ignoreRegExpList": [
+        "AZURE_FUNCTIONAPP_PUBLISH_PROFILE",
+        "MinTTY",
+        "MSYS2",
+        "PCRE2"
+    ]
 }
