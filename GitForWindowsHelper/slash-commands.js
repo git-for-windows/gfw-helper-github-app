@@ -191,7 +191,7 @@ module.exports = async (context, req) => {
             await checkPermissions()
             await thumbsUp()
 
-            const triggerGitArtifacts = require('./trigger-git-artifacts')
+            const { triggerGitArtifacts } = require('./azure-pipelines')
             const answer = await triggerGitArtifacts(context, req.body.issue.number)
 
             const { appendToIssueComment } = require('./issues')
