@@ -199,6 +199,26 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${answer2.html_url}`
         }
 
+        if (command == '/release') {
+            if (owner !== 'git-for-windows'
+             || repo !== 'git'
+             || !req.body.issue.pull_request
+             || !req.body.issue.title.match(/^Rebase to v?[1-9]\S*$/)
+             ) {
+                return `Ignoring ${command} in unexpected repo: ${commentURL}`
+             }
+
+            await checkPermissions()
+            await thumbsUp()
+
+            const { releaseGitArtifacts } = require('./azure-pipelines')
+            const answer = await releaseGitArtifacts(context, req.body.issue.number)
+
+            const { appendToIssueComment } = require('./issues')
+            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The Azure Release Pipeline run [was started](${answer.url})`)
+            return `I edited the comment: ${answer2.html_url}`
+        }
+
         const relNotesMatch = command.match(/^\/add (relnote|release ?note)(\s+(blurb|feature|bug)\s+([^]*))?$/i)
         if (relNotesMatch) {
             if (owner !== 'git-for-windows'
