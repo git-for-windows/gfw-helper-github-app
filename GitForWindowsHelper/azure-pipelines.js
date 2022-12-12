@@ -42,7 +42,45 @@ const triggerGitArtifacts = async (context, prNumber) => {
     }
 }
 
+const listReleases = async (context, token, organization, project) => {
+    const auth = Buffer.from('PAT:' + token).toString('base64')
+    const headers = {
+        'Accept': 'application/json; api-version=7.0; excludeUrls=true',
+        'Authorization': 'Basic ' + auth,
+    }
+
+    const httpsRequest = require('./https-request')
+    return await httpsRequest(
+        context,
+        'vsrm.dev.azure.com',
+        'GET',
+        `/${organization}/${project}/_apis/release/releases`,
+        undefined,
+        headers
+    )
+}
+
+const getRelease = async (context, token, organization, project, releaseId) => {
+    const auth = Buffer.from('PAT:' + token).toString('base64')
+    const headers = {
+        'Accept': 'application/json; api-version=7.0; excludeUrls=true',
+        'Authorization': 'Basic ' + auth,
+    }
+
+    const httpsRequest = require('./https-request')
+    return await httpsRequest(
+        context,
+        'vsrm.dev.azure.com',
+        'GET',
+        `/${organization}/${project}/_apis/release/releases/${releaseId}`,
+        undefined,
+        headers
+    )
+}
+
 module.exports = {
     triggerAzurePipeline,
-    triggerGitArtifacts
+    triggerGitArtifacts,
+    listReleases,
+    getRelease
 }
