@@ -1,4 +1,4 @@
-module.exports = async (context, token, organization, project, buildDefinitionId, sourceBranch, parameters) => {
+const triggerAzurePipeline = async (context, token, organization, project, buildDefinitionId, sourceBranch, parameters) => {
     const auth = Buffer.from('PAT:' + token).toString('base64')
     const headers = {
         'Accept': 'application/json; api-version=5.0-preview.5; excludeUrls=true',
@@ -21,3 +21,6 @@ module.exports = async (context, token, organization, project, buildDefinitionId
     )
 }
 
+module.exports = {
+    triggerAzurePipeline
+}

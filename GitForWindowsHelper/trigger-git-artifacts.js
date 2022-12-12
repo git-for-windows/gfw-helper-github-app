@@ -12,8 +12,8 @@ module.exports = async (context, prNumber) => {
         "use.branch": useBranch
     }
     const token = process.env['AZURE_PIPELINE_TRIGGER_TOKEN']
-    const trigger = require('./trigger-azure-pipeline')
-    const answer2 = await trigger(context, token, 'git-for-windows', 'git', 34, sourceBranch, parameters)
+    const { triggerAzurePipeline } = require('./azure-pipelines')
+    const answer2 = await triggerAzurePipeline(context, token, 'git-for-windows', 'git', 34, sourceBranch, parameters)
     return {
         id: answer2.id,
         url: answer2._links.web.href
