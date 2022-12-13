@@ -74,7 +74,7 @@ module.exports = async (context, req) => {
                 const { appendToIssueComment } = require('./issues');
                 ({ html_url: commentURL, id: commentId } = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The${packageType ? ` ${packageType}` : ''} workflow run [was started](${answer.html_url})`))
             }
-            if (!['openssl', 'curl', 'gnutls'].includes(package_name)) {
+            if (!['openssl', 'curl', 'gnutls', 'pcre2'].includes(package_name)) {
                 await openPR(package_name)
             } else {
                 await openPR(package_name, 'MSYS')
