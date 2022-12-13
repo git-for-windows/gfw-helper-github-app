@@ -1,3 +1,7 @@
+/*
+ * For help with the searchTerms, see
+ * https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests
+ */
 const searchIssues = async (context, searchTerms) => {
     const httpsRequest = require('./https-request');
     const answer = await httpsRequest(
