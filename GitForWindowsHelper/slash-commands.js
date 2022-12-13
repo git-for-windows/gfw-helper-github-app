@@ -58,7 +58,7 @@ module.exports = async (context, req) => {
             await thumbsUp()
 
             const openPR = async (package_name, packageType) => {
-                const { searchIssues } = require('./GitForWindowsHelper/search')
+                const { searchIssues } = require('./search')
                 const prTitle = `${package_name}: update to ${version}`
                 const items = await searchIssues(context, `org:git-for-windows is:pull-request "${prTitle}" in:title`)
                 const alreadyOpenedPR = items.filter(e => e.title === prTitle)
