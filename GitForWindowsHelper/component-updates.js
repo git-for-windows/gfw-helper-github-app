@@ -5,7 +5,7 @@ const guessComponentUpdateDetails = (title) => {
         []
     if (!package_name || !version) throw new Error(`Could not guess component-update details from title '${title}'`)
 
-    if (['git-lfs', 'pcre2'].includes(package_name)) package_name = `mingw-w64-${package_name}`
+    if (['git-lfs'].includes(package_name)) package_name = `mingw-w64-${package_name}`
     else if (['gcm-core', 'gcm'].includes(package_name)) package_name = 'mingw-w64-git-credential-manager'
     else if (package_name === 'cygwin') package_name = 'msys2-runtime'
 

@@ -58,6 +58,27 @@ module.exports = async (context, req) => {
             await thumbsUp()
 
             const openPR = async (package_name, packageType) => {
+                const { searchIssues } = require('./GitForWindowsHelper/search')
+                const prTitle = `${package_name}: update to ${version}`
+                const items = await searchIssues(context, `org:git-for-windows is:pull-request "${prTitle}" in:title`)
+                const alreadyOpenedPR = items.filter(e => e.title === prTitle)
+
+                const { appendToIssueComment } = require('./issues');
+                if (alreadyOpenedPR.length > 0) {
+                    ({ html_url: commentURL, id: commentId } =
+                      await appendToIssueComment(
+                        context,
+                        await getToken(),
+                        owner,
+                        repo,
+                        commentId,
+                        `${
+                          packageType ? `${packageType} ` : ""
+                        }PR [already exists](${alreadyOpenedPR[0].html_url})`
+                      ));
+                    return
+                }
+
                 const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
                 const answer = await triggerWorkflowDispatch(
                     context,
@@ -70,11 +91,10 @@ module.exports = async (context, req) => {
                         version,
                         actor: commenter
                     }
-                )
-                const { appendToIssueComment } = require('./issues');
+                );
                 ({ html_url: commentURL, id: commentId } = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The${packageType ? ` ${packageType}` : ''} workflow run [was started](${answer.html_url})`))
             }
-            if (!['openssl', 'curl', 'gnutls'].includes(package_name)) {
+            if (!['openssl', 'curl', 'gnutls', 'pcre2'].includes(package_name)) {
                 await openPR(package_name)
             } else {
                 await openPR(package_name, 'MSYS')
