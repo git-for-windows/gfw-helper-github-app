@@ -130,6 +130,18 @@ module.exports = async (context, req) => {
 
             await thumbsUp()
 
+            const { queueCheckRun } = require('./check-runs')
+            await queueCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                ref,
+                'build-and-deploy.yml',
+                `Build and deploy ${package_name}`,
+                `Deploying ${package_name}`
+            )
+
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
             const answer = await triggerWorkflowDispatch(
                 context,
