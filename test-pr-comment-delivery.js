@@ -3,7 +3,8 @@
 
     // Expect a path as command-line parameter that points to a file containing
     // an event copy/pasted from
-    // https://github.com/settings/apps/gitforwindowshelper/advanced in the form:
+    // https://github.com/organizations/git-for-windows/settings/apps/gitforwindowshelper/advanced
+    // in the form:
     //
     // Headers
     //
@@ -36,8 +37,8 @@
         else req.headers[key] = value
     })
     req.rawBody = contents.substring(payloadOffset + 1)
-        // In https://github.com/settings/apps/gitforwindowshelper/advanced, the
-        // JSON is pretty-printed, but the actual webhook event avoids any
+        // In https://github.com/organizations/git-for-windows/settings/apps/gitforwindowshelper/advanced,
+        // the JSON is pretty-printed, but the actual webhook event avoids any
         // unnecessary white-space in the body
         .replace(/\r?\n\s*("[^"]*":)\s*/g, '$1')
         .replace(/\r?\n\s*/g, '')
