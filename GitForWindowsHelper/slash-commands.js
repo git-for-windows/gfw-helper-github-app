@@ -53,7 +53,7 @@ module.exports = async (context, req) => {
             await checkPermissions()
 
             const { guessComponentUpdateDetails } = require('./component-updates')
-            const { package_name, version } = guessComponentUpdateDetails(req.body.issue.title)
+            const { package_name, version } = guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
             await thumbsUp()
 
