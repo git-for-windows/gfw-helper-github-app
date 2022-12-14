@@ -1,7 +1,8 @@
 const guessComponentUpdateDetails = (title, body) => {
     let [ , package_name, version ] =
-        title.match(/^\[New (\S+) version\] (?:[^0-9]+\s+)?(\S+)/) ||
+        title.match(/^\[New (\S+) version\] (?:[^0-9]+\s+)?(\S+)(?! new items)/) ||
         title.match(/^(\S+): update to v?(\d[0-9.]\S*)/) ||
+        body.match(/^# \[New (\S+) version\] (?:[^0-9]+\s+)?(\S+)/) ||
         []
     if (!package_name || !version) throw new Error(`Could not guess component-update details from title '${title}'`)
 
