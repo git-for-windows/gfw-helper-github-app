@@ -1,7 +1,8 @@
-const guessComponentUpdateDetails = (title) => {
+const guessComponentUpdateDetails = (title, body) => {
     let [ , package_name, version ] =
-        title.match(/^\[New (\S+) version\] (?:[^0-9]+\s+)?(\S+)/) ||
+        title.match(/^\[New (\S+) version\] (?:[^0-9]+\s+)?(\S+(?:\s+patch\s+\d+)?)(?! new items)/) ||
         title.match(/^(\S+): update to v?(\d[0-9.]\S*)/) ||
+        body.match(/^# \[New (\S+) version\] (?:[^0-9]+\s+)?(\S+(?:\s+patch\s+\d+)?)/) ||
         []
     if (!package_name || !version) throw new Error(`Could not guess component-update details from title '${title}'`)
 
@@ -10,8 +11,8 @@ const guessComponentUpdateDetails = (title) => {
     else if (package_name === 'cygwin') package_name = 'msys2-runtime'
 
     version = version
-        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-)/, '')
-        .replace('_', '.')
+        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-)/, '')
+        .replace(/_|\s+patch\s+/, '.')
         .replace(/-release$/, '')
 
     return { package_name, version }
