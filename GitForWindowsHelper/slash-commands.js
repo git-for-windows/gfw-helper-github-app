@@ -137,7 +137,7 @@ module.exports = async (context, req) => {
                 'git-for-windows',
                 repo,
                 ref,
-                'build-and-deploy.yml',
+                'deploy',
                 `Build and deploy ${package_name}`,
                 `Deploying ${package_name}`
             )
