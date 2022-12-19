@@ -181,7 +181,7 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${answer2.html_url}`
         }
 
-        const relNotesMatch = command.match(/^\/add (relnote|release ?note)((blurb|feature|bug) ([^]*))?$/i)
+        const relNotesMatch = command.match(/^\/add (relnote|release ?note)(\s+(blurb|feature|bug)\s+([^]*))?$/i)
         if (relNotesMatch) {
             if (owner !== 'git-for-windows'
              || !['git', 'build-extra', 'MINGW-packages', 'MSYS2-packages'].includes(repo)) {
