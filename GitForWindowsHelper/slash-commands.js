@@ -112,7 +112,7 @@ module.exports = async (context, req) => {
 
             await checkPermissions()
 
-            const { guessComponentUpdateDetails } = require('./component-updates')
+            const { guessComponentUpdateDetails, isMSYSPackage } = require('./component-updates')
             const { package_name } = guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
             // The commit hash of the tip commit is sadly not part of the
@@ -141,7 +141,7 @@ module.exports = async (context, req) => {
             )
 
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
-            const triggerBuild = async () =>
+            const triggerBuild = async (architecture) =>
                 await triggerWorkflowDispatch(
                     context,
                     await getToken(),
@@ -152,6 +152,7 @@ module.exports = async (context, req) => {
                         package: package_name,
                         repo,
                         ref,
+                        architecture,
                         actor: commenter
                     }
                 )
@@ -166,8 +167,16 @@ module.exports = async (context, req) => {
                     commentId,
                     text
                 )
-            const answer = await triggerBuild()
-            const answer2 = await appendToComment(`The workflow run [was started](${answer.html_url})`)
+            if (!isMSYSPackage(package_name)) {
+                const answer = await triggerBuild()
+                const answer2 = await appendToComment(`The workflow run [was started](${answer.html_url})`)
+                return `I edited the comment: ${answer2.html_url}`
+            }
+            const x86_64Answer = await triggerBuild('x86_64')
+            const i686Answer = await triggerBuild('i686')
+            const answer2 = await appendToComment(
+                `The [x86_64](${x86_64Answer.html_url}) and the [i686](${i686Answer.html_url}) workflow runs were started.`
+            )
             return `I edited the comment: ${answer2.html_url}`
         }
 
