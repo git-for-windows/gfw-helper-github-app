@@ -141,21 +141,33 @@ module.exports = async (context, req) => {
             )
 
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
-            const answer = await triggerWorkflowDispatch(
-                context,
-                await getToken(),
-                'git-for-windows',
-                'git-for-windows-automation',
-                'build-and-deploy.yml',
-                'main', {
-                    package: package_name,
-                    repo,
-                    ref,
-                    actor: commenter
-                }
-            )
+            const triggerBuild = async () =>
+                await triggerWorkflowDispatch(
+                    context,
+                    await getToken(),
+                    'git-for-windows',
+                    'git-for-windows-automation',
+                    'build-and-deploy.yml',
+                    'main', {
+                        package: package_name,
+                        repo,
+                        ref,
+                        actor: commenter
+                    }
+                )
+
             const { appendToIssueComment } = require('./issues')
-            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
+            const appendToComment = async (text) =>
+                await appendToIssueComment(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    commentId,
+                    text
+                )
+            const answer = await triggerBuild()
+            const answer2 = await appendToComment(`The workflow run [was started](${answer.html_url})`)
             return `I edited the comment: ${answer2.html_url}`
         }
 
