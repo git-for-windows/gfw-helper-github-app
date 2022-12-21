@@ -112,10 +112,8 @@ module.exports = async (context, req) => {
 
             await checkPermissions()
 
-            let [ , package_name, version ] = req.body.issue.title.match(/^(\S+): update to (\S+)/) || []
-            if (!package_name || !version) throw new Error(`Could not parse ${req.issue.title} in ${commentURL}`)
-            if (package_name == 'git-lfs') package_name = `mingw-w64-${package_name}`
-            if (version.startsWith('v')) version = version.substring(1)
+            const { guessComponentUpdateDetails, isMSYSPackage } = require('./component-updates')
+            const { package_name } = guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
             // The commit hash of the tip commit is sadly not part of the
             // "comment.created" webhook's payload. Therefore, we have to get it
@@ -143,21 +141,42 @@ module.exports = async (context, req) => {
             )
 
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
-            const answer = await triggerWorkflowDispatch(
-                context,
-                await getToken(),
-                'git-for-windows',
-                'git-for-windows-automation',
-                'build-and-deploy.yml',
-                'main', {
-                    package: package_name,
-                    repo,
-                    ref,
-                    actor: commenter
-                }
-            )
+            const triggerBuild = async (architecture) =>
+                await triggerWorkflowDispatch(
+                    context,
+                    await getToken(),
+                    'git-for-windows',
+                    'git-for-windows-automation',
+                    'build-and-deploy.yml',
+                    'main', {
+                        package: package_name,
+                        repo,
+                        ref,
+                        architecture,
+                        actor: commenter
+                    }
+                )
+
             const { appendToIssueComment } = require('./issues')
-            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
+            const appendToComment = async (text) =>
+                await appendToIssueComment(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    commentId,
+                    text
+                )
+            if (!isMSYSPackage(package_name)) {
+                const answer = await triggerBuild()
+                const answer2 = await appendToComment(`The workflow run [was started](${answer.html_url})`)
+                return `I edited the comment: ${answer2.html_url}`
+            }
+            const x86_64Answer = await triggerBuild('x86_64')
+            const i686Answer = await triggerBuild('i686')
+            const answer2 = await appendToComment(
+                `The [x86_64](${x86_64Answer.html_url}) and the [i686](${i686Answer.html_url}) workflow runs were started.`
+            )
             return `I edited the comment: ${answer2.html_url}`
         }
 

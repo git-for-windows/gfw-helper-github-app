@@ -35,6 +35,12 @@ const prettyPackageName = (name) => {
         tig: 'Tig',
     }[name] || name
 }
+
+const isMSYSPackage = package_name => {
+    return package_name !== 'git-extra'
+        && !package_name.startsWith('mingw-w64-')
+}
+
 const guessReleaseNotes = (issue) => {
     if (!issue.pull_request
         &&issue.labels.filter(label => label.name === 'component-update').length !== 1) throw new Error(`Cannot determine release note from issue ${issue.number}`)
@@ -55,5 +61,6 @@ const guessReleaseNotes = (issue) => {
 module.exports = {
     guessComponentUpdateDetails,
     guessReleaseNotes,
-    prettyPackageName
+    prettyPackageName,
+    isMSYSPackage
 }
