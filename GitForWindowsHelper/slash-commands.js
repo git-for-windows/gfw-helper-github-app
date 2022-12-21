@@ -184,7 +184,6 @@ module.exports = async (context, req) => {
             if (owner !== 'git-for-windows'
              || repo !== 'git'
              || !req.body.issue.pull_request
-             || !req.body.issue.title.match(/^Rebase to v?[1-9]\S*$/)
              ) {
                 return `Ignoring ${command} in unexpected repo: ${commentURL}`
              }
