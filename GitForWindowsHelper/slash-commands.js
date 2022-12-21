@@ -162,7 +162,7 @@ module.exports = async (context, req) => {
                     text
                 )
             if (!isMSYSPackage(package_name)) {
-                await queueCheckRun(
+                const id = await queueCheckRun(
                     context,
                     await getToken(),
                     'git-for-windows',
@@ -175,10 +175,19 @@ module.exports = async (context, req) => {
 
                 const answer = await triggerBuild()
                 const answer2 = await appendToComment(`The workflow run [was started](${answer.html_url})`)
+                await updateCheckRun(
+                    context,
+                    await getToken(),
+                    'git-for-windows',
+                    repo,
+                    id, {
+                        details_url: answer.html_url
+                    }
+                )
                 return `I edited the comment: ${answer2.html_url}`
             }
             
-            await queueCheckRun(
+            const x86_64Id = await queueCheckRun(
                 context,
                 await getToken(),
                 'git-for-windows',
@@ -188,7 +197,7 @@ module.exports = async (context, req) => {
                 `Build and deploy ${package_name}`,
                 `Deploying ${package_name}`
             )
-            await queueCheckRun(
+            const i686Id = await queueCheckRun(
                 context,
                 await getToken(),
                 'git-for-windows',
@@ -203,6 +212,24 @@ module.exports = async (context, req) => {
             const i686Answer = await triggerBuild('i686')
             const answer2 = await appendToComment(
                 `The [x86_64](${x86_64Answer.html_url}) and the [i686](${i686Answer.html_url}) workflow runs were started.`
+            )
+            await updateCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                x86_64Id, {
+                    details_url: x86_64Answer.html_url
+                }
+            )
+            await updateCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                i686Id, {
+                    details_url: i686Answer.html_url
+                }
             )
             return `I edited the comment: ${answer2.html_url}`
         }
