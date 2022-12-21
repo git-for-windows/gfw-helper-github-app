@@ -106,7 +106,6 @@ module.exports = async (context, req) => {
         }
 
         const deployMatch = command.match(/^\/deploy(\s+(\S+)\s*)?$/)
-        context.log(deployMatch)
         if (deployMatch) {
             if (owner !== 'git-for-windows'
              || !req.body.issue.pull_request
@@ -117,7 +116,9 @@ module.exports = async (context, req) => {
             await checkPermissions()
 
             const { guessComponentUpdateDetails, isMSYSPackage } = require('./component-updates')
-            const { package_name } = deployMatch[2] || guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
+            const { package_name } = deployMatch[2]
+                 ? { package_name: deployMatch[2] }
+                 : guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
             // The commit hash of the tip commit is sadly not part of the
             // "comment.created" webhook's payload. Therefore, we have to get it
