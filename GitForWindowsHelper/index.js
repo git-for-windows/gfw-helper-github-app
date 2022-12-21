@@ -27,6 +27,7 @@ module.exports = async function (context, req) {
             && req.body.comment?.body
             && req.body.comment.body.startsWith('/')) return ok(await slashCommand(context, req))
     } catch (e) {
+        context.log(e)
         return withStatus(500, undefined, e.toString('utf-8'))
     }
 
