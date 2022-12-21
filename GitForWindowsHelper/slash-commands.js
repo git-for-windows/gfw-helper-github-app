@@ -7,6 +7,8 @@ module.exports = async (context, req) => {
     let commentId = req.body.comment.id
     let commentURL = req.body.comment.html_url
 
+    context.log(`Looking at command '${command}' (${typeof command})`)
+
     if (command === '/hi') {
         const comment = `Hi @${commenter}!`
 
@@ -104,6 +106,7 @@ module.exports = async (context, req) => {
         }
 
         const deployMatch = command.match(/^\/deploy(\s+(\S+)\s*)?$/)
+        context.log(deployMatch)
         if (deployMatch) {
             if (owner !== 'git-for-windows'
              || !req.body.issue.pull_request
