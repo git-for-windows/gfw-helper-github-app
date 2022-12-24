@@ -134,17 +134,6 @@ module.exports = async (context, req) => {
             await thumbsUp()
 
             const { queueCheckRun } = require('./check-runs')
-            await queueCheckRun(
-                context,
-                await getToken(),
-                'git-for-windows',
-                repo,
-                ref,
-                'deploy',
-                `Build and deploy ${package_name}`,
-                `Deploying ${package_name}`
-            )
-
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
             const triggerBuild = async (architecture) =>
                 await triggerWorkflowDispatch(
@@ -173,10 +162,43 @@ module.exports = async (context, req) => {
                     text
                 )
             if (!isMSYSPackage(package_name)) {
+                await queueCheckRun(
+                    context,
+                    await getToken(),
+                    'git-for-windows',
+                    repo,
+                    ref,
+                    'deploy',
+                    `Build and deploy ${package_name}`,
+                    `Deploying ${package_name}`
+                )
+
                 const answer = await triggerBuild()
                 const answer2 = await appendToComment(`The workflow run [was started](${answer.html_url})`)
                 return `I edited the comment: ${answer2.html_url}`
             }
+            
+            await queueCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                ref,
+                'deploy_x86_64',
+                `Build and deploy ${package_name}`,
+                `Deploying ${package_name}`
+            )
+            await queueCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                ref,
+                'deploy_i686',
+                `Build and deploy ${package_name}`,
+                `Deploying ${package_name}`
+            )
+            
             const x86_64Answer = await triggerBuild('x86_64')
             const i686Answer = await triggerBuild('i686')
             const answer2 = await appendToComment(
