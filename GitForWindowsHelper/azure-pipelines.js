@@ -79,24 +79,24 @@ const getRelease = async (context, token, organization, project, releaseId) => {
 }
 
 const createRelease = async (
-  context,
-  token,
-  organization,
-  project,
-  releaseDefinitionId,
-  artifactAlias,
-  artifactBuildRunId,
-  artifactBuildRunName,
-  artifactBuildDefinitionId,
-  artifactBuildDefinitionName,
-  sourceBranch,
-  sourceCommitId,
-  repo
+    context,
+    token,
+    organization,
+    project,
+    releaseDefinitionId,
+    artifactAlias,
+    artifactBuildRunId,
+    artifactBuildRunName,
+    artifactBuildDefinitionId,
+    artifactBuildDefinitionName,
+    sourceBranch,
+    sourceCommitId,
+    repo
 ) => {
     const auth = Buffer.from("PAT:" + token).toString("base64");
     const headers = {
-      Accept: "application/json; api-version=7.0; excludeUrls=true",
-      Authorization: "Basic " + auth,
+        Accept: "application/json; api-version=7.0; excludeUrls=true",
+        Authorization: "Basic " + auth,
     };
     const body = {
         definitionId: releaseDefinitionId,
@@ -157,19 +157,19 @@ const releaseGitArtifacts = async (context, prNumber) => {
 
     const token = process.env['AZURE_PIPELINE_TRIGGER_TOKEN']
     const answer2 = await createRelease(
-      context,
-      token,
-      'git-for-windows',
-      'git',
-      1,
-      'artifacts',
-      artifactBuildRunId,
-      artifactBuildRunName,
-      artifactBuildDefinitionId,
-      artifactBuildDefinitionName,
-      sourceBranch,
-      sourceCommitId,
-      'git-for-windows/git'
+        context,
+        token,
+        'git-for-windows',
+        'git',
+        1,
+        'artifacts',
+        artifactBuildRunId,
+        artifactBuildRunName,
+        artifactBuildDefinitionId,
+        artifactBuildDefinitionName,
+        sourceBranch,
+        sourceCommitId,
+        'git-for-windows/git'
     )
     return {
         id: answer2.id,

@@ -69,14 +69,14 @@ module.exports = async (context, req) => {
                 if (alreadyOpenedPR.length > 0) {
                     ({ html_url: commentURL, id: commentId } =
                       await appendToIssueComment(
-                        context,
-                        await getToken(),
-                        owner,
-                        repo,
-                        commentId,
-                        `${
-                          packageType ? `${packageType} ` : ""
-                        }PR [already exists](${alreadyOpenedPR[0].html_url})`
+                          context,
+                          await getToken(),
+                          owner,
+                          repo,
+                          commentId,
+                          `${
+                              packageType ? `${packageType} ` : ""
+                          }PR [already exists](${alreadyOpenedPR[0].html_url})`
                       ));
                     return
                 }
@@ -111,14 +111,14 @@ module.exports = async (context, req) => {
              || !req.body.issue.pull_request
              || !['build-extra', 'MINGW-packages', 'MSYS2-packages'].includes(repo)) {
                 return `Ignoring ${command} in unexpected repo: ${commentURL}`
-             }
+            }
 
             await checkPermissions()
 
             const { guessComponentUpdateDetails, isMSYSPackage } = require('./component-updates')
             const { package_name } = deployMatch[2]
-                 ? { package_name: deployMatch[2] }
-                 : guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
+                ? { package_name: deployMatch[2] }
+                : guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
             // The commit hash of the tip commit is sadly not part of the
             // "comment.created" webhook's payload. Therefore, we have to get it
@@ -238,9 +238,9 @@ module.exports = async (context, req) => {
             if (owner !== 'git-for-windows'
              || repo !== 'git'
              || !req.body.issue.pull_request
-             ) {
+            ) {
                 return `Ignoring ${command} in unexpected repo: ${commentURL}`
-             }
+            }
 
             await checkPermissions()
             await thumbsUp()
@@ -255,11 +255,11 @@ module.exports = async (context, req) => {
 
         if (command == '/release') {
             if (owner !== 'git-for-windows'
-             || repo !== 'git'
-             || !req.body.issue.pull_request
-             ) {
+              || repo !== 'git'
+              || !req.body.issue.pull_request
+            ) {
                 return `Ignoring ${command} in unexpected repo: ${commentURL}`
-             }
+            }
 
             await checkPermissions()
             await thumbsUp()
@@ -277,7 +277,7 @@ module.exports = async (context, req) => {
             if (owner !== 'git-for-windows'
              || !['git', 'build-extra', 'MINGW-packages', 'MSYS2-packages'].includes(repo)) {
                 return `Ignoring ${command} in unexpected repo: ${commentURL}`
-             }
+            }
 
             await checkPermissions()
 
