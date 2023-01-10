@@ -134,17 +134,6 @@ module.exports = async (context, req) => {
             await thumbsUp()
 
             const { queueCheckRun } = require('./check-runs')
-            await queueCheckRun(
-                context,
-                await getToken(),
-                'git-for-windows',
-                repo,
-                ref,
-                'deploy',
-                `Build and deploy ${package_name}`,
-                `Deploying ${package_name}`
-            )
-
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
             const triggerBuild = async (architecture) =>
                 await triggerWorkflowDispatch(
@@ -173,14 +162,74 @@ module.exports = async (context, req) => {
                     text
                 )
             if (!isMSYSPackage(package_name)) {
+                const id = await queueCheckRun(
+                    context,
+                    await getToken(),
+                    'git-for-windows',
+                    repo,
+                    ref,
+                    'deploy',
+                    `Build and deploy ${package_name}`,
+                    `Deploying ${package_name}`
+                )
+
                 const answer = await triggerBuild()
                 const answer2 = await appendToComment(`The workflow run [was started](${answer.html_url})`)
+                await updateCheckRun(
+                    context,
+                    await getToken(),
+                    'git-for-windows',
+                    repo,
+                    id, {
+                        details_url: answer.html_url
+                    }
+                )
                 return `I edited the comment: ${answer2.html_url}`
             }
+            
+            const x86_64Id = await queueCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                ref,
+                'deploy_x86_64',
+                `Build and deploy ${package_name}`,
+                `Deploying ${package_name}`
+            )
+            const i686Id = await queueCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                ref,
+                'deploy_i686',
+                `Build and deploy ${package_name}`,
+                `Deploying ${package_name}`
+            )
+            
             const x86_64Answer = await triggerBuild('x86_64')
             const i686Answer = await triggerBuild('i686')
             const answer2 = await appendToComment(
                 `The [x86_64](${x86_64Answer.html_url}) and the [i686](${i686Answer.html_url}) workflow runs were started.`
+            )
+            await updateCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                x86_64Id, {
+                    details_url: x86_64Answer.html_url
+                }
+            )
+            await updateCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                i686Id, {
+                    details_url: i686Answer.html_url
+                }
             )
             return `I edited the comment: ${answer2.html_url}`
         }

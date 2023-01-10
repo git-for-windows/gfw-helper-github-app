@@ -47,6 +47,20 @@ const queueCheckRun = async (context, token, owner, repo, ref, checkRunName, tit
     return id
   }
 
+  const updateCheckRun = async (context, token, owner, repo, checkRunId, parameters) => {
+    const githubApiRequest = require('./github-api-request')
+
+      await githubApiRequest(
+      context,
+      token,
+      'PATCH',
+      `/repos/${owner}/${repo}/check-runs/${checkRunId}`, 
+      parameters
+      }
+    )
+  }
+
   module.exports = {
-    queueCheckRun
+    queueCheckRun,
+    updateCheckRun
   }
