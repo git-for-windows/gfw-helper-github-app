@@ -56,7 +56,6 @@ const queueCheckRun = async (context, token, owner, repo, ref, checkRunName, tit
       'PATCH',
       `/repos/${owner}/${repo}/check-runs/${checkRunId}`, 
       parameters
-      }
     )
   }
 

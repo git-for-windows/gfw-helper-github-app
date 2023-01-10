@@ -133,7 +133,7 @@ module.exports = async (context, req) => {
 
             await thumbsUp()
 
-            const { queueCheckRun } = require('./check-runs')
+            const { queueCheckRun, updateCheckRun } = require('./check-runs')
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
             const triggerBuild = async (architecture) =>
                 await triggerWorkflowDispatch(
