@@ -35,5 +35,23 @@ module.exports = async (context, req) => {
         throw new Error(`${sender} is not allowed to do that`)
     }
 
+    if (action === 'queued') {
+        // Spin up a new runner
+        const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+        const token = await getToken()
+        const answer = await triggerWorkflowDispatch(
+            context,
+            token,
+            'git-for-windows',
+            'git-for-windows-automation',
+            'create-azure-self-hosted-runners.yml',
+            'main', {
+                runner_scope: 'repo-level'
+            }
+        )
+
+        return `The workflow run to create the self-hosted runner VM was started at ${answer.html_url}`
+    }
+
     return `Unhandled action: ${action}`
 }
