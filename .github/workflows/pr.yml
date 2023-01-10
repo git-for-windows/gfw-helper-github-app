@@ -1,0 +1,13 @@
+name: PR check
+
+on: [pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install ESLint
+        run: npm install -g eslint
+      - uses: actions/checkout@v3
+      - name: run ESLint
+        run: eslint -c .eslintrc.json '**/*.js'
