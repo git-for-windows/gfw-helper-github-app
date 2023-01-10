@@ -59,7 +59,20 @@ const updateCheckRun = async (context, token, owner, repo, checkRunId, parameter
     )
 }
 
+const cancelWorkflowRun = async (context, token, owner, repo, workflowRunId) => {
+    const githubApiRequest = require('./github-api-request')
+
+    const answer = await githubApiRequest(
+        context,
+        token,
+        'POST',
+        `/repos/${owner}/${repo}/actions/runs/${workflowRunId}/cancel`
+    )
+    console.log(answer)
+}
+
 module.exports = {
     queueCheckRun,
-    updateCheckRun
+    updateCheckRun,
+    cancelWorkflowRun
 }
