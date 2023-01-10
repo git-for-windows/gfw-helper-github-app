@@ -53,5 +53,24 @@ module.exports = async (context, req) => {
         return `The workflow run to create the self-hosted runner VM was started at ${answer.html_url}`
     }
 
+    if (action === 'completed') {
+        // Delete the runner
+        const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+        const token = await getToken()
+        const vmName = req.body.workflow_job.runner_name
+        const answer = await triggerWorkflowDispatch(
+            context,
+            token,
+            'git-for-windows',
+            'git-for-windows-automation',
+            'delete-self-hosted-runner.yml',
+            'main', {
+                runner_name: vmName
+            }
+        )
+
+        return `The workflow run to delete the self-hosted runner VM '${vmName}' was started at ${answer.html_url}`
+    }
+
     return `Unhandled action: ${action}`
 }
