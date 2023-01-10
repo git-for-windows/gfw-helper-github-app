@@ -54,7 +54,7 @@ const updateCheckRun = async (context, token, owner, repo, checkRunId, parameter
         context,
         token,
         'PATCH',
-        `/repos/${owner}/${repo}/check-runs/${checkRunId}`, 
+        `/repos/${owner}/${repo}/check-runs/${checkRunId}`,
         parameters
     )
 }

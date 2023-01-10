@@ -186,7 +186,7 @@ module.exports = async (context, req) => {
                 )
                 return `I edited the comment: ${answer2.html_url}`
             }
-            
+
             const x86_64Id = await queueCheckRun(
                 context,
                 await getToken(),
@@ -207,7 +207,7 @@ module.exports = async (context, req) => {
                 `Build and deploy ${package_name}`,
                 `Deploying ${package_name}`
             )
-            
+
             const x86_64Answer = await triggerBuild('x86_64')
             const i686Answer = await triggerBuild('i686')
             const answer2 = await appendToComment(
