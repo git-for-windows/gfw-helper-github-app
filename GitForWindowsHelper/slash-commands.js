@@ -199,7 +199,7 @@ module.exports = async (context, req) => {
 
                 const answer = await triggerBuild()
                 const answer2 = await appendToComment(aarch64Answer
-                    ? `The [i686/x86_64](${answer.html_url}) and the [amd64](${aarch64Answer.html_url}) workflow runs were started.`
+                    ? `The [i686/x86_64](${answer.html_url}) and the [arm64](${aarch64Answer.html_url}) workflow runs were started.`
                     : `The workflow run [was started](${answer.html_url}).`
                 )
                 await updateCheckRun(
