@@ -28,7 +28,7 @@ module.exports = async (context, hostname, method, requestPath, body, headers) =
                     statusCode: res.statusCode,
                     statusMessage: res.statusMessage,
                     headers: res.headers
-                 })
+                })
 
                 const chunks = []
                 res.on('data', data => chunks.push(data))

@@ -16,7 +16,7 @@ module.exports = async (context, requestMethod, requestPath, body) => {
     }
 
     const toBase64 = (obj) => Buffer.from(JSON.stringify(obj), "utf-8").toString("base64url")
-	const headerAndPayload = `${toBase64(header)}.${toBase64(payload)}`
+    const headerAndPayload = `${toBase64(header)}.${toBase64(payload)}`
 
     const privateKey = `-----BEGIN RSA PRIVATE KEY-----\n${process.env['GITHUB_APP_PRIVATE_KEY']}\n-----END RSA PRIVATE KEY-----\n`
 
