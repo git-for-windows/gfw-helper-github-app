@@ -41,6 +41,15 @@ const isMSYSPackage = package_name => {
         && !package_name.startsWith('mingw-w64-')
 }
 
+const needsSeparateARM64Build = package_name => {
+    if (package_name === 'git-extra') return true
+    return package_name.startsWith('mingw-w64-') && ![
+        'mingw-w64-git-credential-manager',
+        'mingw-w64-git-lfs',
+        'mingw-w64-wintoast'
+    ].includes(package_name)
+}
+
 const guessReleaseNotes = (issue) => {
     if (!issue.pull_request
         &&issue.labels.filter(label => label.name === 'component-update').length !== 1) throw new Error(`Cannot determine release note from issue ${issue.number}`)
@@ -62,5 +71,6 @@ module.exports = {
     guessComponentUpdateDetails,
     guessReleaseNotes,
     prettyPackageName,
-    isMSYSPackage
+    isMSYSPackage,
+    needsSeparateARM64Build
 }

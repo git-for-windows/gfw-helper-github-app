@@ -115,7 +115,7 @@ module.exports = async (context, req) => {
 
             await checkPermissions()
 
-            const { guessComponentUpdateDetails, isMSYSPackage } = require('./component-updates')
+            const { guessComponentUpdateDetails, isMSYSPackage, needsSeparateARM64Build } = require('./component-updates')
             const { package_name } = deployMatch[2]
                 ? { package_name: deployMatch[2] }
                 : guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
@@ -162,6 +162,30 @@ module.exports = async (context, req) => {
                     text
                 )
             if (!isMSYSPackage(package_name)) {
+                let aarch64Answer
+                if (needsSeparateARM64Build(package_name)) {
+                    const aarch64Id = await queueCheckRun(
+                        context,
+                        await getToken(),
+                        'git-for-windows',
+                        repo,
+                        ref,
+                        'deploy_aarch64',
+                        `Build and deploy ${package_name}`,
+                        `Deploying ${package_name}`
+                    )
+                    aarch64Answer = await triggerBuild('aarch64')
+                    await updateCheckRun(
+                        context,
+                        await getToken(),
+                        'git-for-windows',
+                        repo,
+                        aarch64Id, {
+                            details_url: aarch64Answer.html_url
+                        }
+                    )
+                }
+
                 const id = await queueCheckRun(
                     context,
                     await getToken(),
@@ -174,7 +198,10 @@ module.exports = async (context, req) => {
                 )
 
                 const answer = await triggerBuild()
-                const answer2 = await appendToComment(`The workflow run [was started](${answer.html_url})`)
+                const answer2 = await appendToComment(aarch64Answer
+                    ? `The [i686/x86_64](${answer.html_url}) and the [amd64](${aarch64Answer.html_url}) workflow runs were started.`
+                    : `The workflow run [was started](${answer.html_url}).`
+                )
                 await updateCheckRun(
                     context,
                     await getToken(),
