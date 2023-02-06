@@ -7,6 +7,58 @@
 
 The purpose of this GitHub App is to serve the needs of the Git for Windows project, implementing all kinds of useful automation.
 
+The App is implemented as an Azure Function that performs quick tasks itself and hands off more complex tasks to GitHub workflows in the [`git-for-windows-automation` repository](https://github.com/git-for-windows/git-for-windows-automation).
+
+## Slash commands
+
+The GitForWindowsHelper GitHub App supports so-called "slash commands", i.e. commands that start with a forward slash and that are issued via comments in GitHub Issues or Pull Requests.
+
+### `/hi`
+
+**Where can it be called?** In issues/PRs of any repository in which the GitForWindowsHelper GitHub App is installed.
+
+**What does it do?** The app responds in a separate comment, saying "Hi @&lt;login&gt;" where `<login>` is your GitHub login name.
+
+### `/add release note <type> <message>`
+
+**Where can it be called?** In issues and Pull Requests of Git for Windows' [`git`](https://github.com/git-for-windows/git), [`build-extra`](https://github.com/git-for-windows/build-extra), [`MINGW-packages`](https://github.com/git-for-windows/MINGW-packages) and [`MSYS2-packages`](https://github.com/git-for-windows/MSYS2-packages) repositories.
+
+**What does it do?** It starts a run of [the GitHub workflow](https://github.com/git-for-windows/build-extra/actions/workflows/add-release-note.yml) that adds a bullet point to [Git for Windows' Release Notes](https://github.com/git-for-windows/build-extra/blob/HEAD/ReleaseNotes.md). The `<type>` can be `bug` (for bug fixes), `feature` (for new features) and `blurb` (to add important context about the upcoming release, such as deprecation notices). The `<message>` should be Markdown-formatted and the "Preview" functionality of the comment should be used to ensure that it renders well.
+
+For convenience, the command can be abbreviated as `/add relnote <type> <message>`.
+
+### `/open pr`
+
+**Where can it be called?** In `git-for-windows/git`'s [issue tracker](https://github.com/git-for-windows/git/issues).
+
+**What does it do?** Meant to handle tickets labeled as `component-update` (typically created by [the `Monitor component updates` GitHub workflow](https://github.com/git-for-windows/git/actions/workflows/monitor-components.yml)) that notify the Git for Windows project when new versions are available of software that is shipped with Git for Windows, this command starts a [GitHub workflow run to open the corresponding Pull Request](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/open-pr.yml).
+
+### `/deploy [<package>]`
+
+**Where can it be called?** In Pull Requests of Git for Windows' [`build-extra`](https://github.com/git-for-windows/build-extra), [`MINGW-packages`](https://github.com/git-for-windows/MINGW-packages) and [`MSYS2-packages`](https://github.com/git-for-windows/MSYS2-packages) repositories.
+
+**What does it do?** This triggers one ore more [GitHub workflow runs](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/build-and-deploy.yml) to build and deploy Git for Windows' [Pacman packages](https://github.com/git-for-windows/git/wiki/Package-management).
+
+### `/git-artifacts`
+
+**Where can it be called?** In `git-for-windows/git`'s [Pull Requests](https://github.com/git-for-windows/git/pulls)
+
+**What does it do?** This command starts [the `Git artifacts` Azure Pipeline](https://dev.azure.com/git-for-windows/git/_build?definitionId=34&_a=summary) that builds all of the artifacts of a full Git for Windows release: installer, Portable Git, MinGit, etc
+
+### `/release`
+
+**Where can it be called?** In `git-for-windows/git`'s [Pull Requests](https://github.com/git-for-windows/git/pulls)
+
+**What does it do?** Call this command after a `/git-artifacts` command successfully produced the artifacts _and_ after the installer artifact has been validated manually, using [the "pre-flight checklist"](https://github.com/git-for-windows/build-extra/blob/HEAD/installer/checklist.txt). This will start [the Azure Release Pipeline](https://dev.azure.com/git-for-windows/git/_release?_a=releases&view=mine&definitionId=1) to publish the artifacts in a new GitHub Release.
+
+## Spinning up Windows/ARM64 runners
+
+As GitHub Actions do not offer hosted Windows/ARM64 runners, Git for Windows needs to use self-hosted Windows/ARM64 runners to build the `clang-aarch64` versions of its MINGW packages.
+
+To this end, the GitForWindowsHelper App notices when a job was queued [in the `git-for-windows-automation` repository](https://github.com/git-for-windows/git-for-windows-automation/actions/) that requires a Windows/ARM64 runner, and starts [the GitHub workflow to spin up an Azure VM with such a runner](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/create-azure-self-hosted-runners.yml). This VM is created from scratch and its runner is marked as ephemeral (meaning: it will run exactly one job for security reasons). Once the job is finished, the GitForWindowsHelper App starts [the GitHub workflow](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/delete-self-hosted-runner.yml) to decommission the VM.
+
+The GitForWindowsHelper App will also notice when jobs are queued for PRs originating in forks, and immediately cancel them. This helps with keeping the cost of self-hosting these Windows/ARM64 at reasonable levels.
+
 ## Tips & Tricks for developing this GitHub App
 
 ### Debug/test-run as much Javascript via the command-line as possible
