@@ -58,7 +58,9 @@ const guessReleaseNotes = (issue) => {
     package_name = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
 
     const matchURLInIssue = (issue) => {
-        const match = issue.body.match(/(?:^|\n)(https:\/\/\S+)$/)
+        const match = issue.body.match(package_name.toLowerCase() === 'bash'
+            ? /(?:^|\n)(https:\/\/\S+)/ // for `bash`, use the first URL
+            : /(?:^|\n)(https:\/\/\S+)$/)
         return match && match[1]
     }
 
