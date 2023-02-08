@@ -53,7 +53,7 @@ const needsSeparateARM64Build = package_name => {
 const guessReleaseNotes = (issue) => {
     if (!issue.pull_request
         &&issue.labels.filter(label => label.name === 'component-update').length !== 1) throw new Error(`Cannot determine release note from issue ${issue.number}`)
-    let { package_name, version } = guessComponentUpdateDetails(issue.title)
+    let { package_name, version } = guessComponentUpdateDetails(issue.title, issue.body)
 
     package_name = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
 
