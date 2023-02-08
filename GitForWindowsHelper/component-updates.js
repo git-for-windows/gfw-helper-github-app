@@ -12,7 +12,8 @@ const guessComponentUpdateDetails = (title, body) => {
 
     version = version
         .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-)/, '')
-        .replace(/_|\s+patch\s+/, '.')
+        .replace(/\s+patch\s+/, '.')
+        .replace(/_/g, '.')
         .replace(/-release$/, '')
 
     return { package_name, version }
