@@ -16,6 +16,6 @@
     )
 
     const { guessReleaseNotes } = require('./GitForWindowsHelper/component-updates')
-    const guessed = await guessReleaseNotes(issue)
+    const guessed = await guessReleaseNotes(console, issue)
     console.log(JSON.stringify(guessed, null, 2))
 })().catch(console.log)

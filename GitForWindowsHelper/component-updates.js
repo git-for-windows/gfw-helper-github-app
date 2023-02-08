@@ -50,7 +50,7 @@ const needsSeparateARM64Build = package_name => {
     ].includes(package_name)
 }
 
-const guessReleaseNotes = (issue) => {
+const guessReleaseNotes = async (context, issue) => {
     if (!issue.pull_request
         &&issue.labels.filter(label => label.name === 'component-update').length !== 1) throw new Error(`Cannot determine release note from issue ${issue.number}`)
     let { package_name, version } = guessComponentUpdateDetails(issue.title, issue.body)
@@ -69,6 +69,18 @@ const guessReleaseNotes = (issue) => {
 
         const match = issue.body.match(/See (https:\/\/\S+) for details/)
         if (match) return match[1]
+
+        const issueMatch = issue.body.match(/https:\/\/github\.com\/git-for-windows\/git\/issues\/(\d+)/)
+        if (issueMatch) {
+            const githubApiRequest = require('./github-api-request')
+            const issue = await githubApiRequest(
+                context,
+                null,
+                'GET',
+                `/repos/git-for-windows/git/issues/${issueMatch[1]}`
+            )
+            return matchURLInIssue(issue)
+        }
     }
 
     const url = await matchURL()
