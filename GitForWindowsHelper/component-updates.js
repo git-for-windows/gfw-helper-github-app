@@ -57,13 +57,23 @@ const guessReleaseNotes = (issue) => {
 
     package_name = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
 
-    const urlMatch = issue.pull_request
-        ? issue.body.match(/See (https:\/\/\S+) for details/)
-        : issue.body.match(/(?:^|\n)(https:\/\/\S+)$/)
-    if (!urlMatch) throw new Error(`Could not determine URL from issue ${issue.number}`)
+    const matchURLInIssue = (issue) => {
+        const match = issue.body.match(/(?:^|\n)(https:\/\/\S+)$/)
+        return match && match[1]
+    }
+
+    const matchURL = async () => {
+        if (!issue.pull_request) return matchURLInIssue(issue)
+
+        const match = issue.body.match(/See (https:\/\/\S+) for details/)
+        if (match) return match[1]
+    }
+
+    const url = await matchURL()
+    if (!url) throw new Error(`Could not determine URL from issue ${issue.number}`)
     return {
         type: 'feature',
-        message: `Comes with [${package_name} v${version}](${urlMatch[1]}).`
+        message: `Comes with [${package_name} v${version}](${url}).`
     }
 }
 
