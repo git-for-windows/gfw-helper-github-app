@@ -311,7 +311,7 @@ module.exports = async (context, req) => {
             let [ , , , type, message ] = relNotesMatch
             if (!type) {
                 const { guessReleaseNotes } = require('./component-updates');
-                ({ type, message } = await guessReleaseNotes(req.body.issue))
+                ({ type, message } = await guessReleaseNotes(context, req.body.issue))
             }
 
             await thumbsUp()
