@@ -6,8 +6,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: install ESLint
-        run: npm install -g eslint
       - uses: actions/checkout@v3
+      - name: npm install
+        run: npm install
       - name: run ESLint
-        run: eslint -c .eslintrc.json '**/*.js'
+        run: npm run lint
