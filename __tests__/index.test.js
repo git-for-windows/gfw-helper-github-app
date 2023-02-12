@@ -24,4 +24,21 @@ test('reject requests other than webhook payloads', async () => {
     }
 
     await expectInvalidWebhook('Unexpected method: GET')
+
+    context.log = jest.fn()
+    context.req.method = 'POST'
+    context.req.headers = {
+        'content-type': 'text/plain'
+    }
+    await expectInvalidWebhook('Unexpected content type: text/plain')
+
+    context.req.headers['content-type'] = 'application/json'
+    await expectInvalidWebhook('Missing X-Hub-Signature')
+
+    context.req.headers['x-hub-signature-256'] = 'invalid'
+    await expectInvalidWebhook('Unexpected X-Hub-Signature format: invalid')
+
+    context.req.headers['x-hub-signature-256'] = 'sha256=incorrect'
+    context.req.rawBody = '# empty'
+    await expectInvalidWebhook('Incorrect X-Hub-Signature')
 })
