@@ -54,14 +54,61 @@ jest.mock('../GitForWindowsHelper/github-api-request-as-app', () => {
     return mockGitHubApiRequestAsApp
 })
 
+const dispatchedWorkflows = []
 let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, payload) => {
     if (method === 'POST' && requestPath.endsWith('/comments')) return {
         id: -124,
         html_url: `new-comment-url-${payload.body}`
     }
+    if (method === 'GET' && requestPath.endsWith('/comments/0')) return {
+        body: `existing comment body`
+    }
+    if (method === 'PATCH' && requestPath.endsWith('/comments/0')) return {
+        id: 0,
+        html_url: `appended-comment-body-${payload.body}`
+    }
+    if (method === 'POST' && requestPath.endsWith('/reactions')) return {
+        id: `new-reaction-${payload.content}`
+    }
+    if (method === 'POST' && requestPath === '/graphql') {
+        if (payload.query.startsWith('query CollaboratorPermission')) return {
+            data: {
+                repository:{
+                    collaborators: {
+                        edges: [{ permission: 'WRITE'}]
+                    }
+                }
+            }
+        }
+    }
+    let match
+    if (method === 'POST' && (match = requestPath.match(/([^/]+)\/dispatches$/))) {
+        dispatchedWorkflows.unshift({
+            html_url: `dispatched-workflow-${match[1]}`,
+            path: `.github/workflows/${match[1]}`,
+            payload
+        })
+        return {
+            headers: {
+                date: (new Date()).toISOString()
+            }
+        }
+    }
+    if (method === 'GET' && requestPath.indexOf('/actions/runs?') > 0) return {
+        workflow_runs: dispatchedWorkflows
+    }
+    if (method === 'GET' && requestPath === '/user') return {
+        login: 'cheers'
+    }
+    throw new Error(`Unhandled ${method}-${requestPath}-${JSON.stringify(payload)}`)
 })
 jest.mock('../GitForWindowsHelper/github-api-request', () => {
     return mockGitHubApiRequest
+})
+
+afterEach(() => {
+    jest.clearAllMocks()
+    dispatchedWorkflows.splice(0, dispatchedWorkflows.length) // empty the array
 })
 
 const makeContext = (body, headers) => {
@@ -153,4 +200,41 @@ testIssueComment('/hi', async (context) => {
         "/repos/git-for-windows/git/issues/0/comments",
         {"body": "Hi @statler and waldorf!" }
     ])
+})
+
+let mockGetInstallationIDForRepo = jest.fn(() => 'installation-id')
+jest.mock('../GitForWindowsHelper/get-installation-id-for-repo', () => {
+    return mockGetInstallationIDForRepo
+})
+
+let mockSearchIssues = jest.fn(() => [])
+jest.mock('../GitForWindowsHelper/search', () => {
+    return {
+        searchIssues: mockSearchIssues
+    }
+})
+
+testIssueComment('/open pr', {
+    issue: {
+        number: 4281,
+        title: '[New gnutls version] GnuTLS 3.8.0',
+        body: `Released a bug-fix and enhancement release on the 3.8.x branch.[GnuTLS 3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html)
+
+Added the security advisory.[GNUTLS-SA-2020-07-14](security-new.html#GNUTLS-SA-2020-07-14)
+
+http://www.gnutls.org/news.html#2023-02-10`
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: appended-comment-body-existing comment body
+
+The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows).toHaveLength(2)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.package)).toEqual(['mingw-w64-gnutls', 'gnutls'])
 })
