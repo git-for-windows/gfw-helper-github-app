@@ -82,8 +82,8 @@ const makeContext = (body, headers) => {
     }
 }
 
-const mockIssueComment = (comment) => {
-    return makeContext({
+const testIssueComment = (comment, fn) => {
+    const context = makeContext({
         action: 'created',
         comment: {
             body: comment,
@@ -108,10 +108,18 @@ const mockIssueComment = (comment) => {
     }, {
         'x-github-event': 'issue_comment'
     })
+
+    test(`test ${comment}`, async () => {
+        try {
+            await fn(context)
+        } catch (e) {
+            context.log.mock.calls.forEach(e => console.log(e[0]))
+            throw e;
+        }
+    })
 }
 
-test('test /hi', async () => {
-    const context = mockIssueComment('/hi')
+testIssueComment('/hi', async (context) => {
     expect(await index(context, context.req)).toBeUndefined()
     expect(context.res).toEqual({
         body: 'I said hi! new-comment-url-Hi @statler and waldorf!',
