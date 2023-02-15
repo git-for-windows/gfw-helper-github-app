@@ -100,6 +100,9 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath === '/user') return {
         login: 'cheers'
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/86')) return {
+        head: { sha: '707a11ee' }
+    }
     throw new Error(`Unhandled ${method}-${requestPath}-${JSON.stringify(payload)}`)
 })
 jest.mock('../GitForWindowsHelper/github-api-request', () => {
@@ -252,4 +255,42 @@ The MSYS workflow run [was started](dispatched-workflow-open-pr.yml)`
 
 The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`
     })
+})
+
+let mockQueueCheckRun = jest.fn(() => 'check-run-id')
+let mockUpdateCheckRun = jest.fn()
+jest.mock('../GitForWindowsHelper/check-runs', () => {
+    return {
+        queueCheckRun: mockQueueCheckRun,
+        updateCheckRun: mockUpdateCheckRun
+    }
+})
+
+testIssueComment('/deploy', {
+    issue: {
+        number: 86,
+        title: 'gnutls: update to 3.8.0',
+        body: 'This closes https://github.com/git-for-windows/git/issues/4281',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MSYS2-packages/pull/86'
+        }
+    },
+    repository: {
+        name: 'MSYS2-packages',
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: appended-comment-body-existing comment body
+
+The [x86_64](dispatched-workflow-build-and-deploy.yml) and the [i686](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(2)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
+    expect(dispatchedWorkflows).toHaveLength(2)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686', 'x86_64'])
 })
