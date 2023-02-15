@@ -33,7 +33,8 @@ test('guessComponentUpdateDetails()', () => {
         ['[New pcre2 version] PCRE2-10.42', 'pcre2', '10.42'],
         ['[New git-lfs version] v3.3.0', 'mingw-w64-git-lfs', '3.3.0'],
         ['[New heimdal version] Heimdal 7.7.1 - Security Fix Release', 'heimdal', '7.7.1'],
-        ['[New gnutls version] GnuTLS 3.8.0', 'gnutls', '3.8.0']
+        ['[New gnutls version] GnuTLS 3.8.0', 'gnutls', '3.8.0'],
+        ['[New git-credential-manager version] GCM 2.0.886', 'mingw-w64-git-credential-manager', '2.0.886']
     ]
     for (const [title, package_name, version] of titles) {
         expect(guessComponentUpdateDetails(title)).toEqual({ package_name, version })
