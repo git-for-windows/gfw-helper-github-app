@@ -82,12 +82,30 @@ const makeContext = (body, headers) => {
     }
 }
 
-const testIssueComment = (comment, fn) => {
-    const context = makeContext({
+function extend (a, ...list) {
+    for (const b of list) {
+        for (const key of Object.keys(b)) {
+            if (Array.isArray(key[a])) a[key].push(...(Array.isArray(b[key]) ? b[key] : [ b[key] ]))
+            if (a[key] !== null && a[key] instanceof Object) extend(a[key], b[key])
+            else a[key] = b[key]
+        }
+    }
+    return a
+}
+
+const testIssueComment = (comment, bodyExtra_, fn) => {
+    if (!fn) {
+        fn = bodyExtra_
+        bodyExtra_= undefined
+    }
+    const repo = bodyExtra_?.repository?.name || 'git'
+    const number = bodyExtra_?.issue?.number || 0
+    const pullOrIssues = bodyExtra_?.issue?.pull_request ? 'pull' : 'issues'
+    const context = makeContext(extend({
         action: 'created',
         comment: {
             body: comment,
-            html_url: 'https://github.com/git-for-windows/git/issues/0',
+            html_url: `https://github.com/git-for-windows/${repo}/${pullOrIssues}/${number}`,
             id: 0,
             user: {
                 login: 'statler and waldorf'
@@ -97,15 +115,15 @@ const testIssueComment = (comment, fn) => {
             id: 123
         },
         issue: {
-            number: 0
+            number
         },
         repository: {
-            name: 'git',
+            name: repo,
             owner: {
                 login: 'git-for-windows'
             }
         }
-    }, {
+    }, bodyExtra_ ? bodyExtra_ : {}), {
         'x-github-event': 'issue_comment'
     })
 
