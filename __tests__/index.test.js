@@ -294,3 +294,32 @@ The [x86_64](dispatched-workflow-build-and-deploy.yml) and the [i686](dispatched
     expect(dispatchedWorkflows).toHaveLength(2)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686', 'x86_64'])
 })
+
+testIssueComment('/add release note', {
+    issue: {
+        number: 4281,
+        labels: [{ name: 'component-update' }],
+        title: '[New gnutls version] GnuTLS 3.8.0',
+        body: `Released a bug-fix and enhancement release on the 3.8.x branch.[GnuTLS 3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html)
+
+Added the security advisory.[GNUTLS-SA-2020-07-14](security-new.html#GNUTLS-SA-2020-07-14)
+
+http://www.gnutls.org/news.html#2023-02-10`
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-add-release-note.yml)`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows).toHaveLength(1)
+    expect(dispatchedWorkflows[0].payload.inputs).toEqual({
+        message: 'Comes with [GNU TLS v3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html).',
+        type: 'feature'
+    })
+})
