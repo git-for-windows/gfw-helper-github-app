@@ -56,12 +56,12 @@ const guessReleaseNotes = async (context, issue) => {
         &&issue.labels.filter(label => label.name === 'component-update').length !== 1) throw new Error(`Cannot determine release note from issue ${issue.number}`)
     let { package_name, version } = guessComponentUpdateDetails(issue.title, issue.body)
 
-    package_name = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
-
     const matchURLInIssue = (issue) => {
-        const match = issue.body.match(package_name.toLowerCase() === 'bash'
-            ? /(?:^|\n)(https:\/\/\S+)/ // for `bash`, use the first URL
-            : /(?:^|\n)(https:\/\/\S+)$/)
+        const pattern = {
+            bash: /(?:^|\n)(https:\/\/\S+)/, // use the first URL
+            gnutls: /(https:\/\/[^\s)]+)/
+        }[package_name.toLowerCase()] || /(?:^|\n)(https:\/\/\S+)$/
+        const match = issue.body.match(pattern)
         return match && match[1]
     }
 
@@ -86,6 +86,9 @@ const guessReleaseNotes = async (context, issue) => {
 
     const url = await matchURL()
     if (!url) throw new Error(`Could not determine URL from issue ${issue.number}`)
+
+    package_name = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
+
     return {
         type: 'feature',
         message: `Comes with [${package_name} v${version}](${url}).`
