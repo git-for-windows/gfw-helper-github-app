@@ -237,4 +237,19 @@ The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`,
     expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
     expect(dispatchedWorkflows).toHaveLength(2)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.package)).toEqual(['mingw-w64-gnutls', 'gnutls'])
+    expect(mockGitHubApiRequest).toHaveBeenCalled()
+    const msysComment = mockGitHubApiRequest.mock.calls[mockGitHubApiRequest.mock.calls.length - 6]
+    expect(msysComment[3]).toEqual('/repos/git-for-windows/git/issues/comments/0')
+    expect(msysComment[4]).toEqual({
+        body: `existing comment body
+
+The MSYS workflow run [was started](dispatched-workflow-open-pr.yml)`
+    })
+    const mingwComment = mockGitHubApiRequest.mock.calls[mockGitHubApiRequest.mock.calls.length - 1]
+    expect(mingwComment[3]).toEqual('/repos/git-for-windows/git/issues/comments/0')
+    expect(mingwComment[4]).toEqual({
+        body: `existing comment body
+
+The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`
+    })
 })
