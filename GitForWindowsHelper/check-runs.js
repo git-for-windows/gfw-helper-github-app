@@ -71,8 +71,23 @@ const cancelWorkflowRun = async (context, token, owner, repo, workflowRunId) => 
     console.log(answer)
 }
 
+const listCheckRunsForCommit = async (context, token, owner, repo, rev, checkRunName) => {
+    const githubApiRequest = require('./github-api-request')
+
+    const answer = await githubApiRequest(
+        context,
+        token,
+        'GET',
+        `/repos/${owner}/${repo}/commits/${rev}/check-runs?per_page=100${
+            checkRunName ? `&check_name=${checkRunName}` : ''
+        }`
+    )
+    return answer.check_runs
+}
+
 module.exports = {
     queueCheckRun,
     updateCheckRun,
-    cancelWorkflowRun
+    cancelWorkflowRun,
+    listCheckRunsForCommit
 }

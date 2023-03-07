@@ -123,13 +123,8 @@ module.exports = async (context, req) => {
             // The commit hash of the tip commit is sadly not part of the
             // "comment.created" webhook's payload. Therefore, we have to get it
             // "by hand"
-            const githubApiRequest = require('./github-api-request')
-            const { head: { sha: ref } } = await githubApiRequest(
-                console,
-                null,
-                'GET',
-                `/repos/${owner}/${repo}/pulls/${issueNumber}`
-            )
+            const { getPRCommitSHA } = require('./issues')
+            const ref = await getPRCommitSHA(console, await getToken(), owner, repo, issueNumber)
 
             await thumbsUp()
 
@@ -272,11 +267,63 @@ module.exports = async (context, req) => {
             await checkPermissions()
             await thumbsUp()
 
-            const { triggerGitArtifacts } = require('./azure-pipelines')
-            const answer = await triggerGitArtifacts(context, req.body.issue.number)
+            const { getPRCommitSHA } = require('./issues')
+            const rev = await getPRCommitSHA(context, await getToken(), owner, repo, issueNumber)
+
+            const { listCheckRunsForCommit } = require('./check-runs')
+            const runs = await listCheckRunsForCommit(
+                context,
+                await getToken(owner, repo),
+                owner,
+                repo,
+                rev,
+                'tag-git'
+            )
+            const latest = runs
+                .sort((a, b) => a.id - b.id)
+                .pop()
+            if (latest && latest.status === 'completed' && latest.conclusion === 'success') {
+                // There is already a `tag-git` workflow run; Trigger the `git-artifacts` runs directly
+                if (!latest.head_sha) latest.head_sha = rev
+                const { triggerGitArtifactsRuns } = require('./cascading-runs')
+                const res = await triggerGitArtifactsRuns(context, owner, repo, latest)
+
+                const { appendToIssueComment } = require('./issues')
+                const answer2 = await appendToIssueComment(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    commentId,
+                    res
+                )
+                return `I edited the comment: ${answer2.html_url}`
+            }
+
+            const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+            const answer = await triggerWorkflowDispatch(
+                context,
+                await getToken(),
+                'git-for-windows',
+                'git-for-windows-automation',
+                'tag-git.yml',
+                'main', {
+                    rev,
+                    owner,
+                    repo,
+                    snapshot: false
+                }
+            )
 
             const { appendToIssueComment } = require('./issues')
-            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The Azure Pipeline run [was started](${answer.url})`)
+            const answer2 = await appendToIssueComment(
+                context,
+                await getToken(),
+                owner,
+                repo,
+                commentId,
+                `The \`tag-git\` workflow run [was started](${answer.html_url})`
+            )
             return `I edited the comment: ${answer2.html_url}`
         }
 
@@ -291,12 +338,101 @@ module.exports = async (context, req) => {
             await checkPermissions()
             await thumbsUp()
 
-            const { releaseGitArtifacts } = require('./azure-pipelines')
-            const answer = await releaseGitArtifacts(context, req.body.issue.number)
+            // Find the `git-artifacts` runs' IDs
+            const { getPRCommitSHA } = require('./issues')
+            const commitSHA = await getPRCommitSHA(context, await getToken(), owner, repo, issueNumber)
 
-            const { appendToIssueComment } = require('./issues')
-            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The Azure Release Pipeline run [was started](${answer.url})`)
-            return `I edited the comment: ${answer2.html_url}`
+            const { listCheckRunsForCommit, queueCheckRun, updateCheckRun } = require('./check-runs')
+            const releaseCheckRunId = await queueCheckRun(
+                context,
+                await getToken(),
+                'git-for-windows',
+                repo,
+                commitSHA,
+                'github-release',
+                `Publish Git for Windows @${commitSHA}`,
+                `Downloading the Git artifacts from the 'git-artifacts' runs and publishing them as a new GitHub Release at ${owner}/${repo}`
+            )
+
+            try {
+                let gitVersion
+                let tagGitWorkflowRunID
+                const workFlowRunIDs = {}
+                for (const architecture of ['x86_64', 'i686']) {
+                    const workflowName = `git-artifacts-${architecture}`
+                    const runs = await listCheckRunsForCommit(
+                        context,
+                        await getToken(owner, repo),
+                        owner,
+                        repo,
+                        commitSHA,
+                        workflowName
+                    )
+                    const latest = runs
+                        .filter(run => run.output.summary.indexOf(` from commit ${commitSHA} ` > 0))
+                        .sort((a, b) => a.id - b.id)
+                        .pop()
+                    if (latest) {
+                        if (latest.status !== 'completed' || latest.conclusion !== 'success') {
+                            throw new Error(`The '${workflowName}}' run at ${latest.html_url} did not succeed.`)
+                        }
+                        workFlowRunIDs[architecture] = latest.id
+                        const gitVersionMatch = latest.output.summary.match(/^Build Git (\S+) artifacts from commit (\S+) \(tag-git run #(\d+)\)$/)
+                        if (!gitVersionMatch) throw new Error(`Could not parse summary '${latest.output.summary}' of run ${latest.id}`)
+                        if (!gitVersion) gitVersion = gitVersionMatch[1]
+                        else if (gitVersion !== gitVersionMatch[1]) throw new Error(`The 'git-artifacts' runs disagree on the Git version`)
+                        if (!tagGitWorkflowRunID) tagGitWorkflowRunID = gitVersionMatch[3]
+                        else if (tagGitWorkflowRunID !== gitVersionMatch[3]) throw new Error(`The 'git-artifacts' runs are based on different 'tag-git' runs`)
+                    } else {
+                        throw new Error(`The '${workflowName}' run was not found`)
+                    }
+                }
+
+                await updateCheckRun(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    releaseCheckRunId, {
+                        output: {
+                            title: `Publish ${gitVersion} for @${commitSHA}`,
+                            summary: `Downloading the Git artifacts from ${workFlowRunIDs['x86_64']} and ${workFlowRunIDs['i686']} and publishing them as a new GitHub Release at ${owner}/${repo}`
+                        }
+                    }
+                )
+
+                const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+                const answer = await triggerWorkflowDispatch(
+                    context,
+                    await getToken(),
+                    'git-for-windows',
+                    'git-for-windows-automation',
+                    'release-git.yml',
+                    'main', {
+                        git_artifacts_x86_64_workflow_run_id: workFlowRunIDs['x86_64'],
+                        git_artifacts_i686_workflow_run_id: workFlowRunIDs['i686']
+                    }
+                )
+
+                const { appendToIssueComment } = require('./issues')
+                const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The \`release-git\` workflow run [was started](${answer.html_url})`)
+                return `I edited the comment: ${answer2.html_url}`
+            } catch (e) {
+                await updateCheckRun(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    releaseCheckRunId, {
+                        status: 'completed',
+                        conclusion: 'failure',
+                        output: {
+                            text: e.toString()
+                        }
+                    }
+                )
+                throw e
+            }
         }
 
         const relNotesMatch = command.match(/^\/add (relnote|release ?note)(\s+(blurb|feature|bug)\s+([^]*))?$/i)

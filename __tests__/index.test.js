@@ -103,6 +103,15 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/86')) return {
         head: { sha: '707a11ee' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/4322')) return {
+        head: { sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339' }
+    }
+    if (method === 'GET' && requestPath.endsWith('/pulls/4328')) return {
+        head: { sha: 'this-will-be-rc2' }
+    }
+    if (method === 'GET' && requestPath.endsWith('/pulls/4323')) return {
+        head: { sha: 'dee501d15' }
+    }
     throw new Error(`Unhandled ${method}-${requestPath}-${JSON.stringify(payload)}`)
 })
 jest.mock('../GitForWindowsHelper/github-api-request', () => {
@@ -259,10 +268,44 @@ The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`
 
 let mockQueueCheckRun = jest.fn(() => 'check-run-id')
 let mockUpdateCheckRun = jest.fn()
+let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, checkRunName) => {
+    if (rev === 'this-will-be-rc2') {
+        const output = {
+            title: 'Build Git -rc2 artifacts',
+            summary: 'Build Git -rc2 artifacts from commit this-will-be-rc2 (tag-git run #987)'
+        }
+        if (checkRunName === 'git-artifacts-x86_64') return [{ id: 8664, status: 'completed', conclusion: 'success', output }]
+        if (checkRunName === 'git-artifacts-i686') return [{ id: 686, status: 'completed', conclusion: 'success', output }]
+    }
+    if (rev === 'dee501d15') {
+        if (checkRunName === 'tag-git') return [{
+            status: 'completed',
+            conclusion: 'success',
+            html_url: '<url-to-tag-git',
+            output: {
+                title: 'Tag Git -rc1½',
+                summary: `Tag Git -rc1½ @${rev}`,
+                text: 'For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/341).'
+            }
+        }]
+        return []
+    }
+    if (checkRunName === 'git-artifacts-x86_64') return [{
+        status: 'completed',
+        conclusion: 'success',
+        html_url: '<url-to-existing-x86_64-run>',
+        output: {
+            title: 'Build Git -rc1',
+            summary: 'Build Git -rc1 from commit c8edb521bdabec14b07e9142e48cab77a40ba339 (tag-git run #4322343196)'
+        }
+    }]
+    return []
+})
 jest.mock('../GitForWindowsHelper/check-runs', () => {
     return {
         queueCheckRun: mockQueueCheckRun,
-        updateCheckRun: mockUpdateCheckRun
+        updateCheckRun: mockUpdateCheckRun,
+        listCheckRunsForCommit: mockListCheckRunsForCommit
     }
 })
 
@@ -321,5 +364,151 @@ The workflow run [was started](dispatched-workflow-add-release-note.yml)`,
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
         message: 'Comes with [GNU TLS v3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html).',
         type: 'feature'
+    })
+})
+
+test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
+    const context = makeContext({
+        action: 'completed',
+        check_run: {
+            name: 'tag-git',
+            head_sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339',
+            conclusion: 'success',
+            output: {
+                title: 'Tag Git v2.40.0-rc1.windows.1 @c8edb521bdabec14b07e9142e48cab77a40ba339',
+                summary: 'Tag Git v2.40.0-rc1.windows.1 @c8edb521bdabec14b07e9142e48cab77a40ba339',
+                text: 'For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/4322343196).\nTagged Git v2.40.0-rc1.windows.1\nDone!.'
+            }
+        },
+        installation: {
+            id: 123
+        },
+        repository: {
+            name: 'git',
+            owner: {
+                login: 'git-for-windows'
+            },
+            full_name: 'git-for-windows/git'
+        }
+    }, {
+        'x-github-event': 'check_run'
+    })
+
+    try {
+        expect(await index(context, context.req)).toBeUndefined()
+        expect(context.res).toEqual({
+            body: `git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
+The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+`,
+            headers: undefined,
+            status: undefined
+        })
+        expect(mockGitHubApiRequest).toHaveBeenCalled()
+        expect(mockGitHubApiRequest.mock.calls[0].slice(1)).toEqual([
+            'installation-access-token',
+            'POST',
+            '/repos/git-for-windows/git-for-windows-automation/actions/workflows/git-artifacts.yml/dispatches', {
+                ref: 'main',
+                inputs: {
+                    architecture: 'i686',
+                    tag_git_workflow_run_id: 4322343196
+                }
+            }
+        ])
+    } catch (e) {
+        context.log.mock.calls.forEach(e => console.log(e[0]))
+        throw e;
+    }
+})
+
+testIssueComment('/git-artifacts', {
+    issue: {
+        number: 4322,
+        title: 'Rebase to v2.40.0-rc1',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/git/pull/4322'
+        }
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: appended-comment-body-existing comment body
+
+The \`tag-git\` workflow run [was started](dispatched-workflow-tag-git.yml)`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows).toHaveLength(1)
+    expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-tag-git.yml')
+    expect(dispatchedWorkflows[0].payload.inputs).toEqual({
+        owner: 'git-for-windows',
+        repo: 'git',
+        rev: 'c8edb521bdabec14b07e9142e48cab77a40ba339',
+        snapshot: false
+    })
+
+    jest.clearAllMocks()
+    dispatchedWorkflows.splice(0, dispatchedWorkflows.length) // empty the array
+
+    // with existing `tag-git` run
+    context.req.body.issue = {
+        number: 4323,
+        title: 'Rebase to v2.40.0-rc1½',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/git/pull/4323'
+        }
+    }
+
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: appended-comment-body-existing comment body
+
+The \`git-artifacts-x86_64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalled()
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows).toHaveLength(2)
+    expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
+    expect(dispatchedWorkflows[0].payload.inputs).toEqual({
+        architecture: 'i686',
+        tag_git_workflow_run_id: 341
+    })
+    expect(dispatchedWorkflows[1].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
+    expect(dispatchedWorkflows[1].payload.inputs).toEqual({
+        architecture: 'x86_64',
+        tag_git_workflow_run_id: 341
+    })
+})
+
+testIssueComment('/release', {
+    issue: {
+        number: 4328,
+        title: 'Rebase to v2.40.0-rc2',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/git/pull/4328'
+        }
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: appended-comment-body-existing comment body
+
+The \`release-git\` workflow run [was started](dispatched-workflow-release-git.yml)`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows).toHaveLength(1)
+    expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-release-git.yml')
+    expect(dispatchedWorkflows[0].payload.inputs).toEqual({
+        git_artifacts_x86_64_workflow_run_id: 8664,
+        git_artifacts_i686_workflow_run_id: 686
     })
 })

@@ -44,6 +44,16 @@ module.exports = async function (context, req) {
         return withStatus(500, undefined, e.toString('utf-8'))
     }
 
+    try {
+        const { cascadingRuns } = require('./cascading-runs.js')
+        if (req.headers['x-github-event'] === 'check_run'
+            && req.body.repository.full_name === 'git-for-windows/git'
+            && req.body.action === 'completed') return ok(await cascadingRuns(context, req))
+    } catch (e) {
+        context.log(e)
+        return withStatus(500, undefined, e.toString('utf-8'))
+    }
+
     context.log("Got headers")
     context.log(req.headers)
     context.log("Got body")
