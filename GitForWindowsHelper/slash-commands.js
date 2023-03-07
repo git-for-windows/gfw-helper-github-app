@@ -270,6 +270,36 @@ module.exports = async (context, req) => {
             const { getPRCommitSHA } = require('./issues')
             const rev = await getPRCommitSHA(context, await getToken(), owner, repo, issueNumber)
 
+            const { listCheckRunsForCommit } = require('./check-runs')
+            const runs = await listCheckRunsForCommit(
+                context,
+                await getToken(owner, repo),
+                owner,
+                repo,
+                rev,
+                'tag-git'
+            )
+            const latest = runs
+                .sort((a, b) => a.id - b.id)
+                .pop()
+            if (latest && latest.status === 'completed' && latest.conclusion === 'success') {
+                // There is already a `tag-git` workflow run; Trigger the `git-artifacts` runs directly
+                if (!latest.head_sha) latest.head_sha = rev
+                const { triggerGitArtifactsRuns } = require('./cascading-runs')
+                const res = await triggerGitArtifactsRuns(context, owner, repo, latest)
+
+                const { appendToIssueComment } = require('./issues')
+                const answer2 = await appendToIssueComment(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    commentId,
+                    res
+                )
+                return `I edited the comment: ${answer2.html_url}`
+            }
+
             const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
             const answer = await triggerWorkflowDispatch(
                 context,

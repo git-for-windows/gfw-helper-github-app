@@ -45,7 +45,7 @@ module.exports = async function (context, req) {
     }
 
     try {
-        const cascadingRuns = require('./cascading-runs.js')
+        const { cascadingRuns } = require('./cascading-runs.js')
         if (req.headers['x-github-event'] === 'check_run'
             && req.body.repository.full_name === 'git-for-windows/git'
             && req.body.action === 'completed') return ok(await cascadingRuns(context, req))
