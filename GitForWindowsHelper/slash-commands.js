@@ -300,6 +300,7 @@ module.exports = async (context, req) => {
                 return `I edited the comment: ${answer2.html_url}`
             }
 
+            const tagGitCheckRunTitle = `Tag Git @${rev}`
             const tagGitCheckRunId = await queueCheckRun(
                 context,
                 await getToken(),
@@ -307,8 +308,8 @@ module.exports = async (context, req) => {
                 repo,
                 rev,
                 'tag-git',
-                `Tag Git @${rev}`,
-                `Tag Git @${rev}`
+                tagGitCheckRunTitle,
+                tagGitCheckRunTitle
             )
 
             try {
@@ -347,6 +348,8 @@ module.exports = async (context, req) => {
                         status: 'completed',
                         conclusion: 'failure',
                         output: {
+                            title: tagGitCheckRunTitle,
+                            summary: tagGitCheckRunTitle,
                             text: e.message || JSON.stringify(e, null, 2)
                         }
                     }
@@ -371,6 +374,8 @@ module.exports = async (context, req) => {
             const commitSHA = await getPRCommitSHA(context, await getToken(), owner, repo, issueNumber)
 
             const { listCheckRunsForCommit, queueCheckRun, updateCheckRun } = require('./check-runs')
+            const checkRunTitle = `Publish Git for Windows @${commitSHA}`
+            const checkRunSummary = `Downloading the Git artifacts from the 'git-artifacts' runs and publishing them as a new GitHub Release at ${owner}/${repo}`
             const releaseCheckRunId = await queueCheckRun(
                 context,
                 await getToken(),
@@ -378,8 +383,8 @@ module.exports = async (context, req) => {
                 repo,
                 commitSHA,
                 'github-release',
-                `Publish Git for Windows @${commitSHA}`,
-                `Downloading the Git artifacts from the 'git-artifacts' runs and publishing them as a new GitHub Release at ${owner}/${repo}`
+                checkRunTitle,
+                checkRunSummary
             )
 
             try {
@@ -455,6 +460,8 @@ module.exports = async (context, req) => {
                         status: 'completed',
                         conclusion: 'failure',
                         output: {
+                            title: checkRunTitle,
+                            summary: checkRunSummary,
                             text: e.message || JSON.stringify(e, null, 2)
                         }
                     }
