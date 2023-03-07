@@ -11,30 +11,30 @@ const getToken = (() => {
     return async (context, owner, repo) => tokens[[owner, repo]] || (tokens[[owner, repo]] = await get(context, owner, repo))
 })()
 
-const triggerGitArtifactsRuns = async (context, checkRunOwner, checkRunRepo, checkRun) => {
-    const commitSHA = checkRun.head_sha
-    const conclusion = checkRun.conclusion
-    const text = checkRun.output.text
+const triggerGitArtifactsRuns = async (context, checkRunOwner, checkRunRepo, tagGitCheckRun) => {
+    const commitSHA = tagGitCheckRun.head_sha
+    const conclusion = tagGitCheckRun.conclusion
+    const text = tagGitCheckRun.output.text
 
     if (conclusion !== 'success') {
-        throw new Error(`tag-git run ${checkRun.id} completed with ${conclusion}: ${checkRun.html_url}`)
+        throw new Error(`tag-git run ${tagGitCheckRun.id} completed with ${conclusion}: ${tagGitCheckRun.html_url}`)
     }
 
     const match = text.match(/For details, see \[this run\]\(https:\/\/github.com\/([^/]+)\/([^/]+)\/actions\/runs\/(\d+)\)/)
-    if (!match) throw new Error(`Unhandled 'text' attribute of tag-git run ${checkRun.id}: ${checkRun.url}`)
+    if (!match) throw new Error(`Unhandled 'text' attribute of tag-git run ${tagGitCheckRun.id}: ${tagGitCheckRun.url}`)
     const owner = match[1]
     const repo = match[2]
     const workflowRunId = Number(match[3])
     if (owner !== 'git-for-windows' || repo !== 'git-for-windows-automation') {
-        throw new Error(`Unexpected repository ${owner}/${repo} for tag-git run ${checkRun.id}: ${checkRun.url}`)
+        throw new Error(`Unexpected repository ${owner}/${repo} for tag-git run ${tagGitCheckRun.id}: ${tagGitCheckRun.url}`)
     }
 
-    const gitVersionMatch = checkRun.output.summary.match(/^Tag Git (\S+) @([0-9a-f]+)$/)
+    const gitVersionMatch = tagGitCheckRun.output.summary.match(/^Tag Git (\S+) @([0-9a-f]+)$/)
     if (!gitVersionMatch) {
-        throw new Error(`Could not parse Git version from summary '${checkRun.output.summary}' of tag-git run ${checkRun.id}: ${checkRun.url}`)
+        throw new Error(`Could not parse Git version from summary '${tagGitCheckRun.output.summary}' of tag-git run ${tagGitCheckRun.id}: ${tagGitCheckRun.url}`)
     }
     if (commitSHA !== gitVersionMatch[2]) {
-        throw new Error(`Expected ${commitSHA} in summary '${checkRun.output.summary}' of tag-git run ${checkRun.id}: ${checkRun.url}`)
+        throw new Error(`Expected ${commitSHA} in summary '${tagGitCheckRun.output.summary}' of tag-git run ${tagGitCheckRun.id}: ${tagGitCheckRun.url}`)
     }
     const gitVersion = gitVersionMatch[1]
 
