@@ -92,7 +92,7 @@ const triggerGitArtifactsRuns = async (context, checkRunOwner, checkRunRepo, tag
             'git-artifacts.yml',
             'main', {
                 architecture,
-                tag_git_workflow_run_id: workflowRunId
+                tag_git_workflow_run_id: workflowRunId.toString()
             }
         )
         res = `${res}The \`git-artifacts-${architecture}\` workflow run [was started](${run.html_url}).\n`
