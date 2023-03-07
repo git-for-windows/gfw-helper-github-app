@@ -311,7 +311,7 @@ module.exports = async (context, req) => {
                     rev,
                     owner,
                     repo,
-                    snapshot: false
+                    snapshot: 'false'
                 }
             )
 
