@@ -2,6 +2,11 @@ const validateGitHubWebHook = require('./validate-github-webhook')
 
 module.exports = async function (context, req) {
     const withStatus = (status, headers, body) => {
+        if (typeof body === 'object') try {
+            body = JSON.stringify(null, 2)
+        } catch (e) {
+            context.log(e)
+        }
         context.res = {
             status,
             headers,
