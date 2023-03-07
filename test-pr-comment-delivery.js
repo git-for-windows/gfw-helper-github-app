@@ -54,6 +54,10 @@
     const localSettings = JSON.parse(fs.readFileSync('local.settings.json'))
     Object.entries(localSettings.Values).forEach(([key, value]) => process.env[key] = value)
 
+    // avoid accidentally triggering anything
+    delete process.env.GITHUB_APP_PRIVATE_KEY
+    delete process.env.AZURE_PIPELINE_TRIGGER_TOKEN
+
     const index = require('./GitForWindowsHelper/index')
     console.log(await index(context, req) || context.res)
 })().catch(console.log)
