@@ -259,10 +259,23 @@ The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`
 
 let mockQueueCheckRun = jest.fn(() => 'check-run-id')
 let mockUpdateCheckRun = jest.fn()
+let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, _rev, checkRunName) => {
+    if (checkRunName === 'git-artifacts-x86_64') return [{
+        status: 'completed',
+        conclusion: 'success',
+        html_url: '<url-to-existing-x86_64-run>',
+        output: {
+            title: 'Build Git -rc1',
+            summary: 'Build Git -rc1 from commit c8edb521bdabec14b07e9142e48cab77a40ba339 (tag-git run #4322343196)'
+        }
+    }]
+    return []
+})
 jest.mock('../GitForWindowsHelper/check-runs', () => {
     return {
         queueCheckRun: mockQueueCheckRun,
-        updateCheckRun: mockUpdateCheckRun
+        updateCheckRun: mockUpdateCheckRun,
+        listCheckRunsForCommit: mockListCheckRunsForCommit
     }
 })
 
@@ -322,4 +335,58 @@ The workflow run [was started](dispatched-workflow-add-release-note.yml)`,
         message: 'Comes with [GNU TLS v3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html).',
         type: 'feature'
     })
+})
+
+test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
+    const context = makeContext({
+        action: 'completed',
+        check_run: {
+            name: 'tag-git',
+            head_sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339',
+            conclusion: 'success',
+            output: {
+                title: 'Tag Git v2.40.0-rc1.windows.1 @c8edb521bdabec14b07e9142e48cab77a40ba339',
+                summary: 'Tag Git v2.40.0-rc1.windows.1 @c8edb521bdabec14b07e9142e48cab77a40ba339',
+                text: 'For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/4322343196).\nTagged Git v2.40.0-rc1.windows.1\nDone!.'
+            }
+        },
+        installation: {
+            id: 123
+        },
+        repository: {
+            name: 'git',
+            owner: {
+                login: 'git-for-windows'
+            },
+            full_name: 'git-for-windows/git'
+        }
+    }, {
+        'x-github-event': 'check_run'
+    })
+
+    try {
+        expect(await index(context, context.req)).toBeUndefined()
+        expect(context.res).toEqual({
+            body: `git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
+The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+`,
+            headers: undefined,
+            status: undefined
+        })
+        expect(mockGitHubApiRequest).toHaveBeenCalled()
+        expect(mockGitHubApiRequest.mock.calls[0].slice(1)).toEqual([
+            'installation-access-token',
+            'POST',
+            '/repos/git-for-windows/git-for-windows-automation/actions/workflows/git-artifacts.yml/dispatches', {
+                ref: 'main',
+                inputs: {
+                    architecture: 'i686',
+                    tag_git_workflow_run_id: 4322343196
+                }
+            }
+        ])
+    } catch (e) {
+        context.log.mock.calls.forEach(e => console.log(e[0]))
+        throw e;
+    }
 })
