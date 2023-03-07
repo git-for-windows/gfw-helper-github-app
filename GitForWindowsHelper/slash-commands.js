@@ -270,7 +270,7 @@ module.exports = async (context, req) => {
             const { getPRCommitSHA } = require('./issues')
             const rev = await getPRCommitSHA(context, await getToken(), owner, repo, issueNumber)
 
-            const { listCheckRunsForCommit } = require('./check-runs')
+            const { listCheckRunsForCommit, queueCheckRun, updateCheckRun } = require('./check-runs')
             const runs = await listCheckRunsForCommit(
                 context,
                 await getToken(owner, repo),
@@ -300,31 +300,59 @@ module.exports = async (context, req) => {
                 return `I edited the comment: ${answer2.html_url}`
             }
 
-            const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
-            const answer = await triggerWorkflowDispatch(
-                context,
-                await getToken(),
-                'git-for-windows',
-                'git-for-windows-automation',
-                'tag-git.yml',
-                'main', {
-                    rev,
-                    owner,
-                    repo,
-                    snapshot: 'false'
-                }
-            )
-
-            const { appendToIssueComment } = require('./issues')
-            const answer2 = await appendToIssueComment(
+            const tagGitCheckRunId = await queueCheckRun(
                 context,
                 await getToken(),
                 owner,
                 repo,
-                commentId,
-                `The \`tag-git\` workflow run [was started](${answer.html_url})`
+                rev,
+                'tag-git',
+                `Tag Git @${rev}`,
+                `Tag Git @${rev}`
             )
-            return `I edited the comment: ${answer2.html_url}`
+
+            try {
+                const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+                const answer = await triggerWorkflowDispatch(
+                    context,
+                    await getToken(),
+                    'git-for-windows',
+                    'git-for-windows-automation',
+                    'tag-git.yml',
+                    'main', {
+                        rev,
+                        owner,
+                        repo,
+                        snapshot: 'false'
+                    }
+                )
+
+                const { appendToIssueComment } = require('./issues')
+                const answer2 = await appendToIssueComment(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    commentId,
+                    `The \`tag-git\` workflow run [was started](${answer.html_url})`
+                )
+                return `I edited the comment: ${answer2.html_url}`
+            } catch (e) {
+                await updateCheckRun(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    tagGitCheckRunId, {
+                        status: 'completed',
+                        conclusion: 'failure',
+                        output: {
+                            text: e.toString()
+                        }
+                    }
+                )
+                throw e
+            }
         }
 
         if (command == '/release') {
