@@ -267,11 +267,33 @@ module.exports = async (context, req) => {
             await checkPermissions()
             await thumbsUp()
 
-            const { triggerGitArtifacts } = require('./azure-pipelines')
-            const answer = await triggerGitArtifacts(context, req.body.issue.number)
+            const { getPRCommitSHA } = require('./issues')
+            const rev = await getPRCommitSHA(context, await getToken(), owner, repo, issueNumber)
+
+            const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+            const answer = await triggerWorkflowDispatch(
+                context,
+                await getToken(),
+                'git-for-windows',
+                'git-for-windows-automation',
+                'tag-git.yml',
+                'main', {
+                    rev,
+                    owner,
+                    repo,
+                    snapshot: false
+                }
+            )
 
             const { appendToIssueComment } = require('./issues')
-            const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The Azure Pipeline run [was started](${answer.url})`)
+            const answer2 = await appendToIssueComment(
+                context,
+                await getToken(),
+                owner,
+                repo,
+                commentId,
+                `The \`tag-git\` workflow run [was started](${answer.html_url})`
+            )
             return `I edited the comment: ${answer2.html_url}`
         }
 

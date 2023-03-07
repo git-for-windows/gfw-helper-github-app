@@ -103,6 +103,9 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/86')) return {
         head: { sha: '707a11ee' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/4322')) return {
+        head: { sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339' }
+    }
     throw new Error(`Unhandled ${method}-${requestPath}-${JSON.stringify(payload)}`)
 })
 jest.mock('../GitForWindowsHelper/github-api-request', () => {
@@ -389,4 +392,33 @@ The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-ar
         context.log.mock.calls.forEach(e => console.log(e[0]))
         throw e;
     }
+})
+
+testIssueComment('/git-artifacts', {
+    issue: {
+        number: 4322,
+        title: 'Rebase to v2.40.0-rc1',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/git/pull/4322'
+        }
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: appended-comment-body-existing comment body
+
+The \`tag-git\` workflow run [was started](dispatched-workflow-tag-git.yml)`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows).toHaveLength(1)
+    expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-tag-git.yml')
+    expect(dispatchedWorkflows[0].payload.inputs).toEqual({
+        owner: 'git-for-windows',
+        repo: 'git',
+        rev: 'c8edb521bdabec14b07e9142e48cab77a40ba339',
+        snapshot: false
+    })
 })
