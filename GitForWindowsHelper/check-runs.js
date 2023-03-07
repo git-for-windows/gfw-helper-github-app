@@ -26,7 +26,6 @@ const queueCheckRun = async (context, token, owner, repo, ref, checkRunName, tit
                 }
             ))
         }
-        process.stderr.write(`Returning existing ${filtered[0].id}`)
         return filtered[0].id
     }
 
