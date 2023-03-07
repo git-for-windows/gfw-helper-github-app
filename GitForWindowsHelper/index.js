@@ -33,7 +33,7 @@ module.exports = async function (context, req) {
             && req.body.comment.body.startsWith('/')) return ok(await slashCommand(context, req))
     } catch (e) {
         context.log(e)
-        return withStatus(500, undefined, e.toString('utf-8'))
+        return withStatus(500, undefined, e.message || JSON.stringify(e, null, 2))
     }
 
     try {
@@ -46,7 +46,7 @@ module.exports = async function (context, req) {
             && req.body.workflow_job.labels[1] === 'ARM64') return ok(await selfHostedARM64Runners(context, req))
     } catch (e) {
         context.log(e)
-        return withStatus(500, undefined, e.toString('utf-8'))
+        return withStatus(500, undefined, e.message || JSON.stringify(e, null, 2))
     }
 
     try {
@@ -56,7 +56,7 @@ module.exports = async function (context, req) {
             && req.body.action === 'completed') return ok(await cascadingRuns(context, req))
     } catch (e) {
         context.log(e)
-        return withStatus(500, undefined, e.toString('utf-8'))
+        return withStatus(500, undefined, e.message || JSON.stringify(e, null, 2))
     }
 
     context.log("Got headers")

@@ -347,7 +347,7 @@ module.exports = async (context, req) => {
                         status: 'completed',
                         conclusion: 'failure',
                         output: {
-                            text: e.toString()
+                            text: e.message || JSON.stringify(e, null, 2)
                         }
                     }
                 )
@@ -455,7 +455,7 @@ module.exports = async (context, req) => {
                         status: 'completed',
                         conclusion: 'failure',
                         output: {
-                            text: e.toString()
+                            text: e.message || JSON.stringify(e, null, 2)
                         }
                     }
                 )
