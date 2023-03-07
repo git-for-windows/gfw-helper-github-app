@@ -409,7 +409,16 @@ module.exports = async (context, req) => {
                         if (latest.status !== 'completed' || latest.conclusion !== 'success') {
                             throw new Error(`The '${workflowName}}' run at ${latest.html_url} did not succeed.`)
                         }
-                        workFlowRunIDs[architecture] = latest.id
+
+                        const match = latest.output.text.match(/For details, see \[this run\]\(https:\/\/github.com\/([^/]+)\/([^/]+)\/actions\/runs\/(\d+)\)/)
+                        if (!match) throw new Error(`Unhandled 'text' attribute of git-artifacts run ${latest.id}: ${latest.url}`)
+                        const owner = match[1]
+                        const repo = match[2]
+                        workFlowRunIDs[architecture] = match[3]
+                        if (owner !== 'git-for-windows' || repo !== 'git-for-windows-automation') {
+                            throw new Error(`Unexpected repository ${owner}/${repo} for git-artifacts run ${latest.id}: ${latest.url}`)
+                        }
+
                         const gitVersionMatch = latest.output.summary.match(/^Build Git (\S+) artifacts from commit (\S+) \(tag-git run #(\d+)\)$/)
                         if (!gitVersionMatch) throw new Error(`Could not parse summary '${latest.output.summary}' of run ${latest.id}`)
                         if (!gitVersion) gitVersion = gitVersionMatch[1]
