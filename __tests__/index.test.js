@@ -446,7 +446,7 @@ The \`tag-git\` workflow run [was started](dispatched-workflow-tag-git.yml)`,
         owner: 'git-for-windows',
         repo: 'git',
         rev: 'c8edb521bdabec14b07e9142e48cab77a40ba339',
-        snapshot: false
+        snapshot: 'false'
     })
 
     jest.clearAllMocks()
