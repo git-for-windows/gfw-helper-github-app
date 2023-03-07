@@ -123,13 +123,8 @@ module.exports = async (context, req) => {
             // The commit hash of the tip commit is sadly not part of the
             // "comment.created" webhook's payload. Therefore, we have to get it
             // "by hand"
-            const githubApiRequest = require('./github-api-request')
-            const { head: { sha: ref } } = await githubApiRequest(
-                console,
-                null,
-                'GET',
-                `/repos/${owner}/${repo}/pulls/${issueNumber}`
-            )
+            const { getPRCommitSHA } = require('./issues')
+            const ref = await getPRCommitSHA(console, await getToken(), owner, repo, issueNumber)
 
             await thumbsUp()
 

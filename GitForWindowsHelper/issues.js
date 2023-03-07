@@ -52,10 +52,21 @@ const createReactionForIssueComment = async (context, token, owner, repo, commen
     return answer.id
 }
 
+const getPRCommitSHA = async (context, token, owner, repo, pullRequestNumber) => {
+    const answer = await sendGitHubAPIRequest(
+        context,
+        token,
+        'GET',
+        `/repos/${owner}/${repo}/pulls/${pullRequestNumber}`
+    )
+    return answer.head.sha
+}
+
 module.exports = {
     addIssueComment,
     getIssue,
     getIssueComment,
     appendToIssueComment,
-    createReactionForIssueComment
+    createReactionForIssueComment,
+    getPRCommitSHA
 }
