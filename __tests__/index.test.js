@@ -411,7 +411,7 @@ The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-ar
                 ref: 'main',
                 inputs: {
                     architecture: 'i686',
-                    tag_git_workflow_run_id: 4322343196
+                    tag_git_workflow_run_id: "4322343196"
                 }
             }
         ])
@@ -477,12 +477,12 @@ The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-ar
     expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
         architecture: 'i686',
-        tag_git_workflow_run_id: 341
+        tag_git_workflow_run_id: "341"
     })
     expect(dispatchedWorkflows[1].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[1].payload.inputs).toEqual({
         architecture: 'x86_64',
-        tag_git_workflow_run_id: 341
+        tag_git_workflow_run_id: "341"
     })
 })
 
