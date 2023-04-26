@@ -270,12 +270,13 @@ let mockQueueCheckRun = jest.fn(() => 'check-run-id')
 let mockUpdateCheckRun = jest.fn()
 let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, checkRunName) => {
     if (rev === 'this-will-be-rc2') {
+        const id = checkRunName === 'git-artifacts-x86_64' ? 8664 : 686
         const output = {
             title: 'Build Git -rc2 artifacts',
-            summary: 'Build Git -rc2 artifacts from commit this-will-be-rc2 (tag-git run #987)'
+            summary: 'Build Git -rc2 artifacts from commit this-will-be-rc2 (tag-git run #987)',
+            text: `For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/${id})`
         }
-        if (checkRunName === 'git-artifacts-x86_64') return [{ id: 8664, status: 'completed', conclusion: 'success', output }]
-        if (checkRunName === 'git-artifacts-i686') return [{ id: 686, status: 'completed', conclusion: 'success', output }]
+        return [{ id, status: 'completed', conclusion: 'success', output }]
     }
     if (rev === 'dee501d15') {
         if (checkRunName === 'tag-git') return [{
@@ -508,7 +509,7 @@ The \`release-git\` workflow run [was started](dispatched-workflow-release-git.y
     expect(dispatchedWorkflows).toHaveLength(1)
     expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-release-git.yml')
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
-        git_artifacts_x86_64_workflow_run_id: 8664,
-        git_artifacts_i686_workflow_run_id: 686
+        git_artifacts_x86_64_workflow_run_id: "8664",
+        git_artifacts_i686_workflow_run_id: "686"
     })
 })
