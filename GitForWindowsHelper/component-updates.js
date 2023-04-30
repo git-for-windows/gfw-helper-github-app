@@ -66,6 +66,8 @@ const guessReleaseNotes = async (context, issue) => {
     }
 
     const matchURL = async () => {
+        if (package_name === 'perl') return `http://search.cpan.org/dist/perl-${version}/pod/perldelta.pod`
+
         if (!issue.pull_request) return matchURLInIssue(issue)
 
         const match = issue.body.match(/See (https:\/\/\S+) for details/)

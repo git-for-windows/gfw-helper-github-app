@@ -77,4 +77,13 @@ http://www.gnutls.org/news.html#2023-02-10`
         type: 'feature',
         message: 'Comes with [GNU TLS v3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html).'
     })
+
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New perl version] v5.36.1',
+        body: `\nhttps://github.com/Perl/perl5/releases/tag/v5.36.1`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with [Perl v5.36.1](http://search.cpan.org/dist/perl-5.36.1/pod/perldelta.pod).'
+    })
 })
