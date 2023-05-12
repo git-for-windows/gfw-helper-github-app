@@ -103,6 +103,9 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/86')) return {
         head: { sha: '707a11ee' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/500')) return {
+        head: { sha: '82e8648' }
+    }
     if (method === 'GET' && requestPath.endsWith('/pulls/4322')) return {
         head: { sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339' }
     }
@@ -337,6 +340,28 @@ The [x86_64](dispatched-workflow-build-and-deploy.yml) and the [i686](dispatched
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
     expect(dispatchedWorkflows).toHaveLength(2)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686', 'x86_64'])
+})
+
+testIssueComment('/deploy mingw-w64-git-credential-manager', {
+    issue: {
+        number: 500,
+        title: 'mingw-w64-git-credential-manager: update to 2.1.2',
+        body: 'This closes https://github.com/git-for-windows/git/issues/4415',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/build-extra/pull/500'
+        }
+    },
+    repository: {
+        name: 'build-extra'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual([undefined])
 })
 
 testIssueComment('/add release note', {
