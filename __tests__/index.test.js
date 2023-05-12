@@ -103,6 +103,18 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/86')) return {
         head: { sha: '707a11ee' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/500')) return {
+        head: { sha: '82e8648' }
+    }
+    if (method === 'GET' && requestPath.endsWith('/pulls/74')) return {
+        head: { sha: 'a7e4b90' }
+    }
+    if (method === 'GET' && requestPath.endsWith('/pulls/90')) return {
+        head: { sha: '265d07e' }
+    }
+    if (method === 'GET' && requestPath.endsWith('/pulls/96')) return {
+        head: { sha: 'b7b0dfc' }
+    }
     if (method === 'GET' && requestPath.endsWith('/pulls/4322')) return {
         head: { sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339' }
     }
@@ -337,6 +349,94 @@ The [x86_64](dispatched-workflow-build-and-deploy.yml) and the [i686](dispatched
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
     expect(dispatchedWorkflows).toHaveLength(2)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686', 'x86_64'])
+})
+
+testIssueComment('/deploy mingw-w64-git-credential-manager', {
+    issue: {
+        number: 500,
+        title: 'mingw-w64-git-credential-manager: update to 2.1.2',
+        body: 'This closes https://github.com/git-for-windows/git/issues/4415',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/build-extra/pull/500'
+        }
+    },
+    repository: {
+        name: 'build-extra'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual([undefined])
+})
+
+testIssueComment('/deploy mingw-w64-curl', {
+    issue: {
+        number: 74,
+        title: 'mingw-w64-curl: update to 8.0.1',
+        body: 'This closes https://github.com/git-for-windows/git/issues/4354',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MINGW-packages/pull/74'
+        }
+    },
+    repository: {
+        name: 'MINGW-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The [i686/x86_64](dispatched-workflow-build-and-deploy.yml) and the [arm64](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(2)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', undefined])
+})
+
+testIssueComment('/deploy msys2-runtime', {
+    issue: {
+        number: 90,
+        title: 'msys2-runtime: avoid sharing incompatible cygheaps, take two',
+        body: 'This is a companion to https://github.com/git-for-windows/msys2-runtime/pull/49.',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MSYS2-packages/pull/90'
+        }
+    },
+    repository: {
+        name: 'MSYS2-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['x86_64'])
+})
+
+testIssueComment('/deploy msys2-runtime-3.3', {
+    issue: {
+        number: 96,
+        title: 'add a msys2-runtime-3.3 package',
+        body: 'The first step of phase 2 of the current timeline(https://github.com/git-for-windows/git/issues/4279#issue-1577622335)',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MSYS2-packages/pull/96'
+        }
+    },
+    repository: {
+        name: 'MSYS2-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686'])
 })
 
 testIssueComment('/add release note', {
