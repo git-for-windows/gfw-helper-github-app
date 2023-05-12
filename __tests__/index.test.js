@@ -109,6 +109,12 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/74')) return {
         head: { sha: 'a7e4b90' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/90')) return {
+        head: { sha: '265d07e' }
+    }
+    if (method === 'GET' && requestPath.endsWith('/pulls/96')) return {
+        head: { sha: 'b7b0dfc' }
+    }
     if (method === 'GET' && requestPath.endsWith('/pulls/4322')) return {
         head: { sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339' }
     }
@@ -387,6 +393,50 @@ The [i686/x86_64](dispatched-workflow-build-and-deploy.yml) and the [arm64](disp
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(2)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', undefined])
+})
+
+testIssueComment('/deploy msys2-runtime', {
+    issue: {
+        number: 90,
+        title: 'msys2-runtime: avoid sharing incompatible cygheaps, take two',
+        body: 'This is a companion to https://github.com/git-for-windows/msys2-runtime/pull/49.',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MSYS2-packages/pull/90'
+        }
+    },
+    repository: {
+        name: 'MSYS2-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The [x86_64](dispatched-workflow-build-and-deploy.yml) and the [i686](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(2)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686', 'x86_64'])
+})
+
+testIssueComment('/deploy msys2-runtime-3.3', {
+    issue: {
+        number: 96,
+        title: 'add a msys2-runtime-3.3 package',
+        body: 'The first step of phase 2 of the current timeline(https://github.com/git-for-windows/git/issues/4279#issue-1577622335)',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MSYS2-packages/pull/96'
+        }
+    },
+    repository: {
+        name: 'MSYS2-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The [x86_64](dispatched-workflow-build-and-deploy.yml) and the [i686](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(2)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686', 'x86_64'])
 })
 
 testIssueComment('/add release note', {
