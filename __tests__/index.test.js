@@ -411,10 +411,10 @@ testIssueComment('/deploy msys2-runtime', {
     expect(await index(context, context.req)).toBeUndefined()
     expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
 
-The [x86_64](dispatched-workflow-build-and-deploy.yml) and the [i686](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
-    expect(mockQueueCheckRun).toHaveBeenCalledTimes(2)
-    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
-    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686', 'x86_64'])
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['x86_64'])
 })
 
 testIssueComment('/deploy msys2-runtime-3.3', {
@@ -433,10 +433,10 @@ testIssueComment('/deploy msys2-runtime-3.3', {
     expect(await index(context, context.req)).toBeUndefined()
     expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
 
-The [x86_64](dispatched-workflow-build-and-deploy.yml) and the [i686](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
-    expect(mockQueueCheckRun).toHaveBeenCalledTimes(2)
-    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
-    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686', 'x86_64'])
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686'])
 })
 
 testIssueComment('/add release note', {

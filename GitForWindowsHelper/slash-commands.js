@@ -159,10 +159,17 @@ module.exports = async (context, req) => {
 
             const toTrigger = []
             if (isMSYSPackage(package_name)) {
-                toTrigger.push(
-                    { architecture: 'x86_64' },
-                    { architecture: 'i686' }
-                )
+                if (package_name !== 'msys2-runtime-3.3') {
+                    toTrigger.push(
+                        { architecture: 'x86_64' }
+                    )
+                }
+
+                if (package_name !== 'msys2-runtime') {
+                    toTrigger.push(
+                        { architecture: 'i686' }
+                    )
+                }
             } else {
                 toTrigger.push(
                     { displayArchitecture: 'i686/x86_64' }
