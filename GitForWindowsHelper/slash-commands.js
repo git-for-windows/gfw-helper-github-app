@@ -156,104 +156,69 @@ module.exports = async (context, req) => {
                     commentId,
                     text
                 )
-            if (!isMSYSPackage(package_name)) {
-                let aarch64Answer
+
+            const toTrigger = []
+            if (isMSYSPackage(package_name)) {
+                toTrigger.push(
+                    { architecture: 'x86_64' },
+                    { architecture: 'i686' }
+                )
+            } else {
+                toTrigger.push(
+                    { displayArchitecture: 'i686/x86_64' }
+                )
                 if (needsSeparateARM64Build(package_name)) {
-                    const aarch64Id = await queueCheckRun(
-                        context,
-                        await getToken(),
-                        'git-for-windows',
-                        repo,
-                        ref,
-                        'deploy_aarch64',
-                        `Build and deploy ${package_name}`,
-                        `Deploying ${package_name}`
-                    )
-                    aarch64Answer = await triggerBuild('aarch64')
-                    await updateCheckRun(
-                        context,
-                        await getToken(),
-                        'git-for-windows',
-                        repo,
-                        aarch64Id, {
-                            details_url: aarch64Answer.html_url
-                        }
+                    toTrigger.push(
+                        { architecture: 'aarch64', displayArchitecture: 'arm64' }
                     )
                 }
+            }
 
-                const id = await queueCheckRun(
+            for (const e of toTrigger) {
+                const deployLabel = e.architecture ? `deploy_${e.architecture}` : 'deploy'
+                e.id = await queueCheckRun(
                     context,
                     await getToken(),
                     'git-for-windows',
                     repo,
                     ref,
-                    'deploy',
+                    deployLabel,
                     `Build and deploy ${package_name}`,
                     `Deploying ${package_name}`
                 )
+            }
 
-                const answer = await triggerBuild()
-                const answer2 = await appendToComment(aarch64Answer
-                    ? `The [i686/x86_64](${answer.html_url}) and the [arm64](${aarch64Answer.html_url}) workflow runs were started.`
-                    : `The workflow run [was started](${answer.html_url}).`
-                )
+            for (const e of toTrigger) {
+                e.answer = await triggerBuild(e.architecture)
+            }
+
+            const answer = await appendToComment(
+                toTrigger.length === 1
+                    ? `The workflow run [was started](${toTrigger[0].answer.html_url}).`
+                    : `${toTrigger.map((e, index) => {
+                        return `${
+                            index === 0 ? 'The' : index === toTrigger.length - 1 ? ' and the' : ', the'
+                        } [${
+                            e.displayArchitecture || e.architecture
+                        }](${
+                            e.answer.html_url
+                        })`
+                    }).join('')} workflow runs were started.`
+            )
+
+            for (const e of toTrigger) {
                 await updateCheckRun(
                     context,
                     await getToken(),
                     'git-for-windows',
                     repo,
-                    id, {
-                        details_url: answer.html_url
+                    e.id, {
+                        details_url: e.answer.html_url
                     }
                 )
-                return `I edited the comment: ${answer2.html_url}`
             }
 
-            const x86_64Id = await queueCheckRun(
-                context,
-                await getToken(),
-                'git-for-windows',
-                repo,
-                ref,
-                'deploy_x86_64',
-                `Build and deploy ${package_name}`,
-                `Deploying ${package_name}`
-            )
-            const i686Id = await queueCheckRun(
-                context,
-                await getToken(),
-                'git-for-windows',
-                repo,
-                ref,
-                'deploy_i686',
-                `Build and deploy ${package_name}`,
-                `Deploying ${package_name}`
-            )
-
-            const x86_64Answer = await triggerBuild('x86_64')
-            const i686Answer = await triggerBuild('i686')
-            const answer2 = await appendToComment(
-                `The [x86_64](${x86_64Answer.html_url}) and the [i686](${i686Answer.html_url}) workflow runs were started.`
-            )
-            await updateCheckRun(
-                context,
-                await getToken(),
-                'git-for-windows',
-                repo,
-                x86_64Id, {
-                    details_url: x86_64Answer.html_url
-                }
-            )
-            await updateCheckRun(
-                context,
-                await getToken(),
-                'git-for-windows',
-                repo,
-                i686Id, {
-                    details_url: i686Answer.html_url
-                }
-            )
-            return `I edited the comment: ${answer2.html_url}`
+            return `I edited the comment: ${answer.html_url}`
         }
 
         if (command == '/git-artifacts') {
