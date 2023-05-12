@@ -106,6 +106,9 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/500')) return {
         head: { sha: '82e8648' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/74')) return {
+        head: { sha: 'a7e4b90' }
+    }
     if (method === 'GET' && requestPath.endsWith('/pulls/4322')) return {
         head: { sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339' }
     }
@@ -362,6 +365,28 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual([undefined])
+})
+
+testIssueComment('/deploy mingw-w64-curl', {
+    issue: {
+        number: 74,
+        title: 'mingw-w64-curl: update to 8.0.1',
+        body: 'This closes https://github.com/git-for-windows/git/issues/4354',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MINGW-packages/pull/74'
+        }
+    },
+    repository: {
+        name: 'MINGW-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The [i686/x86_64](dispatched-workflow-build-and-deploy.yml) and the [arm64](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(2)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', undefined])
 })
 
 testIssueComment('/add release note', {
