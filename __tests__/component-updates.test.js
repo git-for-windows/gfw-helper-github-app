@@ -87,4 +87,13 @@ http://www.gnutls.org/news.html#2023-02-10`
         type: 'feature',
         message: 'Comes with [Perl v5.36.1](http://search.cpan.org/dist/perl-5.36.1/pod/perldelta.pod).'
     })
+
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New curl version] curl-8_1_1',
+        body: `\nhttps://github.com/curl/curl/releases/tag/curl-8_1_1`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with [cURL v8.1.1](https://curl.se/changes.html#8_1_1).'
+    })
 })
