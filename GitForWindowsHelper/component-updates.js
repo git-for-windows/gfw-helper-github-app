@@ -11,7 +11,7 @@ const guessComponentUpdateDetails = (title, body) => {
     else if (package_name === 'cygwin') package_name = 'msys2-runtime'
 
     version = version
-        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-)/, '')
+        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-|curl-)/, '')
         .replace(/\s+patch\s+/, '.')
         .replace(/_/g, '.')
         .replace(/-release$/, '')

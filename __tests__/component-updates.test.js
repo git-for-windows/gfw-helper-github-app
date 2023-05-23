@@ -29,6 +29,7 @@ test('guessComponentUpdateDetails()', () => {
         ['[New openssh version] V_9_2_P1', 'openssh', '9.2.P1'],
         ['[New tig version] tig-2.5.8', 'tig', '2.5.8'],
         ['[New curl version] 7.87.0', 'curl', '7.87.0'],
+        ['[New curl version] curl-8_1_1', 'curl', '8.1.1'],
         ['[New mintty version] 3.6.3', 'mintty', '3.6.3'],
         ['[New pcre2 version] PCRE2-10.42', 'pcre2', '10.42'],
         ['[New git-lfs version] v3.3.0', 'mingw-w64-git-lfs', '3.3.0'],
