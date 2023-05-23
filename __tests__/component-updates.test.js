@@ -29,6 +29,7 @@ test('guessComponentUpdateDetails()', () => {
         ['[New openssh version] V_9_2_P1', 'openssh', '9.2.P1'],
         ['[New tig version] tig-2.5.8', 'tig', '2.5.8'],
         ['[New curl version] 7.87.0', 'curl', '7.87.0'],
+        ['[New curl version] curl-8_1_1', 'curl', '8.1.1'],
         ['[New mintty version] 3.6.3', 'mintty', '3.6.3'],
         ['[New pcre2 version] PCRE2-10.42', 'pcre2', '10.42'],
         ['[New git-lfs version] v3.3.0', 'mingw-w64-git-lfs', '3.3.0'],
@@ -85,5 +86,14 @@ http://www.gnutls.org/news.html#2023-02-10`
     })).toEqual({
         type: 'feature',
         message: 'Comes with [Perl v5.36.1](http://search.cpan.org/dist/perl-5.36.1/pod/perldelta.pod).'
+    })
+
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New curl version] curl-8_1_1',
+        body: `\nhttps://github.com/curl/curl/releases/tag/curl-8_1_1`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with [cURL v8.1.1](https://curl.se/changes.html#8_1_1).'
     })
 })

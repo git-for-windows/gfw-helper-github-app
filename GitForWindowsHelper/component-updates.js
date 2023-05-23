@@ -11,7 +11,7 @@ const guessComponentUpdateDetails = (title, body) => {
     else if (package_name === 'cygwin') package_name = 'msys2-runtime'
 
     version = version
-        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-)/, '')
+        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-|curl-)/, '')
         .replace(/\s+patch\s+/, '.')
         .replace(/_/g, '.')
         .replace(/-release$/, '')
@@ -67,6 +67,7 @@ const guessReleaseNotes = async (context, issue) => {
 
     const matchURL = async () => {
         if (package_name === 'perl') return `http://search.cpan.org/dist/perl-${version}/pod/perldelta.pod`
+        if (package_name === 'curl') return `https://curl.se/changes.html#${version.replaceAll('.', '_')}`
 
         if (!issue.pull_request) return matchURLInIssue(issue)
 
