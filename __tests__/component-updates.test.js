@@ -96,4 +96,22 @@ http://www.gnutls.org/news.html#2023-02-10`
         type: 'feature',
         message: 'Comes with [cURL v8.1.1](https://curl.se/changes.html#8_1_1).'
     })
+
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New openssl version] OpenSSL 1.1.1u',
+        body: `\nhttps://github.com/openssl/openssl/releases/tag/OpenSSL_1_1_1u`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with [OpenSSL v1.1.1u](https://www.openssl.org/news/openssl-1.1.1-notes.html).'
+    })
+
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New openssl version] OpenSSL 3.1.1',
+        body: `\nhttps://github.com/openssl/openssl/releases/tag/openssl-3.1.1`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with [OpenSSL v3.1.1](https://www.openssl.org/news/openssl-3.1-notes.html).'
+    })
 })
