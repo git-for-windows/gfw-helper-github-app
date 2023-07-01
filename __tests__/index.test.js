@@ -109,6 +109,9 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/74')) return {
         head: { sha: 'a7e4b90' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/75')) return {
+        head: { sha: '45b8fd0' }
+    }
     if (method === 'GET' && requestPath.endsWith('/pulls/90')) return {
         head: { sha: '265d07e' }
     }
@@ -437,6 +440,29 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686'])
+})
+
+
+testIssueComment('/deploy mingw-w64-clang', {
+    issue: {
+        number: 75,
+        title: 'shrink LLVM',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MINGW-packages/pull/75'
+        }
+    },
+    repository: {
+        name: 'MINGW-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64'])
 })
 
 testIssueComment('/add release note', {

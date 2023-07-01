@@ -171,9 +171,11 @@ module.exports = async (context, req) => {
                     )
                 }
             } else {
-                toTrigger.push(
-                    { displayArchitecture: 'i686/x86_64' }
-                )
+                if (package_name !== 'mingw-w64-clang') {
+                    toTrigger.push(
+                        { displayArchitecture: 'i686/x86_64' }
+                    )
+                }
                 if (needsSeparateARM64Build(package_name)) {
                     toTrigger.push(
                         { architecture: 'aarch64', displayArchitecture: 'arm64' }
