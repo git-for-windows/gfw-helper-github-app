@@ -107,11 +107,38 @@ const guessReleaseNotes = async (context, issue) => {
     }
 }
 
+const pacmanRepositoryBaseURL = 'https://wingit.blob.core.windows.net/'
+
+const pacmanRepositoryURLs = (package_name, version) =>
+    isMSYSPackage(package_name)
+        ? [
+            `${pacmanRepositoryBaseURL}i686/${package_name}-${version}-1-i686.pkg.tar.xz`,
+            `${pacmanRepositoryBaseURL}x86-64/${package_name}-${version}-1-x86_64.pkg.tar.xz`
+        ] : [
+            `${pacmanRepositoryBaseURL}i686/${package_name.replace(/^mingw-w64/, '$&-i686')}-${version}-1-any.pkg.tar.xz`,
+            `${pacmanRepositoryBaseURL}x86-64/${package_name.replace(/^mingw-w64/, '$&-x86_64')}-${version}-1-any.pkg.tar.xz`
+        ]
+
+const getMissingDeployments = async (package_name, version) => {
+    const urls = []
+    const msysName = package_name.replace(/^mingw-w64-/, '')
+    if (packageNeedsBothMSYSAndMINGW(msysName)) {
+        urls.push(...pacmanRepositoryURLs(msysName, version))
+        urls.push(...pacmanRepositoryURLs(`mingw-w64-${msysName}`, version))
+    } else {
+        urls.push(...pacmanRepositoryURLs(package_name, version))
+    }
+    const { doesURLReturn404 } = require('./https-request')
+    const result = await Promise.all(urls.map(async url => doesURLReturn404(url)))
+    return urls.filter((_, index) => result[index])
+}
+
 module.exports = {
     guessComponentUpdateDetails,
     guessReleaseNotes,
     prettyPackageName,
     isMSYSPackage,
     packageNeedsBothMSYSAndMINGW,
-    needsSeparateARM64Build
+    needsSeparateARM64Build,
+    getMissingDeployments
 }

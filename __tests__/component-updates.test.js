@@ -1,6 +1,7 @@
 const {
     guessComponentUpdateDetails,
-    guessReleaseNotes
+    guessReleaseNotes,
+    getMissingDeployments
 } = require('../GitForWindowsHelper/component-updates')
 
 const bashTicketBody = `# [New bash version] Bash-5.2 patch 15: fix too-aggressive optimizing forks out of subshell commands
@@ -126,4 +127,14 @@ http://www.gnutls.org/news.html#2023-02-10`
         package: 'openssl',
         version: '3.1.1'
     })
+})
+
+test('getMissingDeployments()', async () => {
+    const missingURL = 'https://wingit.blob.core.windows.net/x86-64/curl-8.1.2-1-x86_64.pkg.tar.xz'
+    const mockDoesURLReturn404 = jest.fn(url => url === missingURL)
+    jest.mock('../GitForWindowsHelper/https-request', () => {
+        return { doesURLReturn404: mockDoesURLReturn404 }
+    })
+
+    expect(await getMissingDeployments('curl', '8.1.2')).toEqual([missingURL])
 })
