@@ -54,7 +54,7 @@ module.exports = async (context, req) => {
 
             await checkPermissions()
 
-            const { guessComponentUpdateDetails } = require('./component-updates')
+            const { guessComponentUpdateDetails, packageNeedsBothMSYSAndMINGW } = require('./component-updates')
             const { package_name, version } = guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
             await thumbsUp()
@@ -96,7 +96,7 @@ module.exports = async (context, req) => {
                 );
                 ({ html_url: commentURL, id: commentId } = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The${packageType ? ` ${packageType}` : ''} workflow run [was started](${answer.html_url})`))
             }
-            if (!['openssl', 'curl', 'gnutls', 'pcre2'].includes(package_name)) {
+            if (!packageNeedsBothMSYSAndMINGW(package_name)) {
                 await openPR(package_name)
             } else {
                 await openPR(package_name, 'MSYS')

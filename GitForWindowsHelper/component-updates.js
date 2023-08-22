@@ -42,6 +42,10 @@ const isMSYSPackage = package_name => {
         && !package_name.startsWith('mingw-w64-')
 }
 
+const packageNeedsBothMSYSAndMINGW = package_name => {
+    return ['openssl', 'curl', 'gnutls', 'pcre2'].includes(package_name)
+}
+
 const needsSeparateARM64Build = package_name => {
     if (package_name === 'git-extra') return true
     return package_name.startsWith('mingw-w64-') && ![
@@ -108,5 +112,6 @@ module.exports = {
     guessReleaseNotes,
     prettyPackageName,
     isMSYSPackage,
+    packageNeedsBothMSYSAndMINGW,
     needsSeparateARM64Build
 }
