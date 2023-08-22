@@ -54,7 +54,7 @@ module.exports = async (context, req) => {
 
             await checkPermissions()
 
-            const { guessComponentUpdateDetails } = require('./component-updates')
+            const { guessComponentUpdateDetails, packageNeedsBothMSYSAndMINGW } = require('./component-updates')
             const { package_name, version } = guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
             await thumbsUp()
@@ -96,7 +96,7 @@ module.exports = async (context, req) => {
                 );
                 ({ html_url: commentURL, id: commentId } = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The${packageType ? ` ${packageType}` : ''} workflow run [was started](${answer.html_url})`))
             }
-            if (!['openssl', 'curl', 'gnutls', 'pcre2'].includes(package_name)) {
+            if (!packageNeedsBothMSYSAndMINGW(package_name)) {
                 await openPR(package_name)
             } else {
                 await openPR(package_name, 'MSYS')
@@ -462,10 +462,18 @@ module.exports = async (context, req) => {
 
             await checkPermissions()
 
+            const { appendToIssueComment } = require('./issues')
             let [ , , , type, message ] = relNotesMatch
             if (!type) {
-                const { guessReleaseNotes } = require('./component-updates');
-                ({ type, message } = await guessReleaseNotes(context, req.body.issue))
+                const { guessReleaseNotes, getMissingDeployments } = require('./component-updates');
+                let package_name, version
+                ({ type, message, package: package_name, version } = await guessReleaseNotes(context, req.body.issue))
+                const missingDeployments = await getMissingDeployments(package_name, version)
+                if (missingDeployments.length > 0) {
+                    const message = `The following deployment(s) are missing:\n\n* ${missingDeployments.join('\n* ')}`
+                    await appendToIssueComment(context, await getToken(), owner, repo, commentId, message)
+                    throw new Error(message)
+                }
             }
 
             await thumbsUp()
@@ -482,7 +490,6 @@ module.exports = async (context, req) => {
                     message
                 }
             )
-            const { appendToIssueComment } = require('./issues')
             const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
             return `I edited the comment: ${answer2.html_url}`
         }

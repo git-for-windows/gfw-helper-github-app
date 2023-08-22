@@ -29,7 +29,7 @@ module.exports = async (context, requestMethod, requestPath, body) => {
 
     const token = `${headerAndPayload}.${signature}`
 
-    const httpsRequest = require('./https-request')
+    const { httpsRequest } = require('./https-request')
     return await httpsRequest(
         context,
         null,

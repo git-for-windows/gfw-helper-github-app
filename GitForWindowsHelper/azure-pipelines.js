@@ -10,7 +10,7 @@ const triggerAzurePipeline = async (context, token, organization, project, build
         'parameters': JSON.stringify(parameters),
     }
 
-    const httpsRequest = require('./https-request')
+    const { httpsRequest } = require('./https-request')
     return await httpsRequest(
         context,
         'dev.azure.com',
@@ -49,7 +49,7 @@ const listReleases = async (context, token, organization, project) => {
         'Authorization': 'Basic ' + auth,
     }
 
-    const httpsRequest = require('./https-request')
+    const { httpsRequest } = require('./https-request')
     return await httpsRequest(
         context,
         'vsrm.dev.azure.com',
@@ -67,7 +67,7 @@ const getRelease = async (context, token, organization, project, releaseId) => {
         'Authorization': 'Basic ' + auth,
     }
 
-    const httpsRequest = require('./https-request')
+    const { httpsRequest } = require('./https-request')
     return await httpsRequest(
         context,
         'vsrm.dev.azure.com',
@@ -120,7 +120,7 @@ const createRelease = async (
         properties: { ReleaseCreationSource: "GitForWindowsHelper" },
     }
 
-    const httpsRequest = require('./https-request')
+    const { httpsRequest } = require('./https-request')
     return await httpsRequest(
         context,
         'vsrm.dev.azure.com',

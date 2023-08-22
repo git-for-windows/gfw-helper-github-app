@@ -1,6 +1,6 @@
 const gently = require('./gently')
 
-module.exports = async (context, hostname, method, requestPath, body, headers) => {
+const httpsRequest = async (context, hostname, method, requestPath, body, headers) => {
     headers = {
         'User-Agent': 'GitForWindowsHelper/0.0',
         Accept: 'application/json',
@@ -59,4 +59,30 @@ module.exports = async (context, hostname, method, requestPath, body, headers) =
             reject(e)
         }
     })
+}
+
+const doesURLReturn404 = async url => {
+    const match = url.match(/^https:\/\/([^/]+?)(:\d+)?(\/.*)?$/)
+    if (!match) throw new Error(`Could not parse URL ${url}`)
+
+    const https = require('https')
+    const options = {
+        method: 'HEAD',
+        host: match[1],
+        port: Number.parseInt(match[2] || '443'),
+        path: match[3] || '/'
+    }
+    return new Promise((resolve, reject) => {
+        https.request(options, res => {
+            if (res.error) reject(res.error)
+            else if (res.statusCode === 404) resolve(true)
+            else if (res.statusCode === 200) resolve(false)
+            else reject(`Unexpected statusCode: ${res.statusCode}`)
+        }).end()
+    })
+}
+
+module.exports = {
+    httpsRequest,
+    doesURLReturn404
 }

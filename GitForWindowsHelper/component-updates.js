@@ -42,6 +42,10 @@ const isMSYSPackage = package_name => {
         && !package_name.startsWith('mingw-w64-')
 }
 
+const packageNeedsBothMSYSAndMINGW = package_name => {
+    return ['openssl', 'curl', 'gnutls', 'pcre2'].includes(package_name)
+}
+
 const needsSeparateARM64Build = package_name => {
     if (package_name === 'git-extra') return true
     return package_name.startsWith('mingw-w64-') && ![
@@ -93,12 +97,40 @@ const guessReleaseNotes = async (context, issue) => {
     const url = await matchURL()
     if (!url) throw new Error(`Could not determine URL from issue ${issue.number}`)
 
-    package_name = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
+    const prettyName = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
 
     return {
         type: 'feature',
-        message: `Comes with [${package_name} v${version}](${url}).`
+        message: `Comes with [${prettyName} v${version}](${url}).`,
+        package: package_name,
+        version
     }
+}
+
+const pacmanRepositoryBaseURL = 'https://wingit.blob.core.windows.net/'
+
+const pacmanRepositoryURLs = (package_name, version) =>
+    isMSYSPackage(package_name)
+        ? [
+            `${pacmanRepositoryBaseURL}i686/${package_name}-${version}-1-i686.pkg.tar.xz`,
+            `${pacmanRepositoryBaseURL}x86-64/${package_name}-${version}-1-x86_64.pkg.tar.xz`
+        ] : [
+            `${pacmanRepositoryBaseURL}i686/${package_name.replace(/^mingw-w64/, '$&-i686')}-${version}-1-any.pkg.tar.xz`,
+            `${pacmanRepositoryBaseURL}x86-64/${package_name.replace(/^mingw-w64/, '$&-x86_64')}-${version}-1-any.pkg.tar.xz`
+        ]
+
+const getMissingDeployments = async (package_name, version) => {
+    const urls = []
+    const msysName = package_name.replace(/^mingw-w64-/, '')
+    if (packageNeedsBothMSYSAndMINGW(msysName)) {
+        urls.push(...pacmanRepositoryURLs(msysName, version))
+        urls.push(...pacmanRepositoryURLs(`mingw-w64-${msysName}`, version))
+    } else {
+        urls.push(...pacmanRepositoryURLs(package_name, version))
+    }
+    const { doesURLReturn404 } = require('./https-request')
+    const result = await Promise.all(urls.map(async url => doesURLReturn404(url)))
+    return urls.filter((_, index) => result[index])
 }
 
 module.exports = {
@@ -106,5 +138,7 @@ module.exports = {
     guessReleaseNotes,
     prettyPackageName,
     isMSYSPackage,
-    needsSeparateARM64Build
+    packageNeedsBothMSYSAndMINGW,
+    needsSeparateARM64Build,
+    getMissingDeployments
 }
