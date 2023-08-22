@@ -168,6 +168,11 @@ function extend (a, ...list) {
 }
 
 const testIssueComment = (comment, bodyExtra_, fn) => {
+    let note = comment
+    if (typeof comment === 'object') {
+        note = comment.note
+        comment = comment.comment
+    }
     if (!fn) {
         fn = bodyExtra_
         bodyExtra_= undefined
@@ -201,7 +206,7 @@ const testIssueComment = (comment, bodyExtra_, fn) => {
         'x-github-event': 'issue_comment'
     })
 
-    test(`test ${comment}`, async () => {
+    test(`test ${comment}${note ? ` (${note})` : ''}`, async () => {
         try {
             await fn(context)
         } catch (e) {
@@ -465,6 +470,12 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64'])
 })
 
+const missingURL = 'https://wingit.blob.core.windows.net/x86-64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz'
+const mockDoesURLReturn404 = jest.fn(url => url === missingURL)
+jest.mock('../GitForWindowsHelper/https-request', () => {
+    return { doesURLReturn404: mockDoesURLReturn404 }
+})
+
 testIssueComment('/add release note', {
     issue: {
         number: 4281,
@@ -487,11 +498,34 @@ The workflow run [was started](dispatched-workflow-add-release-note.yml)`,
     })
     expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
     expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(mockDoesURLReturn404).toHaveBeenCalledTimes(4)
     expect(dispatchedWorkflows).toHaveLength(1)
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
         message: 'Comes with [GNU TLS v3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html).',
         type: 'feature'
     })
+})
+
+testIssueComment({ comment: '/add release note', note: 'missing deployment' }, {
+    issue: {
+        number: 4523,
+        labels: [{ name: 'component-update' }],
+        title: '[New git-lfs version] v3.4.0',
+        body: `https://github.com/git-lfs/git-lfs/releases/tag/v3.4.0`
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `The following deployment(s) are missing:
+
+* https://wingit.blob.core.windows.net/x86-64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz`,
+        headers: undefined,
+        status: 500
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(mockDoesURLReturn404).toHaveBeenCalledTimes(2)
+    expect(dispatchedWorkflows).toHaveLength(0)
 })
 
 test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
