@@ -1,6 +1,6 @@
 const gently = require('./gently')
 
-module.exports = async (context, hostname, method, requestPath, body, headers) => {
+const httpsRequest = async (context, hostname, method, requestPath, body, headers) => {
     headers = {
         'User-Agent': 'GitForWindowsHelper/0.0',
         Accept: 'application/json',
@@ -59,4 +59,8 @@ module.exports = async (context, hostname, method, requestPath, body, headers) =
             reject(e)
         }
     })
+}
+
+module.exports = {
+    httpsRequest
 }
