@@ -93,11 +93,13 @@ const guessReleaseNotes = async (context, issue) => {
     const url = await matchURL()
     if (!url) throw new Error(`Could not determine URL from issue ${issue.number}`)
 
-    package_name = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
+    const prettyName = prettyPackageName(package_name.replace(/^mingw-w64-/, ''))
 
     return {
         type: 'feature',
-        message: `Comes with [${package_name} v${version}](${url}).`
+        message: `Comes with [${prettyName} v${version}](${url}).`,
+        package: package_name,
+        version
     }
 }
 

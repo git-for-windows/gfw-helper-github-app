@@ -63,7 +63,9 @@ test('guessReleaseNotes()', async () => {
         body: bashTicketBody
     })).toEqual({
         type: 'feature',
-        message: 'Comes with [Bash v5.2.15](https://git.savannah.gnu.org/cgit/bash.git/commit/?id=ec8113b9861375e4e17b3307372569d429dec814).'
+        message: 'Comes with [Bash v5.2.15](https://git.savannah.gnu.org/cgit/bash.git/commit/?id=ec8113b9861375e4e17b3307372569d429dec814).',
+        package: 'bash',
+        version: '5.2.15'
     })
 
     expect(await guessReleaseNotes(context, {
@@ -76,7 +78,9 @@ Added the security advisory.[GNUTLS-SA-2020-07-14](security-new.html#GNUTLS-SA-2
 http://www.gnutls.org/news.html#2023-02-10`
     })).toEqual({
         type: 'feature',
-        message: 'Comes with [GNU TLS v3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html).'
+        message: 'Comes with [GNU TLS v3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html).',
+        package: 'gnutls',
+        version: '3.8.0'
     })
 
     expect(await guessReleaseNotes(context, {
@@ -85,7 +89,9 @@ http://www.gnutls.org/news.html#2023-02-10`
         body: `\nhttps://github.com/Perl/perl5/releases/tag/v5.36.1`
     })).toEqual({
         type: 'feature',
-        message: 'Comes with [Perl v5.36.1](http://search.cpan.org/dist/perl-5.36.1/pod/perldelta.pod).'
+        message: 'Comes with [Perl v5.36.1](http://search.cpan.org/dist/perl-5.36.1/pod/perldelta.pod).',
+        package: 'perl',
+        version: '5.36.1'
     })
 
     expect(await guessReleaseNotes(context, {
@@ -94,7 +100,9 @@ http://www.gnutls.org/news.html#2023-02-10`
         body: `\nhttps://github.com/curl/curl/releases/tag/curl-8_1_1`
     })).toEqual({
         type: 'feature',
-        message: 'Comes with [cURL v8.1.1](https://curl.se/changes.html#8_1_1).'
+        message: 'Comes with [cURL v8.1.1](https://curl.se/changes.html#8_1_1).',
+        package: 'curl',
+        version: '8.1.1'
     })
 
     expect(await guessReleaseNotes(context, {
@@ -103,7 +111,9 @@ http://www.gnutls.org/news.html#2023-02-10`
         body: `\nhttps://github.com/openssl/openssl/releases/tag/OpenSSL_1_1_1u`
     })).toEqual({
         type: 'feature',
-        message: 'Comes with [OpenSSL v1.1.1u](https://www.openssl.org/news/openssl-1.1.1-notes.html).'
+        message: 'Comes with [OpenSSL v1.1.1u](https://www.openssl.org/news/openssl-1.1.1-notes.html).',
+        package: 'openssl',
+        version: '1.1.1u'
     })
 
     expect(await guessReleaseNotes(context, {
@@ -112,6 +122,8 @@ http://www.gnutls.org/news.html#2023-02-10`
         body: `\nhttps://github.com/openssl/openssl/releases/tag/openssl-3.1.1`
     })).toEqual({
         type: 'feature',
-        message: 'Comes with [OpenSSL v3.1.1](https://www.openssl.org/news/openssl-3.1-notes.html).'
+        message: 'Comes with [OpenSSL v3.1.1](https://www.openssl.org/news/openssl-3.1-notes.html).',
+        package: 'openssl',
+        version: '3.1.1'
     })
 })
