@@ -121,6 +121,8 @@ const getMissingDeployments = async (package_name, version) => {
     // MinTTY is at epoch 1, which is part of Pacman's versioning scheme
     if (package_name === 'mintty') version = `1~${version}`
     const architectures = ['i686', 'x86_64']
+    if (package_name === 'msys2-runtime') architectures.shift()
+    else if (package_name === 'msys2-runtime-3.3') architectures.pop()
 
     const urls = []
     const msysName = package_name.replace(/^mingw-w64-/, '')
