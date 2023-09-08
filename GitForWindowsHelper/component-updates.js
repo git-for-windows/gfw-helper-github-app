@@ -109,27 +109,28 @@ const guessReleaseNotes = async (context, issue) => {
 
 const pacmanRepositoryBaseURL = 'https://wingit.blob.core.windows.net/'
 
-const pacmanRepositoryURLs = (package_name, version) =>
-    isMSYSPackage(package_name)
-        ? [
-            `${pacmanRepositoryBaseURL}i686/${package_name}-${version}-1-i686.pkg.tar.xz`,
-            `${pacmanRepositoryBaseURL}x86-64/${package_name}-${version}-1-x86_64.pkg.tar.xz`
-        ] : [
-            `${pacmanRepositoryBaseURL}i686/${package_name.replace(/^mingw-w64/, '$&-i686')}-${version}-1-any.pkg.tar.xz`,
-            `${pacmanRepositoryBaseURL}x86-64/${package_name.replace(/^mingw-w64/, '$&-x86_64')}-${version}-1-any.pkg.tar.xz`
-        ]
+const pacmanRepositoryURLs = (package_name, version, architectures) =>
+    architectures.map(arch => {
+        const fileName = isMSYSPackage(package_name)
+            ? `${package_name}-${version}-1-${arch}.pkg.tar.xz`
+            : `${package_name.replace(/^mingw-w64/, `$&-${arch}`)}-${version}-1-any.pkg.tar.xz`
+        return `${pacmanRepositoryBaseURL}${arch.replace(/_/g, '-')}/${fileName}`
+    })
 
 const getMissingDeployments = async (package_name, version) => {
     // MinTTY is at epoch 1, which is part of Pacman's versioning scheme
     if (package_name === 'mintty') version = `1~${version}`
+    const architectures = ['i686', 'x86_64']
+    if (package_name === 'msys2-runtime') architectures.shift()
+    else if (package_name === 'msys2-runtime-3.3') architectures.pop()
 
     const urls = []
     const msysName = package_name.replace(/^mingw-w64-/, '')
     if (packageNeedsBothMSYSAndMINGW(msysName)) {
-        urls.push(...pacmanRepositoryURLs(msysName, version))
-        urls.push(...pacmanRepositoryURLs(`mingw-w64-${msysName}`, version))
+        urls.push(...pacmanRepositoryURLs(msysName, version, architectures))
+        urls.push(...pacmanRepositoryURLs(`mingw-w64-${msysName}`, version, architectures))
     } else {
-        urls.push(...pacmanRepositoryURLs(package_name, version))
+        urls.push(...pacmanRepositoryURLs(package_name, version, architectures))
     }
     const { doesURLReturn404 } = require('./https-request')
     const result = await Promise.all(urls.map(async url => doesURLReturn404(url)))
