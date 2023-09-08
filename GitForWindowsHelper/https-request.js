@@ -88,7 +88,43 @@ const doesURLReturn404 = async url => {
     })
 }
 
+const fetchHTML = async url => {
+    const options = parseURL(url)
+    options.headers = {
+        'User-Agent': 'GitForWindowsHelper/0.0',
+        Accept: 'text/html'
+    }
+    return new Promise((resolve, reject) => {
+        try {
+            const https = require('https')
+            const req = https.request(options, res => {
+                res.on('error', e => reject(e))
+
+                const chunks = []
+                res.on('data', data => chunks.push(data))
+                res.on('end', () => {
+                    const html = Buffer.concat(chunks).toString('utf-8')
+                    if (res.statusCode > 299) {
+                        reject({
+                            statusCode: res.statusCode,
+                            statusMessage: res.statusMessage,
+                            body: html
+                        })
+                    } else {
+                        resolve(html)
+                    }
+                })
+            })
+            req.on('error', err => reject(err))
+            req.end()
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
 module.exports = {
     httpsRequest,
-    doesURLReturn404
+    doesURLReturn404,
+    fetchHTML
 }
