@@ -61,6 +61,13 @@ const guessCygwinReleaseNotesURL = async (version) => {
     const match = html.match(new RegExp(`The most recent version of the Cygwin DLL is[^]*?<a href=['"]?([^"' ]*)[^>]*>${version}</a>`))
     if (match) return match[1]
 
+    // Sometimes Cygwin updates the home page a bit later than we'd want, let's
+    // find the announcement on the mailing list directly in that case:
+    const inboxPrefix = 'https://inbox.sourceware.org/cygwin-announce/'
+    const search = await fetchHTML(`${inboxPrefix}?q=cygwin-${version}`)
+    const searchMatch = search.match(new RegExp(`<a\\b(?:[^>]*)\\shref=['"]?([^'" ]+)[^>]*>cygwin ${version}-1</a>`))
+    if (searchMatch) return `${inboxPrefix}${searchMatch[1]}`
+
     throw new Error(`Could not determine Cygwin Release Notes URL for version ${version}`)
 }
 

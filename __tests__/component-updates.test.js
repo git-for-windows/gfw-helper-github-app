@@ -69,7 +69,17 @@ const mockFetchHTML = {
     The Cygwin DLL currently works with all recent, commercially released
     x86_64 versions of Windows, starting with Windows 7.
 </p>
-</div>`
+</div>`,
+    'https://inbox.sourceware.org/cygwin-announce/?q=cygwin-3.4.7': `<html><head><title>cygwin-3.4.7 - search results</title>[... plenty of stuff...]
+<pre>1. <b><a
+href="875y7c63s1.fsf@Rainer.invalid/">Re-Released: tar-1.34-2</a></b>
+    - by ASSI @ 2023-06-24 19:47 UTC [4%]
+
+2. <b><a
+href="20230616162552.879387-1-corinna-cygwin@cygwin.com/">cygwin 3.4.7-1</a></b>
+    - by Corinna Vinschen @ 2023-06-16 14:25 UTC [14%]
+
+</pre>[... even more stuff...]</body></html>`
 }
 const missingURL = 'https://wingit.blob.core.windows.net/x86-64/curl-8.1.2-1-x86_64.pkg.tar.xz'
 const missingMinTTYURL = 'https://wingit.blob.core.windows.net/i686/mintty-1~3.6.5-1-i686.pkg.tar.xz'
@@ -167,6 +177,17 @@ http://www.gnutls.org/news.html#2023-02-10`
         message: 'Comes with the MSYS2 runtime (Git for Windows flavor) based on [Cygwin v3.4.9](https://cygwin.com/pipermail/cygwin-announce/2023-September/011291.html).',
         package: 'msys2-runtime',
         version: '3.4.9'
+    })
+
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New cygwin version] cygwin-3.4.7',
+        body: `\nCygwin 3.4.7 release\n\nhttps://github.com/cygwin/cygwin/releases/tag/cygwin-3.4.7`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with the MSYS2 runtime (Git for Windows flavor) based on [Cygwin v3.4.7](https://inbox.sourceware.org/cygwin-announce/20230616162552.879387-1-corinna-cygwin@cygwin.com/).',
+        package: 'msys2-runtime',
+        version: '3.4.7'
     })
 })
 
