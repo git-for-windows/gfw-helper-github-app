@@ -61,17 +61,23 @@ const httpsRequest = async (context, hostname, method, requestPath, body, header
     })
 }
 
-const doesURLReturn404 = async url => {
+const parseURL = url => {
     const match = url.match(/^https:\/\/([^/]+?)(:\d+)?(\/.*)?$/)
     if (!match) throw new Error(`Could not parse URL ${url}`)
 
-    const https = require('https')
-    const options = {
-        method: 'HEAD',
+    return {
+        method: 'GET',
         host: match[1],
         port: Number.parseInt(match[2] || '443'),
         path: match[3] || '/'
     }
+}
+
+const doesURLReturn404 = async url => {
+    const options = parseURL(url)
+    options.method = 'HEAD'
+
+    const https = require('https')
     return new Promise((resolve, reject) => {
         https.request(options, res => {
             if (res.error) reject(res.error)
