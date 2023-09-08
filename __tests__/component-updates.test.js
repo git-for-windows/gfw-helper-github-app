@@ -56,6 +56,21 @@ jest.mock('../GitForWindowsHelper/github-api-request', () => {
     return mockGithubApiRequest
 })
 
+const mockFetchHTML = {
+    'https://cygwin.com': `<div>
+
+<h2 class="cartouche">Cygwin version</h2>
+
+<p>
+    The most recent version of the Cygwin DLL is
+    <b><a href="https://cygwin.com/pipermail/cygwin-announce/2023-September/011291.html">3.4.9</a></b>.
+</p>
+<p>
+    The Cygwin DLL currently works with all recent, commercially released
+    x86_64 versions of Windows, starting with Windows 7.
+</p>
+</div>`
+}
 const missingURL = 'https://wingit.blob.core.windows.net/x86-64/curl-8.1.2-1-x86_64.pkg.tar.xz'
 const missingMinTTYURL = 'https://wingit.blob.core.windows.net/i686/mintty-1~3.6.5-1-i686.pkg.tar.xz'
 const bogus32BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/i686/msys2-runtime-3.4.9-1-i686.pkg.tar.xz'
@@ -64,7 +79,10 @@ const mockDoesURLReturn404 = jest.fn(url => [
     missingURL, missingMinTTYURL, bogus32BitMSYS2RuntimeURL, bogus64BitMSYS2RuntimeURL
 ].includes(url))
 jest.mock('../GitForWindowsHelper/https-request', () => {
-    return { doesURLReturn404: mockDoesURLReturn404, }
+    return {
+        doesURLReturn404: mockDoesURLReturn404,
+        fetchHTML: jest.fn(url => mockFetchHTML[url])
+    }
 })
 
 
@@ -138,6 +156,17 @@ http://www.gnutls.org/news.html#2023-02-10`
         message: 'Comes with [OpenSSL v3.1.1](https://www.openssl.org/news/openssl-3.1-notes.html).',
         package: 'openssl',
         version: '3.1.1'
+    })
+
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New cygwin version] cygwin-3.4.9',
+        body: `\nCygwin 3.4.9 release\n\nhttps://github.com/cygwin/cygwin/releases/tag/cygwin-3.4.9`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with the MSYS2 runtime (Git for Windows flavor) based on [Cygwin v3.4.9](https://cygwin.com/pipermail/cygwin-announce/2023-September/011291.html).',
+        package: 'msys2-runtime',
+        version: '3.4.9'
     })
 })
 
