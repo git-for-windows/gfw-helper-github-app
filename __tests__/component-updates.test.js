@@ -56,6 +56,18 @@ jest.mock('../GitForWindowsHelper/github-api-request', () => {
     return mockGithubApiRequest
 })
 
+const missingURL = 'https://wingit.blob.core.windows.net/x86-64/curl-8.1.2-1-x86_64.pkg.tar.xz'
+const missingMinTTYURL = 'https://wingit.blob.core.windows.net/i686/mintty-1~3.6.5-1-i686.pkg.tar.xz'
+const bogus32BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/i686/msys2-runtime-3.4.9-1-i686.pkg.tar.xz'
+const bogus64BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/x86-64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
+const mockDoesURLReturn404 = jest.fn(url => [
+    missingURL, missingMinTTYURL, bogus32BitMSYS2RuntimeURL, bogus64BitMSYS2RuntimeURL
+].includes(url))
+jest.mock('../GitForWindowsHelper/https-request', () => {
+    return { doesURLReturn404: mockDoesURLReturn404, }
+})
+
+
 test('guessReleaseNotes()', async () => {
     const context = { log: jest.fn() }
     expect(await guessReleaseNotes(context, {
@@ -130,17 +142,6 @@ http://www.gnutls.org/news.html#2023-02-10`
 })
 
 test('getMissingDeployments()', async () => {
-    const missingURL = 'https://wingit.blob.core.windows.net/x86-64/curl-8.1.2-1-x86_64.pkg.tar.xz'
-    const missingMinTTYURL = 'https://wingit.blob.core.windows.net/i686/mintty-1~3.6.5-1-i686.pkg.tar.xz'
-    const bogus32BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/i686/msys2-runtime-3.4.9-1-i686.pkg.tar.xz'
-    const bogus64BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/x86-64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
-    const mockDoesURLReturn404 = jest.fn(url => [
-        missingURL, missingMinTTYURL, bogus32BitMSYS2RuntimeURL, bogus64BitMSYS2RuntimeURL
-    ].includes(url))
-    jest.mock('../GitForWindowsHelper/https-request', () => {
-        return { doesURLReturn404: mockDoesURLReturn404 }
-    })
-
     expect(await getMissingDeployments('curl', '8.1.2')).toEqual([missingURL])
     expect(await getMissingDeployments('mintty', '3.6.5')).toEqual([missingMinTTYURL])
     expect(await getMissingDeployments('msys2-runtime', '3.4.9')).toEqual([])
