@@ -55,10 +55,37 @@ const needsSeparateARM64Build = package_name => {
     ].includes(package_name)
 }
 
+const guessCygwinReleaseNotesURL = async (version) => {
+    const { fetchHTML } = require('./https-request')
+    const html = await fetchHTML('https://cygwin.com')
+    const match = html.match(new RegExp(`The most recent version of the Cygwin DLL is[^]*?<a href=['"]?([^"' ]*)[^>]*>${version}</a>`))
+    if (match) return match[1]
+
+    // Sometimes Cygwin updates the home page a bit later than we'd want, let's
+    // find the announcement on the mailing list directly in that case:
+    const inboxPrefix = 'https://inbox.sourceware.org/cygwin-announce/'
+    const search = await fetchHTML(`${inboxPrefix}?q=cygwin-${version}`)
+    const searchMatch = search.match(new RegExp(`<a\\b(?:[^>]*)\\shref=['"]?([^'" ]+)[^>]*>cygwin ${version}-1</a>`))
+    if (searchMatch) return `${inboxPrefix}${searchMatch[1]}`
+
+    throw new Error(`Could not determine Cygwin Release Notes URL for version ${version}`)
+}
+
 const guessReleaseNotes = async (context, issue) => {
     if (!issue.pull_request
         &&issue.labels.filter(label => label.name === 'component-update').length !== 1) throw new Error(`Cannot determine release note from issue ${issue.number}`)
     let { package_name, version } = guessComponentUpdateDetails(issue.title, issue.body)
+
+    if (package_name === 'msys2-runtime') {
+        const url = await guessCygwinReleaseNotesURL(version)
+        const message = `Comes with the MSYS2 runtime (Git for Windows flavor) based on [Cygwin v${version}](${url}).`
+        return {
+            type: 'feature',
+            message,
+            package: package_name,
+            version
+        }
+    }
 
     const matchURLInIssue = (issue) => {
         const pattern = {

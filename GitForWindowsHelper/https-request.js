@@ -61,17 +61,23 @@ const httpsRequest = async (context, hostname, method, requestPath, body, header
     })
 }
 
-const doesURLReturn404 = async url => {
+const parseURL = url => {
     const match = url.match(/^https:\/\/([^/]+?)(:\d+)?(\/.*)?$/)
     if (!match) throw new Error(`Could not parse URL ${url}`)
 
-    const https = require('https')
-    const options = {
-        method: 'HEAD',
+    return {
+        method: 'GET',
         host: match[1],
         port: Number.parseInt(match[2] || '443'),
         path: match[3] || '/'
     }
+}
+
+const doesURLReturn404 = async url => {
+    const options = parseURL(url)
+    options.method = 'HEAD'
+
+    const https = require('https')
     return new Promise((resolve, reject) => {
         https.request(options, res => {
             if (res.error) reject(res.error)
@@ -82,7 +88,43 @@ const doesURLReturn404 = async url => {
     })
 }
 
+const fetchHTML = async url => {
+    const options = parseURL(url)
+    options.headers = {
+        'User-Agent': 'GitForWindowsHelper/0.0',
+        Accept: 'text/html'
+    }
+    return new Promise((resolve, reject) => {
+        try {
+            const https = require('https')
+            const req = https.request(options, res => {
+                res.on('error', e => reject(e))
+
+                const chunks = []
+                res.on('data', data => chunks.push(data))
+                res.on('end', () => {
+                    const html = Buffer.concat(chunks).toString('utf-8')
+                    if (res.statusCode > 299) {
+                        reject({
+                            statusCode: res.statusCode,
+                            statusMessage: res.statusMessage,
+                            body: html
+                        })
+                    } else {
+                        resolve(html)
+                    }
+                })
+            })
+            req.on('error', err => reject(err))
+            req.end()
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
 module.exports = {
     httpsRequest,
-    doesURLReturn404
+    doesURLReturn404,
+    fetchHTML
 }

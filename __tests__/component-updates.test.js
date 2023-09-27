@@ -56,6 +56,46 @@ jest.mock('../GitForWindowsHelper/github-api-request', () => {
     return mockGithubApiRequest
 })
 
+const mockFetchHTML = {
+    'https://cygwin.com': `<div>
+
+<h2 class="cartouche">Cygwin version</h2>
+
+<p>
+    The most recent version of the Cygwin DLL is
+    <b><a href="https://cygwin.com/pipermail/cygwin-announce/2023-September/011291.html">3.4.9</a></b>.
+</p>
+<p>
+    The Cygwin DLL currently works with all recent, commercially released
+    x86_64 versions of Windows, starting with Windows 7.
+</p>
+</div>`,
+    'https://inbox.sourceware.org/cygwin-announce/?q=cygwin-3.4.7': `<html><head><title>cygwin-3.4.7 - search results</title>[... plenty of stuff...]
+<pre>1. <b><a
+href="875y7c63s1.fsf@Rainer.invalid/">Re-Released: tar-1.34-2</a></b>
+    - by ASSI @ 2023-06-24 19:47 UTC [4%]
+
+2. <b><a
+href="20230616162552.879387-1-corinna-cygwin@cygwin.com/">cygwin 3.4.7-1</a></b>
+    - by Corinna Vinschen @ 2023-06-16 14:25 UTC [14%]
+
+</pre>[... even more stuff...]</body></html>`
+}
+const missingURL = 'https://wingit.blob.core.windows.net/x86-64/curl-8.1.2-1-x86_64.pkg.tar.xz'
+const missingMinTTYURL = 'https://wingit.blob.core.windows.net/i686/mintty-1~3.6.5-1-i686.pkg.tar.xz'
+const bogus32BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/i686/msys2-runtime-3.4.9-1-i686.pkg.tar.xz'
+const bogus64BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/x86-64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
+const mockDoesURLReturn404 = jest.fn(url => [
+    missingURL, missingMinTTYURL, bogus32BitMSYS2RuntimeURL, bogus64BitMSYS2RuntimeURL
+].includes(url))
+jest.mock('../GitForWindowsHelper/https-request', () => {
+    return {
+        doesURLReturn404: mockDoesURLReturn404,
+        fetchHTML: jest.fn(url => mockFetchHTML[url])
+    }
+})
+
+
 test('guessReleaseNotes()', async () => {
     const context = { log: jest.fn() }
     expect(await guessReleaseNotes(context, {
@@ -127,20 +167,31 @@ http://www.gnutls.org/news.html#2023-02-10`
         package: 'openssl',
         version: '3.1.1'
     })
+
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New cygwin version] cygwin-3.4.9',
+        body: `\nCygwin 3.4.9 release\n\nhttps://github.com/cygwin/cygwin/releases/tag/cygwin-3.4.9`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with the MSYS2 runtime (Git for Windows flavor) based on [Cygwin v3.4.9](https://cygwin.com/pipermail/cygwin-announce/2023-September/011291.html).',
+        package: 'msys2-runtime',
+        version: '3.4.9'
+    })
+
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New cygwin version] cygwin-3.4.7',
+        body: `\nCygwin 3.4.7 release\n\nhttps://github.com/cygwin/cygwin/releases/tag/cygwin-3.4.7`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with the MSYS2 runtime (Git for Windows flavor) based on [Cygwin v3.4.7](https://inbox.sourceware.org/cygwin-announce/20230616162552.879387-1-corinna-cygwin@cygwin.com/).',
+        package: 'msys2-runtime',
+        version: '3.4.7'
+    })
 })
 
 test('getMissingDeployments()', async () => {
-    const missingURL = 'https://wingit.blob.core.windows.net/x86-64/curl-8.1.2-1-x86_64.pkg.tar.xz'
-    const missingMinTTYURL = 'https://wingit.blob.core.windows.net/i686/mintty-1~3.6.5-1-i686.pkg.tar.xz'
-    const bogus32BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/i686/msys2-runtime-3.4.9-1-i686.pkg.tar.xz'
-    const bogus64BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/x86-64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
-    const mockDoesURLReturn404 = jest.fn(url => [
-        missingURL, missingMinTTYURL, bogus32BitMSYS2RuntimeURL, bogus64BitMSYS2RuntimeURL
-    ].includes(url))
-    jest.mock('../GitForWindowsHelper/https-request', () => {
-        return { doesURLReturn404: mockDoesURLReturn404 }
-    })
-
     expect(await getMissingDeployments('curl', '8.1.2')).toEqual([missingURL])
     expect(await getMissingDeployments('mintty', '3.6.5')).toEqual([missingMinTTYURL])
     expect(await getMissingDeployments('msys2-runtime', '3.4.9')).toEqual([])
