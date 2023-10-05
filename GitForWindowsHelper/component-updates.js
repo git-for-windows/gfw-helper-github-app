@@ -147,6 +147,9 @@ const pacmanRepositoryURLs = (package_name, version, architectures) =>
 const getMissingDeployments = async (package_name, version) => {
     // MinTTY is at epoch 1, which is part of Pacman's versioning scheme
     if (package_name === 'mintty') version = `1~${version}`
+    // The `openssh` version looks like this: 9.1p1. But the website calls it 9.1_P1
+    if (package_name === 'openssh') version = version.replace(/[_.]P/, 'p')
+
     const architectures = ['i686', 'x86_64']
     if (package_name === 'msys2-runtime') architectures.shift()
     else if (package_name === 'msys2-runtime-3.3') architectures.pop()
