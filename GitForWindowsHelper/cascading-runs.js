@@ -114,7 +114,17 @@ const cascadingRuns = async (context, req) => {
                 throw new Error(`Refusing to handle cascading run in ${checkRunOwner}/${checkRunRepo}`)
             }
 
-            return await triggerGitArtifactsRuns(context, checkRunOwner, checkRunRepo, checkRun)
+            const comment = await triggerGitArtifactsRuns(context, checkRunOwner, checkRunRepo, checkRun)
+
+            const token = await getToken(context, checkRunOwner, checkRunRepo)
+            const { getGitArtifactsCommentID, appendToIssueComment } = require('./issues')
+            const gitArtifactsCommentID = await getGitArtifactsCommentID(context, token, checkRunOwner, checkRunRepo, req.body.check_run.head_sha)
+
+            if (gitArtifactsCommentID) {
+                await appendToIssueComment(context, token, checkRunOwner, checkRunRepo, gitArtifactsCommentID, comment)
+            }
+
+            return comment
         }
         return `Not a cascading run: ${name}; Doing nothing.`
     }
