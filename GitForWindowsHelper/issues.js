@@ -23,6 +23,17 @@ const getIssueComment = async (context, token, owner, repo, comment_id) => {
     return await sendGitHubAPIRequest(context, token, 'GET', `/repos/${owner}/${repo}/issues/comments/${comment_id}`)
 }
 
+const getGitArtifactsCommentID = async (context, token, owner, repo, headSHA) => {
+    const answer = await sendGitHubAPIRequest(context, token, 'GET', `/search/issues?q=repo:${owner}/${repo}+${headSHA}+type:pr+%22git-artifacts%22`, null, {
+        Accept: 'application/vnd.github.text-match+json'
+    })
+    const items = answer.items.filter(item =>
+        item.text_matches.length === 1
+        && item.text_matches[0].fragment === '/git-artifacts\n\nThe tag-git workflow run was started\n'
+    )
+    return items.length === 1 && items[0].text_matches[0].object_url.replace(/^.*\/(\d+)$/, '$1')
+}
+
 const appendToIssueComment = async (context, token, owner, repo, comment_id, append) => {
     const data = await getIssueComment(context, token, owner, repo, comment_id)
     const answer = await sendGitHubAPIRequest(
@@ -65,6 +76,7 @@ const getPRCommitSHA = async (context, token, owner, repo, pullRequestNumber) =>
 module.exports = {
     addIssueComment,
     getIssue,
+    getGitArtifactsCommentID,
     getIssueComment,
     appendToIssueComment,
     createReactionForIssueComment,
