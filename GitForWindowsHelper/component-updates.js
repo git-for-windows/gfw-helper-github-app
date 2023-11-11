@@ -149,6 +149,8 @@ const getMissingDeployments = async (package_name, version) => {
     if (package_name === 'mintty') version = `1~${version}`
     // The `openssh` version looks like this: 9.1p1. But the website calls it 9.1_P1
     if (package_name === 'openssh') version = version.replace(/[_.]P/, 'p')
+    // The `bash` version has its patch-level zero-padded to three digits
+    if (package_name === 'bash') version = version.replace(/\d+$/, n => n.padStart(3, '0'))
 
     const architectures = ['i686', 'x86_64']
     if (package_name === 'msys2-runtime') architectures.shift()
