@@ -127,6 +127,27 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/4323')) return {
         head: { sha: 'dee501d15' }
     }
+    if (method === 'GET' && requestPath === '/search/issues?q=repo:git-for-windows/git+c8edb521bdabec14b07e9142e48cab77a40ba339+type:pr+%22git-artifacts%22') return {
+        items: [{
+            text_matches: [{
+                object_url: 'https://api.github.com/repositories/23216272/issues/comments/1450703020',
+                fragment: '/git-artifacts\n\nThe tag-git workflow run was started\n'
+            }]
+        }]
+    }
+    if (method === 'GET' && requestPath === '/repos/git-for-windows/git/issues/comments/1450703020') return {
+        body: '/git-artifacts\n\nThe tag-git workflow run [was started](https://url-to-tag-git/)'
+    }
+    if (method === 'PATCH' && requestPath === '/repos/git-for-windows/git/issues/comments/1450703020') {
+        expect(payload.body).toEqual(`/git-artifacts
+
+The tag-git workflow run [was started](https://url-to-tag-git/)
+
+git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
+The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+`)
+        return { html_url: 'https://github.com/git-for-windows/git/pull/4322#issuecomment-1450703020' }
+    }
     throw new Error(`Unhandled ${method}-${requestPath}-${JSON.stringify(payload)}`)
 })
 jest.mock('../GitForWindowsHelper/github-api-request', () => {
