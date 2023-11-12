@@ -86,8 +86,9 @@ const missingMinTTYURL = 'https://wingit.blob.core.windows.net/i686/mintty-1~3.6
 const bogus32BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/i686/msys2-runtime-3.4.9-1-i686.pkg.tar.xz'
 const bogus64BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/x86-64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
 const missingOpenSSHURL = 'https://wingit.blob.core.windows.net/i686/openssh-9.5p1-1-i686.pkg.tar.xz'
+const missingBashURL = 'https://wingit.blob.core.windows.net/x86-64/bash-5.2.020-1-x86_64.pkg.tar.xz'
 const mockDoesURLReturn404 = jest.fn(url => [
-    missingURL, missingMinTTYURL, bogus32BitMSYS2RuntimeURL, bogus64BitMSYS2RuntimeURL, missingOpenSSHURL
+    missingURL, missingMinTTYURL, bogus32BitMSYS2RuntimeURL, bogus64BitMSYS2RuntimeURL, missingOpenSSHURL, missingBashURL
 ].includes(url))
 jest.mock('../GitForWindowsHelper/https-request', () => {
     return {
@@ -198,4 +199,5 @@ test('getMissingDeployments()', async () => {
     expect(await getMissingDeployments('msys2-runtime', '3.4.9')).toEqual([])
     expect(await getMissingDeployments('msys2-runtime-3.3', '3.3.7')).toEqual([])
     expect(await getMissingDeployments('openssh', '9.5.P1')).toEqual([missingOpenSSHURL])
+    expect(await getMissingDeployments('bash', '5.2.20')).toEqual([missingBashURL])
 })
