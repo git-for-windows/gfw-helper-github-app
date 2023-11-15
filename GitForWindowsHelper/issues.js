@@ -29,7 +29,7 @@ const getGitArtifactsCommentID = async (context, token, owner, repo, headSHA) =>
     })
     const items = answer.items.filter(item =>
         item.text_matches.length === 1
-        && item.text_matches[0].fragment === '/git-artifacts\n\nThe tag-git workflow run was started\n'
+        && item.text_matches[0].fragment.trim() === '/git-artifacts\n\nThe tag-git workflow run was started'
     )
     return items.length === 1 && items[0].text_matches[0].object_url.replace(/^.*\/(\d+)$/, '$1')
 }
