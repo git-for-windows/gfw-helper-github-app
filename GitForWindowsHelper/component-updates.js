@@ -91,7 +91,7 @@ const guessReleaseNotes = async (context, issue) => {
         const pattern = {
             bash: /(?:^|\n)(https:\/\/\S+)/, // use the first URL
             gnutls: /(https:\/\/[^\s)]+)/
-        }[package_name.toLowerCase()] || /(?:^|\n)(https:\/\/\S+)$/
+        }[package_name.toLowerCase().replace(/^mingw-w64-/, '')] || /(?:^|\n)(https:\/\/\S+)$/
         const match = issue.body.match(pattern)
         return match && match[1]
     }
