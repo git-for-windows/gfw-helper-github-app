@@ -27,6 +27,7 @@ const prettyPackageName = (name) => {
         'msys2-runtime': 'MSYS2 runtime',
         bash: 'Bash',
         curl: 'cURL',
+        gnupg: 'GNU Privacy Guard',
         gnutls: 'GNU TLS',
         heimdal: 'Heimdal',
         mintty: 'MinTTY',
