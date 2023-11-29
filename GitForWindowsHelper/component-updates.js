@@ -9,9 +9,10 @@ const guessComponentUpdateDetails = (title, body) => {
     if (['git-lfs'].includes(package_name)) package_name = `mingw-w64-${package_name}`
     else if (['git-credential-manager', 'gcm-core', 'gcm'].includes(package_name)) package_name = 'mingw-w64-git-credential-manager'
     else if (package_name === 'cygwin') package_name = 'msys2-runtime'
+    else if (package_name === 'gpg') package_name = 'gnupg'
 
     version = version
-        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-|curl-)/, '')
+        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-|curl-|gnupg-)/, '')
         .replace(/\s+patch\s+/, '.')
         .replace(/_/g, '.')
         .replace(/-release$/, '')
