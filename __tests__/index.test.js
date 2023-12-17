@@ -307,6 +307,41 @@ The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`
     })
 })
 
+testIssueComment('/updpkgsums', {
+    issue: {
+        number: 104,
+        title: 'Make tig launchable from PowerShell/Command Prompt',
+        body: 'Add tig.exe to /cmd/',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MINGW-packages/pull/104'
+        }
+    },
+    repository: {
+        name: 'MINGW-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-updpkgsums.yml).`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows).toHaveLength(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs['pr-number'])).toEqual([104])
+    expect(mockGitHubApiRequest).toHaveBeenCalled()
+    const comment = mockGitHubApiRequest.mock.calls[mockGitHubApiRequest.mock.calls.length - 1]
+    expect(comment[3]).toEqual('/repos/git-for-windows/MINGW-packages/issues/comments/0')
+    expect(comment[4]).toEqual({
+        body: `existing comment body
+
+The workflow run [was started](dispatched-workflow-updpkgsums.yml).`
+    })
+})
+
 let mockQueueCheckRun = jest.fn(() => 'check-run-id')
 let mockUpdateCheckRun = jest.fn()
 let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, checkRunName) => {

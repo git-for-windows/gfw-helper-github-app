@@ -105,6 +105,35 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${commentURL}`
         }
 
+        if (command == '/updpkgsums') {
+            if (owner !== 'git-for-windows'
+             || !req.body.issue.pull_request
+             || !['build-extra', 'MINGW-packages', 'MSYS2-packages'].includes(repo)) {
+                return `Ignoring ${command} in unexpected repo: ${commentURL}`
+            }
+
+            await checkPermissions()
+            await thumbsUp()
+
+            const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+            const answer = await triggerWorkflowDispatch(
+                context,
+                await getToken(),
+                'git-for-windows',
+                'git-for-windows-automation',
+                'updpkgsums.yml',
+                'main', {
+                    repo,
+                    'pr-number': issueNumber,
+                    actor: commenter
+                }
+            );
+            const { appendToIssueComment } = require('./issues');
+            ({ html_url: commentURL } = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url}).`))
+
+            return `I edited the comment: ${commentURL}`
+        }
+
         const deployMatch = command.match(/^\/deploy(\s+(\S+)\s*)?$/)
         if (deployMatch) {
             if (owner !== 'git-for-windows'
