@@ -107,6 +107,6 @@
     const events = await getMatchingEvents()
     for (const e of events) {
         const fullEvent = await gitHubRequestAsApp(console, 'GET', `/app/hook/deliveries/${e.id}`)
-        console.log(`id: ${e.id}\naction: ${e.action}\nrequest: ${JSON.stringify(fullEvent.request, null, 2)}`)
+        console.log(`id: ${e.id}\naction: ${e.action}\nevent: ${JSON.stringify(fullEvent, null, 2)}`)
     }
 })().catch(console.log)
