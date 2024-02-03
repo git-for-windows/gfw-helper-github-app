@@ -118,6 +118,9 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/96')) return {
         head: { sha: 'b7b0dfc' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/153')) return {
+        head: { sha: 'b197f8f' }
+    }
     if (method === 'GET' && requestPath.endsWith('/pulls/4322')) return {
         head: { sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339' }
     }
@@ -503,7 +506,6 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686'])
 })
 
-
 testIssueComment('/deploy mingw-w64-clang', {
     issue: {
         number: 75,
@@ -524,6 +526,28 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64'])
+})
+
+testIssueComment('/deploy libkbsa', {
+    issue: {
+        number: 153,
+        title: 'i686: build newest version of libksba, because gnupg requires at least v1.6.3',
+        body: 'I just tried to deploy gnupg v2.4.4 but it failed in the deploy-i686 job because of an outdated libksba package. We used to benefit from MSYS2\'s updates, but for the i686 variant there are no more updates of the MSYS packages, therefore we have to build it ourselves now.',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MSYS2-packages/pull/153'
+        }
+    },
+    repository: {
+        name: 'MSYS2-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686'])
 })
 
 const missingURL = 'https://wingit.blob.core.windows.net/x86-64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz'
