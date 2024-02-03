@@ -503,7 +503,6 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686'])
 })
 
-
 testIssueComment('/deploy mingw-w64-clang', {
     issue: {
         number: 75,
