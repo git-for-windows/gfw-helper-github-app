@@ -50,6 +50,18 @@ module.exports = async function (context, req) {
     }
 
     try {
+        const finalizeGitForWindowsRelease = require('./finalize-g4w-release')
+        if (req.headers['x-github-event'] === 'workflow_run'
+            && req.body.repository.full_name === 'git-for-windows/git-for-windows-automation'
+            && req.body.action === 'completed'
+            && req.body.workflow_run.path === '.github/workflows/release-git.yml'
+            && req.body.workflow_run.conclusion === 'success') return ok(await finalizeGitForWindowsRelease(context, req))
+    } catch (e) {
+        context.log(e)
+        return withStatus(500, undefined, e.message || JSON.stringify(e, null, 2))
+    }
+
+    try {
         const { cascadingRuns } = require('./cascading-runs.js')
         if (req.headers['x-github-event'] === 'check_run'
             && req.body.repository.full_name === 'git-for-windows/git'

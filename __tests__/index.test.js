@@ -67,6 +67,9 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
         id: 0,
         html_url: `appended-comment-body-${payload.body}`
     }
+    if (method === 'GET' && requestPath.endsWith('/comments/654321')) return {
+        body: 'The `release-git` workflow run [was started](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/54321)'
+    }
     if (method === 'POST' && requestPath.endsWith('/reactions')) return {
         id: `new-reaction-${payload.content}`
     }
@@ -75,7 +78,7 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
             data: {
                 repository:{
                     collaborators: {
-                        edges: [{ permission: 'WRITE'}]
+                        edges: [{ permission: 'WRITE' }]
                     }
                 }
             }
@@ -129,6 +132,14 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     }
     if (method === 'GET' && requestPath.endsWith('/pulls/4323')) return {
         head: { sha: 'dee501d15' }
+    }
+    if (method === 'GET' && requestPath.endsWith('/pulls/765')) return {
+        head: { sha: 'c0ffee1ab7e' }
+    }
+    if (method === 'PATCH' && requestPath.endsWith('/git/refs/heads/main')) {
+        if (payload.sha !== 'c0ffee1ab7e') throw new Error(`Unexpected sha: ${payload.sha}`)
+        if (payload.force !== false) throw new Error(`Unexpected force value: ${payload.force}`)
+        return {}
     }
     if (method === 'GET' && requestPath === '/search/issues?q=repo:git-for-windows/git+c8edb521bdabec14b07e9142e48cab77a40ba339+type:pr+%22git-artifacts%22') return {
         items: [{
@@ -263,7 +274,16 @@ jest.mock('../GitForWindowsHelper/get-installation-id-for-repo', () => {
     return mockGetInstallationIDForRepo
 })
 
-let mockSearchIssues = jest.fn(() => [])
+let mockSearchIssues = jest.fn((_context, searchTerms) => {
+    if (searchTerms.indexOf('release-git') > 0) return [{
+        number: 765,
+        author_association: 'MEMBER',
+        text_matches: [{
+            object_url: 'https://api.github.com/repos/git-for-windows/git/issues/comments/654321'
+        }]
+    }]
+    return []
+})
 jest.mock('../GitForWindowsHelper/search', () => {
     return {
         searchIssues: mockSearchIssues
@@ -752,4 +772,44 @@ The \`release-git\` workflow run [was started](dispatched-workflow-release-git.y
         git_artifacts_x86_64_workflow_run_id: "8664",
         git_artifacts_i686_workflow_run_id: "686"
     })
+})
+
+test('a completed `release-git` run updates the `main` branch in git-for-windows/git', async () => {
+    const context = makeContext({
+        action: 'completed',
+        repository: {
+            full_name: 'git-for-windows/git-for-windows-automation'
+        },
+        sender: {
+            login: 'a-member'
+        },
+        workflow_run: {
+            id: 54321,
+            path: '.github/workflows/release-git.yml',
+            conclusion: 'success'
+        }
+    }, {
+        'x-github-event': 'workflow_run'
+    })
+
+    try {
+        expect(await index(context, context.req)).toBeUndefined()
+        expect(context.res).toEqual({
+            body: `Took care of pushing the \`main\` branch to close PR 765`,
+            headers: undefined,
+            status: undefined
+        })
+        expect(mockGitHubApiRequest).toHaveBeenCalledTimes(4)
+        expect(mockGitHubApiRequest.mock.calls[3].slice(1)).toEqual([
+            'installation-access-token',
+            'PATCH',
+            '/repos/git-for-windows/git/git/refs/heads/main', {
+                sha: 'c0ffee1ab7e',
+                force: false
+            }
+        ])
+    } catch (e) {
+        context.log.mock.calls.forEach(e => console.log(e[0]))
+        throw e;
+    }
 })
