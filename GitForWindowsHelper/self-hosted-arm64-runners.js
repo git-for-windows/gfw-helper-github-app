@@ -24,7 +24,7 @@ module.exports = async (context, req) => {
         return ['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission.toString())
     }
 
-    if (!isAllowed(sender)) {
+    if (!await isAllowed(sender)) {
         if (action !== 'completed') {
             // Cancel workflow run
             const { cancelWorkflowRun } = require('./check-runs')
