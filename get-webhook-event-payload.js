@@ -98,7 +98,7 @@
         const events = [...answer.events]
         while (answer.oldest.epoch > since) {
             answer = await getAtCursor(answer.oldest.id - 1)
-            events.push([...answer.events])
+            events.push(...answer.events)
         }
 
         return events
