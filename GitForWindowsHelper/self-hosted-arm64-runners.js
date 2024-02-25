@@ -18,6 +18,7 @@ module.exports = async (context, req) => {
     })()
 
     const isAllowed = async (login) => {
+        if (login === 'gitforwindowshelper[bot]') return true
         const getCollaboratorPermissions = require('./get-collaborator-permissions')
         const token = await getToken()
         const permission = await getCollaboratorPermissions(context, token, owner, repo, login)
