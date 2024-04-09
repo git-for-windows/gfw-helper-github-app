@@ -5,7 +5,7 @@
     "jest": "^29.7.0"
   },
   "scripts": {
-    "lint": "eslint -c .eslintrc.json '**/*.js'",
+    "lint": "eslint -c eslint.config.js '**/*.js'",
     "test": "jest"
   }
 }
