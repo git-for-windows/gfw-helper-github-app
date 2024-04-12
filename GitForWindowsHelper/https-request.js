@@ -47,7 +47,7 @@ const httpsRequest = async (context, hostname, method, requestPath, body, header
                     }
                     try {
                         resolve(JSON.parse(json))
-                    } catch (e) {
+                    } catch {
                         reject(`Invalid JSON: ${json}`)
                     }
                 })
