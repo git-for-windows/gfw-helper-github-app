@@ -27,11 +27,19 @@ const getGitArtifactsCommentID = async (context, token, owner, repo, headSHA) =>
     const answer = await sendGitHubAPIRequest(context, token, 'GET', `/search/issues?q=repo:${owner}/${repo}+${headSHA}+type:pr+%22git-artifacts%22`, null, {
         Accept: 'application/vnd.github.text-match+json'
     })
-    const items = answer.items.filter(item =>
-        item.text_matches.length === 1
-        && item.text_matches[0].fragment.trim() === '/git-artifacts\n\nThe tag-git workflow run was started'
-    )
-    return items.length === 1 && items[0].text_matches[0].object_url.replace(/^.*\/(\d+)$/, '$1')
+    let commentID = false
+    for (const item of answer.items) {
+        for (const text_match of item.text_matches) {
+            if (text_match.fragment.startsWith('/git-artifacts\n\nThe tag-git workflow run was started')) {
+                if (commentID !== false) return false // more than one match, maybe a trickster at play, ignore altogether
+                else {
+                    commentID = text_match.object_url.replace(/^.*\/(\d+)$/, '$1')
+                    break // continue with outer loop, to see whether another PR matches, too
+                }
+            }
+        }
+    }
+    return commentID
 }
 
 const appendToIssueComment = async (context, token, owner, repo, comment_id, append) => {
