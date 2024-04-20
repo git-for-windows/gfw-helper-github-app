@@ -1,4 +1,5 @@
 const validateGitHubWebHook = require('./validate-github-webhook')
+const { activeOrg } = require('./org')
 
 module.exports = async function (context, req) {
     const withStatus = (status, headers, body) => {
@@ -41,7 +42,7 @@ module.exports = async function (context, req) {
         if (req.headers['x-github-event'] === 'workflow_run'
             && req.body.workflow_run?.event === 'workflow_dispatch'
             && req.body.workflow_run?.head_branch === 'main'
-            && req.body.repository.full_name === 'git-for-windows/git-for-windows-automation'
+            && req.body.repository.full_name === `${activeOrg}/git-for-windows-automation`
             && req.body.action === 'completed'
             && req.body.workflow_run.path === '.github/workflows/release-git.yml'
             && req.body.workflow_run.conclusion === 'success') return ok(await finalizeGitForWindowsRelease(context, req))
@@ -54,7 +55,7 @@ module.exports = async function (context, req) {
         const { cascadingRuns, handlePush } = require('./cascading-runs.js')
         if (req.headers['x-github-event'] === 'check_run'
             && req.body.check_run?.app?.slug === 'gitforwindowshelper'
-            && req.body.repository.full_name === 'git-for-windows/git'
+            && req.body.repository.full_name === `${activeOrg}/git`
             && req.body.action === 'completed') return ok(await cascadingRuns(context, req))
 
         if (req.headers['x-github-event'] === 'push'

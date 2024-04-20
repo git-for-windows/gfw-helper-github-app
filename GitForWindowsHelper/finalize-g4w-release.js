@@ -1,9 +1,11 @@
+const { activeOrg } = require('./org')
+
 module.exports = async (context, req) => {
     if (req.body.action !== 'completed') return "Nothing to do here: workflow run did not complete yet"
     if (req.body.workflow_run.conclusion !== 'success') return "Nothing to do here: workflow run did not succeed"
 
     const releaseWorkflowRunID = req.body.workflow_run.id
-    const owner = 'git-for-windows'
+    const owner = activeOrg
     const repo = 'git'
     const sender = req.body.sender.login
 
@@ -31,11 +33,11 @@ module.exports = async (context, req) => {
     if (!await isAllowed(sender)) throw new Error(`${sender} is not allowed to do that`)
 
     const { searchIssues } = require('./search')
-    const items = await searchIssues(context, 'org:git-for-windows is:pr is:open in:comments "The release-git workflow run was started"')
+    const items = await searchIssues(context, `org:${activeOrg} is:pr is:open in:comments "The release-git workflow run was started"`)
 
     const githubApiRequest = require('./github-api-request')
 
-    const needle = `The \`release-git\` workflow run [was started](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/${releaseWorkflowRunID})`
+    const needle = `The \`release-git\` workflow run [was started](https://github.com/${activeOrg}/git-for-windows-automation/actions/runs/${releaseWorkflowRunID})`
     const candidates = []
     for (const item of items) {
         if (!['OWNER', 'MEMBER'].includes(item.author_association)) continue
