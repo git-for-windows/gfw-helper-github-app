@@ -150,12 +150,12 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
         }]
     }
     if (method === 'GET' && requestPath === '/repos/git-for-windows/git/issues/comments/1450703020') return {
-        body: '/git-artifacts\n\nThe tag-git workflow run [was started](https://url-to-tag-git/)'
+        body: '/git-artifacts\n\nThe `tag-git` workflow run [was started](https://url-to-tag-git/)'
     }
     if (method === 'PATCH' && requestPath === '/repos/git-for-windows/git/issues/comments/1450703020') {
         expect(payload.body).toEqual(`/git-artifacts
 
-The tag-git workflow run [was started](https://url-to-tag-git/)
+The \`tag-git\` workflow run [was started](https://url-to-tag-git/)
 
 git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
@@ -635,6 +635,7 @@ test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
             name: 'tag-git',
             head_sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339',
             conclusion: 'success',
+            details_url: 'https://url-to-tag-git/',
             output: {
                 title: 'Tag Git v2.40.0-rc1.windows.1 @c8edb521bdabec14b07e9142e48cab77a40ba339',
                 summary: 'Tag Git v2.40.0-rc1.windows.1 @c8edb521bdabec14b07e9142e48cab77a40ba339',
