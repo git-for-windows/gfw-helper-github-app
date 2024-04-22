@@ -1,5 +1,9 @@
 /.*
+/*.config.js
 /*.md
 /*.gif
+/*.svg
 /host.json
 /local.settings.json
+/package*.json
+/test-*.js
