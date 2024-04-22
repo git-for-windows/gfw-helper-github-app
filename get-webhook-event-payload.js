@@ -5,6 +5,7 @@
 
     let eventType = undefined
     let aroundDate = undefined
+    let repository = undefined
 
     // parse arguments, e.g. --event-type=check_run --date='Tue, 21 Nov 2023 11:13:12 GMT'
     const args = process.argv.slice(2)
@@ -37,7 +38,8 @@
             const arg = getArg()
             if (isNaN(Date.parse(arg))) throw new Error(`--date requires a valid date (got '${arg}')`)
             aroundDate = new Date(arg)
-        } else
+        } else if (option === '--repository') repository = getArg()
+        else
             throw new Error(`Unhandled option: '${option}`)
     }
 
@@ -47,6 +49,16 @@
     const localSettings = JSON.parse(fs.readFileSync('local.settings.json'))
     process.env.GITHUB_APP_ID = localSettings.Values.GITHUB_APP_ID
     process.env.GITHUB_APP_PRIVATE_KEY = localSettings.Values.GITHUB_APP_PRIVATE_KEY
+
+    const repositoryID = !repository ? false : await (async () => {
+        const [owner, repo] = repository.split('/')
+        const getInstallationIdForRepo = require('./GitForWindowsHelper/get-installation-id-for-repo')
+        const installationId = await getInstallationIdForRepo(console, owner, repo)
+        const getInstallationAccessToken = require('./GitForWindowsHelper/get-installation-access-token')
+        const token = await getInstallationAccessToken(console, installationId)
+        const gitHubRequest = require('./GitForWindowsHelper/github-api-request')
+        return (await gitHubRequest(console, token, 'GET', `/repos/${repository}`)).id
+    })()
 
     const gitHubRequestAsApp = require('./GitForWindowsHelper/github-api-request-as-app')
 
@@ -61,6 +73,7 @@
             if (eventType && e.event !== eventType) return false
             if (since && e.epoch < since) return false
             if (until && e.epoch > until) return false
+            if (repositoryID && e.repository_id !== repositoryID) return false
             return true
         })
         const newest = answer.shift()
