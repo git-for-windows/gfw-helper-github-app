@@ -118,7 +118,14 @@ const cascadingRuns = async (context, req) => {
 
             const token = await getToken(context, checkRunOwner, checkRunRepo)
             const { getGitArtifactsCommentID, appendToIssueComment } = require('./issues')
-            const gitArtifactsCommentID = await getGitArtifactsCommentID(context, token, checkRunOwner, checkRunRepo, req.body.check_run.head_sha)
+            const gitArtifactsCommentID = await getGitArtifactsCommentID(
+                context,
+                token,
+                checkRunOwner,
+                checkRunRepo,
+                req.body.check_run.head_sha,
+                checkRun.details_url,
+            )
 
             if (gitArtifactsCommentID) {
                 await appendToIssueComment(context, token, checkRunOwner, checkRunRepo, gitArtifactsCommentID, comment)
