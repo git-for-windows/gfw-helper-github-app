@@ -1,3 +1,5 @@
+const { activeBot, activeOrg } = require('./org')
+
 const getToken = (() => {
     const tokens = {}
 
@@ -12,7 +14,7 @@ const getToken = (() => {
 })()
 
 const isAllowed = async (context, owner, repo, login) => {
-    if (login === 'gitforwindowshelper[bot]') return true
+    if (login === activeBot) return true
     const getCollaboratorPermissions = require('./get-collaborator-permissions')
     const token = await getToken(context, owner, repo)
     const permission = await getCollaboratorPermissions(context, token, owner, repo, login)
@@ -33,7 +35,7 @@ const triggerGitArtifactsRuns = async (context, checkRunOwner, checkRunRepo, tag
     const owner = match[1]
     const repo = match[2]
     const workflowRunId = Number(match[3])
-    if (owner !== 'git-for-windows' || repo !== 'git-for-windows-automation') {
+    if (owner !== activeOrg || repo !== 'git-for-windows-automation') {
         throw new Error(`Unexpected repository ${owner}/${repo} for tag-git run ${tagGitCheckRun.id}: ${tagGitCheckRun.url}`)
     }
 
@@ -115,12 +117,12 @@ const cascadingRuns = async (context, req) => {
     const checkRunRepo = req.body.repository.name
     const checkRun = req.body.check_run
     const name = checkRun.name
-    const sender = req.body.sender.login === 'ghost' && checkRun?.app?.slug === 'gitforwindowshelper'
-        ? 'gitforwindowshelper[bot]' : req.body.sender.login
+    const sender = req.body.sender.login === 'ghost' && checkRun?.app?.slug === activeBot
+        ? activeBot : req.body.sender.login
 
     if (action === 'completed') {
         if (name === 'tag-git') {
-            if (checkRunOwner !== 'git-for-windows' || checkRunRepo !== 'git') {
+            if (checkRunOwner !== activeOrg || checkRunRepo !== 'git') {
                 throw new Error(`Refusing to handle cascading run in ${checkRunOwner}/${checkRunRepo}`)
             }
 

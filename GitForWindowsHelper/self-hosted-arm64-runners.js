@@ -1,3 +1,5 @@
+const { activeOrg, activeBot } = require('./org')
+
 module.exports = async (context, req) => {
     const action = req.body.action
     const owner = req.body.repository.owner.login
@@ -18,7 +20,7 @@ module.exports = async (context, req) => {
     })()
 
     const isAllowed = async (login) => {
-        if (login === 'gitforwindowshelper[bot]') return true
+        if (login === activeBot) return true
         const getCollaboratorPermissions = require('./get-collaborator-permissions')
         const token = await getToken()
         const permission = await getCollaboratorPermissions(context, token, owner, repo, login)
@@ -43,7 +45,7 @@ module.exports = async (context, req) => {
         const answer = await triggerWorkflowDispatch(
             context,
             token,
-            'git-for-windows',
+            activeOrg,
             'git-for-windows-automation',
             'create-azure-self-hosted-runners.yml',
             'main', {
@@ -64,7 +66,7 @@ module.exports = async (context, req) => {
         const answer = await triggerWorkflowDispatch(
             context,
             token,
-            'git-for-windows',
+            activeOrg,
             'git-for-windows-automation',
             'delete-self-hosted-runner.yml',
             'main', {

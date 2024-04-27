@@ -119,9 +119,27 @@ This process looks a bit complex, but the main reason for that is that three thi
 
 First of all, a new [Azure Function](https://portal.azure.com/#blade/HubsExtension/BrowseResourceBlade/resourceType/Microsoft.Web%2Fsites/kind/functionapp) was created. A Linux one was preferred, for cost and performance reasons. Deployment with GitHub was _not_ yet configured.
 
-#### Getting the "publish profile"
+#### Obtaining the Azure credentials
 
-After the deployment succeeded, in the "Overview" tab, there is a "Get publish profile" link on the right panel at the center top. Clicking it will automatically download a `.json` file whose contents will be needed later.
+The idea is to use [OpenID Connect](https://docs.github.com/en/actions/concepts/security/openid-connect) to log into Azure in the deploy workflow, _identifying_ as said workflow, via a "Managed Identity". This can be registered after the Azure Function has been successfully created: In an Azure CLI (for example [the one that is very neatly embedded in the Azure Portal](https://learn.microsoft.com/en-us/azure/cloud-shell/get-started/classic)), run this (after replacing the placeholders `{subscription-id}`, `{resource-group}` and `{app-name}`):
+
+```shell
+az identity create --name <managed-identity-name> -g <resource-group>
+az identity federated-credential create \
+  --identity-name <managed-identity-name> \
+  --resource-group <resource-group> \
+  --name github-workflow \
+  --issuer https://token.actions.githubusercontent.com \
+  --subject repo:<org>/gfw-helper-github-app:environment:deploy-to-azure \
+  --audiences api://AzureADTokenExchange
+# The scope can be copied from the Azure Portal URL after navigating to the Azure Function
+az role assignment create \
+  --assignee <client-id-of-managed-identity> \
+  --scope '/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Web/sites/<azure-function-name>' \
+  --role 'Contributor'
+```
+
+The result is a "managed identity", essentially a tightly-scoped credential that allows deploying this particular Azure Function from that particular repository in a GitHub workflow run and that's it. This managed identity is identified via the `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID` Actions secrets, more on that below.
 
 #### Some environment variables
 
@@ -131,9 +149,9 @@ Concretely, the environment variables `GITHUB_WEBHOOK_SECRET`, `GITHUB_APP_PRIVA
 
 ### The repository
 
-On https://github.com/, the `+` link on the top was pressed, and an empty, private repository was registered. Nothing was pushed to it yet.
+Create a fork of https://github.com/git-for-windows/gfw-helper-github-app. Configure the Azure Managed Identity via Actions secrets, under the keys `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID`. Also, the `AZURE_FUNCTION_NAME` secret needs to be defined (its value is the name of the Azure Function).
 
-After that, the contents of the publish profile that [was downloaded earlier](#getting-the-publish-profile) was registered as Actions secret, under the name `AZURE_FUNCTIONAPP_PUBLISH_PROFILE`.
+After that, the Azure Service Principal needs to be registered as Actions secret, under the name `AZURE_RBAC_CREDENTIALS`.
 
 This repository was initialized locally only after that, actually, by starting to write this `README.md` and then developing this working toy GitHub App, and the `origin` remote was set to the newly registered repository on GitHub.
 
