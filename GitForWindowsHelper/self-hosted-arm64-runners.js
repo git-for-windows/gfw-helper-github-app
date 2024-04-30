@@ -47,7 +47,9 @@ module.exports = async (context, req) => {
             'git-for-windows-automation',
             'create-azure-self-hosted-runners.yml',
             'main', {
-                runner_scope: 'repo-level'
+                runner_scope: 'repo-level',
+                // Repository that the runner will be deployed to. We want to ensure that the runner is deployed to the same repository that triggered the action.
+                runner_repo: repo
             }
         )
 
