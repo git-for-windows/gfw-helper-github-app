@@ -39,7 +39,7 @@ module.exports = async function (context, req) {
     try {
         const selfHostedARM64Runners = require('./self-hosted-arm64-runners')
         if (req.headers['x-github-event'] === 'workflow_job'
-            && req.body.repository.full_name === 'git-for-windows/git-for-windows-automation'
+            && ['git-for-windows/git-for-windows-automation', 'git-for-windows/git-sdk-arm64'].includes(req.body.repository.full_name)
             && ['queued', 'completed'].includes(req.body.action)
             && req.body.workflow_job.labels.length === 2
             && req.body.workflow_job.labels[0] === 'Windows'
