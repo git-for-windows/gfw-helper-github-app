@@ -200,7 +200,7 @@ module.exports = async (context, req) => {
                     )
                 }
             } else {
-                if (package_name !== 'mingw-w64-clang') {
+                if (package_name !== 'mingw-w64-llvm') {
                     toTrigger.push(
                         { displayArchitecture: 'i686/x86_64' }
                     )

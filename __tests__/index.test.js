@@ -112,14 +112,14 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/74')) return {
         head: { sha: 'a7e4b90' }
     }
-    if (method === 'GET' && requestPath.endsWith('/pulls/75')) return {
-        head: { sha: '45b8fd0' }
-    }
     if (method === 'GET' && requestPath.endsWith('/pulls/90')) return {
         head: { sha: '265d07e' }
     }
     if (method === 'GET' && requestPath.endsWith('/pulls/96')) return {
         head: { sha: 'b7b0dfc' }
+    }
+    if (method === 'GET' && requestPath.endsWith('/pulls/115')) return {
+        head: { sha: '9bc59bd' }
     }
     if (method === 'GET' && requestPath.endsWith('/pulls/153')) return {
         head: { sha: 'b197f8f' }
@@ -526,13 +526,13 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686'])
 })
 
-testIssueComment('/deploy mingw-w64-clang', {
+testIssueComment('/deploy mingw-w64-llvm', {
     issue: {
-        number: 75,
-        title: 'shrink LLVM',
+        number: 115,
+        title: 'clang: update to 18.1.6',
         body: '',
         pull_request: {
-            html_url: 'https://github.com/git-for-windows/MINGW-packages/pull/75'
+            html_url: 'https://github.com/git-for-windows/MINGW-packages/pull/115'
         }
     },
     repository: {
@@ -546,6 +546,29 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64'])
+})
+
+testIssueComment('/deploy', {
+    issue: {
+        number: 115,
+        title: 'clang: update to 18.1.6',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MINGW-packages/pull/115'
+        }
+    },
+    repository: {
+        name: 'MINGW-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64'])
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.package)).toEqual(['mingw-w64-llvm'])
 })
 
 testIssueComment('/deploy libkbsa', {
