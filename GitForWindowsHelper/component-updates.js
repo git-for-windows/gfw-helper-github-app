@@ -10,6 +10,7 @@ const guessComponentUpdateDetails = (title, body) => {
     else if (['git-credential-manager', 'gcm-core', 'gcm'].includes(package_name)) package_name = 'mingw-w64-git-credential-manager'
     else if (package_name === 'cygwin') package_name = 'msys2-runtime'
     else if (package_name === 'gpg') package_name = 'gnupg'
+    else if (['clang', 'llvm', 'mingw-w64-clang'].includes(package_name)) package_name = 'mingw-w64-llvm'
 
     version = version
         .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-|curl-|gnupg-)/, '')
