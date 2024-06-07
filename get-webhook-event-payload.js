@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 (async () => {
     const fs = require('fs')
 
