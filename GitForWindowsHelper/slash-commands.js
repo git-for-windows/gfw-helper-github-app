@@ -124,7 +124,7 @@ module.exports = async (context, req) => {
                 'updpkgsums.yml',
                 'main', {
                     repo,
-                    'pr-number': issueNumber,
+                    'pr-number': '' + issueNumber,
                     actor: commenter
                 }
             );

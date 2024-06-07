@@ -354,7 +354,7 @@ The workflow run [was started](dispatched-workflow-updpkgsums.yml).`,
     expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
     expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
     expect(dispatchedWorkflows).toHaveLength(1)
-    expect(dispatchedWorkflows.map(e => e.payload.inputs['pr-number'])).toEqual([104])
+    expect(dispatchedWorkflows.map(e => e.payload.inputs['pr-number'])).toEqual(['104'])
     expect(mockGitHubApiRequest).toHaveBeenCalled()
     const comment = mockGitHubApiRequest.mock.calls[mockGitHubApiRequest.mock.calls.length - 1]
     expect(comment[3]).toEqual('/repos/git-for-windows/MINGW-packages/issues/comments/0')
