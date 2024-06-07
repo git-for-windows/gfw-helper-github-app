@@ -11,6 +11,16 @@
     while (args.length) {
         let option = args.shift()
 
+        const issueCommentMatch = option.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/\d+#issuecomment-(\d+)$/)
+        if (issueCommentMatch) {
+            eventType = 'issue_comment'
+            const githubRequest = require('./GitForWindowsHelper/github-api-request')
+            const [owner, repo, comment_id] = issueCommentMatch.slice(1)
+            const comment = await githubRequest(console, null, 'GET', `/repos/${owner}/${repo}/issues/comments/${comment_id}`)
+            aroundDate = new Date(comment.updated_at)
+            continue
+        }
+
         const optionWithArgument = option.match(/^(--[^=]+)=(.*)$/)
         if (optionWithArgument) {
             option = optionWithArgument[1]
