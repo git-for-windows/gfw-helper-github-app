@@ -136,6 +136,12 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/765')) return {
         head: { sha: 'c0ffee1ab7e' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/69')) return {
+        head: { sha: '59d71150a6ee93ab954221c43ca86f8eafe68ddc'}
+    }
+    if (method === 'GET' && requestPath.endsWith('/pulls/177')) return {
+        head: { sha: '03bdffe5997'}
+    }
     if (method === 'PATCH' && requestPath.endsWith('/git/refs/heads/main')) {
         if (payload.sha !== 'c0ffee1ab7e') throw new Error(`Unexpected sha: ${payload.sha}`)
         if (payload.force !== false) throw new Error(`Unexpected force value: ${payload.force}`)
@@ -330,6 +336,44 @@ The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`
     })
 })
 
+testIssueComment('/open pr', {
+    repository: {
+        name: 'msys2-runtime'
+    },
+    issue: {
+        number: 69,
+        title: 'Support OneDrive better',
+        body: `This backports patches that avoid hydrating files on OneDrive _just_ to \`stat()\` them.
+
+See also https://github.com/msys2/msys2-runtime/issues/206.`,
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/msys2-runtime/pull/69'
+        }
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-open-pr.yml)`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
+    expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows).toHaveLength(1)
+    expect(dispatchedWorkflows[0].payload.inputs.package).toEqual('msys2-runtime')
+    expect(dispatchedWorkflows[0].payload.inputs.version).toEqual('59d71150a6ee93ab954221c43ca86f8eafe68ddc')
+    expect(mockGitHubApiRequest).toHaveBeenCalled()
+    const msysComment = mockGitHubApiRequest.mock.calls[mockGitHubApiRequest.mock.calls.length - 1]
+    expect(msysComment[3]).toEqual('/repos/git-for-windows/msys2-runtime/issues/comments/0')
+    expect(msysComment[4]).toEqual({
+        body: `existing comment body
+
+The workflow run [was started](dispatched-workflow-open-pr.yml)`
+    })
+})
+
 testIssueComment('/updpkgsums', {
     issue: {
         number: 104,
@@ -502,6 +546,29 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['x86_64'])
+})
+
+testIssueComment('/deploy', {
+    issue: {
+        number: 177,
+        title: 'msys2-runtime: update to 4b3a2e08f545432b62461313082193d6df09b6b8',
+        body: 'This corresponds to https://github.com/git-for-windows/msys2-runtime/pull/70',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MSYS2-packages/pull/177'
+        }
+    },
+    repository: {
+        name: 'MSYS2-packages'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['x86_64'])
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.package)).toEqual(['msys2-runtime'])
 })
 
 testIssueComment('/deploy msys2-runtime-3.3', {

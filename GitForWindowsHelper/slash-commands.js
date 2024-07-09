@@ -50,12 +50,18 @@ module.exports = async (context, req) => {
 
     try {
         if (command == '/open pr') {
-            if (owner !== 'git-for-windows' || repo !== 'git') return `Ignoring ${command} in unexpected repo: ${commentURL}`
+            if (owner !== 'git-for-windows' || !['git', 'msys2-runtime'].includes(repo)) return `Ignoring ${command} in unexpected repo: ${commentURL}`
 
             await checkPermissions()
 
             const { guessComponentUpdateDetails, packageNeedsBothMSYSAndMINGW } = require('./component-updates')
-            const { package_name, version } = guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
+            const { getPRCommitSHA } = require('./issues')
+            const { package_name, version } = repo === 'msys2-runtime'
+                ? {
+                    package_name: repo,
+                    version: await getPRCommitSHA(context, await getToken(), owner, repo, issueNumber)
+                }
+                : guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
             await thumbsUp()
 
