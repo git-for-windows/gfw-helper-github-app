@@ -151,6 +151,17 @@ http://www.gnutls.org/news.html#2023-02-10`
     })
 
     expect(await guessReleaseNotes(context, {
+        pull_request: { "html_url": "https://github.com/git-for-windows/MINGW-packages/pull/120" },
+        title: 'mingw-w64-curl: update to 8.8.0',
+        body: `This closes https://github.com/git-for-windows/git/issues/4963`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with [cURL v8.8.0](https://curl.se/changes.html#8_8_0).',
+        package: 'mingw-w64-curl',
+        version: '8.8.0'
+    })
+
+    expect(await guessReleaseNotes(context, {
         labels: [{ name: 'component-update' }],
         title: '[New openssl version] OpenSSL 1.1.1u',
         body: `\nhttps://github.com/openssl/openssl/releases/tag/OpenSSL_1_1_1u`

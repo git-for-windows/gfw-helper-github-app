@@ -102,11 +102,13 @@ const guessReleaseNotes = async (context, issue) => {
     }
 
     const matchURL = async () => {
-        if (package_name === 'perl') return `http://search.cpan.org/dist/perl-${version}/pod/perldelta.pod`
-        if (package_name === 'curl') return `https://curl.se/changes.html#${version.replaceAll('.', '_')}`
-        if (package_name === 'openssl') return `https://www.openssl.org/news/openssl-${
+        switch (package_name.replace(/^mingw-w64-/, '')) {
+        case 'perl': return `http://search.cpan.org/dist/perl-${version}/pod/perldelta.pod`
+        case 'curl': return `https://curl.se/changes.html#${version.replaceAll('.', '_')}`
+        case 'openssl': return `https://www.openssl.org/news/openssl-${
             version.replace(/^(1\.1\.1|[3-9]\.\d+).*/, '$1')
         }-notes.html`
+        }
 
         if (!issue.pull_request) return matchURLInIssue(issue)
 
