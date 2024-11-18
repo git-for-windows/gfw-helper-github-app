@@ -414,7 +414,11 @@ let mockQueueCheckRun = jest.fn(() => 'check-run-id')
 let mockUpdateCheckRun = jest.fn()
 let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, checkRunName) => {
     if (rev === 'this-will-be-rc2') {
-        const id = checkRunName === 'git-artifacts-x86_64' ? 8664 : 686
+        const id = {
+            'git-artifacts-x86_64': 8664,
+            'git-artifacts-i686': 686,
+            'git-artifacts-aarch64': 64
+        }[checkRunName]
         const output = {
             title: 'Build Git -rc2 artifacts',
             summary: 'Build Git -rc2 artifacts from commit this-will-be-rc2 (tag-git run #987)',
@@ -869,7 +873,8 @@ The \`release-git\` workflow run [was started](dispatched-workflow-release-git.y
     expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-release-git.yml')
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
         git_artifacts_x86_64_workflow_run_id: "8664",
-        git_artifacts_i686_workflow_run_id: "686"
+        git_artifacts_i686_workflow_run_id: "686",
+        git_artifacts_aarch64_workflow_run_id: "64"
     })
 })
 
