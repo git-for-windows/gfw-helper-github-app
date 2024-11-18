@@ -42,7 +42,7 @@ const triggerGitArtifactsRuns = async (context, checkRunOwner, checkRunRepo, tag
 
     const architecturesToTrigger = []
     const { listCheckRunsForCommit, queueCheckRun } = require('./check-runs')
-    for (const architecture of ['x86_64', 'i686']) {
+    for (const architecture of ['x86_64', 'i686', 'aarch64']) {
         const workflowName = `git-artifacts-${architecture}`
         const runs = await listCheckRunsForCommit(
             context,
