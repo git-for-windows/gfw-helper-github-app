@@ -165,6 +165,7 @@ The \`tag-git\` workflow run [was started](https://url-to-tag-git/)
 
 git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 `)
         return { html_url: 'https://github.com/git-for-windows/git/pull/4322#issuecomment-1450703020' }
     }
@@ -751,6 +752,7 @@ test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
         expect(context.res).toEqual({
             body: `git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 `,
             headers: undefined,
             status: undefined
@@ -819,20 +821,26 @@ The \`tag-git\` workflow run [was started](dispatched-workflow-tag-git.yml)`,
 
 The \`git-artifacts-x86_64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 `,
         headers: undefined,
         status: undefined
     })
     expect(mockGetInstallationAccessToken).toHaveBeenCalled()
     expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
-    expect(dispatchedWorkflows).toHaveLength(2)
+    expect(dispatchedWorkflows).toHaveLength(3)
     expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
-        architecture: 'i686',
+        architecture: 'aarch64',
         tag_git_workflow_run_id: "341"
     })
     expect(dispatchedWorkflows[1].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[1].payload.inputs).toEqual({
+        architecture: 'i686',
+        tag_git_workflow_run_id: "341"
+    })
+    expect(dispatchedWorkflows[2].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
+    expect(dispatchedWorkflows[2].payload.inputs).toEqual({
         architecture: 'x86_64',
         tag_git_workflow_run_id: "341"
     })
