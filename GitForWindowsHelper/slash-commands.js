@@ -400,7 +400,7 @@ module.exports = async (context, req) => {
                 let gitVersion
                 let tagGitWorkflowRunID
                 const workFlowRunIDs = {}
-                for (const architecture of ['x86_64', 'i686']) {
+                for (const architecture of ['x86_64', 'i686', 'aarch64']) {
                     const workflowName = `git-artifacts-${architecture}`
                     const runs = await listCheckRunsForCommit(
                         context,
@@ -447,7 +447,7 @@ module.exports = async (context, req) => {
                     releaseCheckRunId, {
                         output: {
                             title: `Publish ${gitVersion} for @${commitSHA}`,
-                            summary: `Downloading the Git artifacts from ${workFlowRunIDs['x86_64']} and ${workFlowRunIDs['i686']} and publishing them as a new GitHub Release at ${owner}/${repo}`
+                            summary: `Downloading the Git artifacts from ${workFlowRunIDs['x86_64']}, ${workFlowRunIDs['i686']} and ${workFlowRunIDs['aarch64']} and publishing them as a new GitHub Release at ${owner}/${repo}`
                         }
                     }
                 )
@@ -461,7 +461,8 @@ module.exports = async (context, req) => {
                     'release-git.yml',
                     'main', {
                         git_artifacts_x86_64_workflow_run_id: workFlowRunIDs['x86_64'],
-                        git_artifacts_i686_workflow_run_id: workFlowRunIDs['i686']
+                        git_artifacts_i686_workflow_run_id: workFlowRunIDs['i686'],
+                        git_artifacts_aarch64_workflow_run_id: workFlowRunIDs['aarch64'],
                     }
                 )
 
