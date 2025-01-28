@@ -15,6 +15,21 @@
       "console": "integratedTerminal"
     },
     {
+      "type": "node",
+      "request": "launch",
+      "name": "Test event delivery",
+      "runtimeArgs": [
+        "--inspect-brk",
+      ],
+      "stopOnEntry": false,
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "${workspaceFolder}/test-pr-comment-delivery.js",
+        "${workspaceFolder}/example-check-run-git-artifacts-completed.yml",
+      ],
+      "console": "integratedTerminal"
+    },
+    {
       "name": "Attach to Node Functions",
       "type": "node",
       "request": "attach",
