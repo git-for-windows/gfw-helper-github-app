@@ -169,6 +169,14 @@ The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git
 `)
         return { html_url: 'https://github.com/git-for-windows/git/pull/4322#issuecomment-1450703020' }
     }
+    if (method === 'GET' && requestPath ===
+        '/repos/git-for-windows/git-snapshots/releases/tags/prerelease-2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446') {
+        throw { statusCode: 404 }
+    }
+    if (method === 'GET' && requestPath ===
+        '/repos/git-for-windows/git/compare/HEAD...0c796d3013a57e8cc894c152f0200107226e5dd1') {
+        return { behind_by: 0 }
+    }
     throw new Error(`Unhandled ${method}-${requestPath}-${JSON.stringify(payload)}`)
 })
 jest.mock('../GitForWindowsHelper/github-api-request', () => {
@@ -422,6 +430,19 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
         const output = {
             title: 'Build Git -rc2 artifacts',
             summary: 'Build Git -rc2 artifacts from commit this-will-be-rc2 (tag-git run #987)',
+            text: `For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/${id})`
+        }
+        return [{ id, status: 'completed', conclusion: 'success', output }]
+    }
+    if (rev === '0c796d3013a57e8cc894c152f0200107226e5dd1') {
+        const id = {
+            'git-artifacts-x86_64': 13010015190,
+            'git-artifacts-i686': 13010015938,
+            'git-artifacts-aarch64': 13010016895
+        }[checkRunName]
+        const output = {
+            title: 'Build Git v2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446 artifacts',
+            summary: 'Build Git v2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446 artifacts from commit 0c796d3013a57e8cc894c152f0200107226e5dd1 (tag-git run #13009996573)',
             text: `For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/${id})`
         }
         return [{ id, status: 'completed', conclusion: 'success', output }]
@@ -910,6 +931,66 @@ test('a completed `release-git` run updates the `main` branch in git-for-windows
             '/repos/git-for-windows/git/git/refs/heads/main', {
                 sha: 'c0ffee1ab7e',
                 force: false
+            }
+        ])
+    } catch (e) {
+        context.log.mock.calls.forEach(e => console.log(e[0]))
+        throw e;
+    }
+})
+
+test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-snapshot`', async () => {
+    const context = makeContext({
+        action: 'completed',
+        check_run: {
+            name: 'git-artifacts-aarch64',
+            head_sha: '0c796d3013a57e8cc894c152f0200107226e5dd1',
+            status: 'completed',
+            conclusion: 'success',
+            details_url: 'https://url-to-git-artifacts-aarch64/',
+            output: {
+                title: 'Build Git v2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446 artifacts',
+                summary: 'Build Git v2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446 artifacts from commit 0c796d3013a57e8cc894c152f0200107226e5dd1 (tag-git run #13009996573)',
+                text: 'For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/13010016895).'
+            }
+        },
+        installation: {
+            id: 123
+        },
+        repository: {
+            name: 'git',
+            owner: {
+                login: 'git-for-windows'
+            },
+            full_name: 'git-for-windows/git'
+        }
+    }, {
+        'x-github-event': 'check_run'
+    })
+
+    try {
+        expect(await index(context, context.req)).toBeUndefined()
+        expect(context.res).toEqual({
+            body: `The 'upload-snapshot' workflow run was started at dispatched-workflow-upload-snapshot.yml`,
+            headers: undefined,
+            status: undefined
+        })
+        expect(mockGitHubApiRequest).toHaveBeenCalled()
+        expect(mockGitHubApiRequest.mock.calls[0].slice(1)).toEqual([
+            'installation-access-token',
+            'GET',
+            '/repos/git-for-windows/git-snapshots/releases/tags/prerelease-2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446'
+        ])
+        expect(mockGitHubApiRequest.mock.calls[2].slice(1)).toEqual([
+            'installation-access-token',
+            'POST',
+            '/repos/git-for-windows/git-for-windows-automation/actions/workflows/upload-snapshot.yml/dispatches', {
+                ref: 'main',
+                inputs: {
+                    git_artifacts_aarch64_workflow_run_id: "13010016895",
+                    git_artifacts_i686_workflow_run_id: "13010015938",
+                    git_artifacts_x86_64_workflow_run_id: "13010015190"
+                }
             }
         ])
     } catch (e) {
