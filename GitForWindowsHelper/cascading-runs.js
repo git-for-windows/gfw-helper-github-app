@@ -133,6 +133,120 @@ const cascadingRuns = async (context, req) => {
 
             return comment
         }
+        if (checkRunOwner === 'git-for-windows'
+            && checkRunRepo === 'git'
+            && name.startsWith('git-artifacts-')) {
+            const output = req.body.check_run.output
+            const match = output.summary.match(
+                /Build Git (\S+) artifacts from commit (\S+) \(tag-git run #(\d+)\)/
+            )
+            if (!match) throw new Error(
+                `Could not parse 'summary' attribute of check-run ${req.body.check_run.id}: ${output.summary}`
+            )
+            const [, ver, commit, tagGitWorkflowRunID] = match
+            const snapshotTag = `prerelease-${ver.replace(/^v/, '')}`
+
+            // First, verify that the snapshot has not been uploaded yet
+            const gitSnapshotsToken = await getToken(context, checkRunOwner, 'git-snapshots')
+            const githubApiRequest = require('./github-api-request')
+            try {
+                const releasePath = `${checkRunOwner}/git-snapshots/releases/tags/${snapshotTag}`
+                await githubApiRequest(
+                    context,
+                    gitSnapshotsToken,
+                    'GET',
+                    `/repos/${releasePath}`,
+                )
+                return `Ignoring ${name} check-run because the snapshot for ${commit} was already uploaded`
+                    + ` to https://github.com/${releasePath}`
+            } catch(e) {
+                if (e?.statusCode !== 404) throw e
+                // The snapshot does not exist yet
+            }
+
+            // Next, check that the commit is on the `main` branch
+            const gitToken = await getToken(context, checkRunOwner, checkRunRepo)
+            const { behind_by } = await githubApiRequest(
+                context,
+                gitToken,
+                'GET',
+                `/repos/${checkRunOwner}/${checkRunRepo}/compare/HEAD...${commit}`,
+            )
+            if (behind_by > 0) {
+                return `Ignoring ${name} check-run because its corresponding commit ${commit} is not on the main branch`
+            }
+
+            const workFlowRunIDs = {}
+            const { listCheckRunsForCommit, queueCheckRun } = require('./check-runs')
+            for (const architecture of ['x86_64', 'i686', 'aarch64']) {
+                const workflowName = `git-artifacts-${architecture}`
+                const runs = name === workflowName ? [req.body.check_run] : await listCheckRunsForCommit(
+                    context,
+                    gitToken,
+                    checkRunOwner,
+                    checkRunRepo,
+                    commit,
+                    workflowName
+                )
+                const needle =
+                    `Build Git ${ver} artifacts from commit ${commit} (tag-git run #${tagGitWorkflowRunID})`
+                const latest = runs
+                    .filter(run => run.output.summary === needle)
+                    .sort((a, b) => a.id - b.id)
+                    .pop()
+                if (latest) {
+                    if (latest.status !== 'completed') {
+                        return `The '${workflowName}' run at ${latest.html_url} did not complete yet.`
+                    }
+                    if (latest.conclusion !== 'success') {
+                        throw new Error(`The '${workflowName}' run at ${latest.html_url} did not succeed.`)
+                    }
+
+                    const match = latest.output.text.match(
+                        /For details, see \[this run\]\(https:\/\/github.com\/([^/]+)\/([^/]+)\/actions\/runs\/(\d+)\)/
+                    )
+                    if (!match) throw new Error(`Unhandled 'text' attribute of git-artifacts run ${latest.id}: ${latest.url}`)
+                    const owner = match[1]
+                    const repo = match[2]
+                    workFlowRunIDs[architecture] = match[3]
+                    if (owner !== 'git-for-windows' || repo !== 'git-for-windows-automation') {
+                        throw new Error(`Unexpected repository ${owner}/${repo} for git-artifacts run ${latest.id}: ${latest.url}`)
+                    }
+                } else {
+                    return `Won't trigger 'upload-snapshot' in reaction to ${name} because the '${workflowName}' run does not exist.`
+                }
+            }
+
+            const checkRunTitle = `Upload snapshot ${snapshotTag}`
+            await queueCheckRun(
+                context,
+                gitToken,
+                'git-for-windows',
+                'git',
+                commit,
+                'upload-snapshot',
+                checkRunTitle,
+                checkRunTitle
+            )
+
+            const gitForWindowsAutomationToken =
+                await getToken(context, checkRunOwner, 'git-for-windows-automation')
+            const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+            const answer = await triggerWorkflowDispatch(
+                context,
+                gitForWindowsAutomationToken,
+                'git-for-windows',
+                'git-for-windows-automation',
+                'upload-snapshot.yml',
+                'main', {
+                    git_artifacts_x86_64_workflow_run_id: workFlowRunIDs['x86_64'],
+                    git_artifacts_i686_workflow_run_id: workFlowRunIDs['i686'],
+                    git_artifacts_aarch64_workflow_run_id: workFlowRunIDs['aarch64'],
+                }
+            )
+
+            return `The 'upload-snapshot' workflow run was started at ${answer.html_url}`
+        }
         return `Not a cascading run: ${name}; Doing nothing.`
     }
     return `Unhandled action: ${action}`
