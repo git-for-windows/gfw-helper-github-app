@@ -460,6 +460,29 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
         }]
         return []
     }
+    if (rev === '88811') {
+        if (checkRunName === 'tag-git') return [{
+            conclusion: 'success',
+            status: 'completed',
+            output: {
+                summary: 'Tag Git already-tagged @88811'
+            },
+            id: 123
+        }]
+        if (checkRunName.startsWith('git-artifacts')) {
+            const id = {
+                'git-artifacts-x86_64': 8664,
+                'git-artifacts-i686': 686,
+                'git-artifacts-aarch64':64,
+            }[checkRunName]
+            const output = {
+                title: 'Build already-tagged artifacts',
+                summary: 'Build Git already-tagged artifacts from commit 88811 (tag-git run #123)',
+                text: `For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/${id})`
+            }
+            return [{ id, status: 'completed', conclusion: 'success', output }]
+        }
+    }
     if (checkRunName === 'git-artifacts-x86_64') return [{
         status: 'completed',
         conclusion: 'success',
@@ -993,6 +1016,50 @@ test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-s
                 }
             }
         ])
+    } catch (e) {
+        context.log.mock.calls.forEach(e => console.log(e[0]))
+        throw e;
+    }
+})
+
+test('a `push` triggers a `tag-git` or an `upload-snapshot` run', async () => {
+    const context = makeContext({
+        ref: 'refs/heads/main',
+        after: 'no-tag-git-yet',
+        installation: {
+            id: 123
+        },
+        repository: {
+            name: 'git',
+            owner: {
+                login: 'git-for-windows'
+            },
+            full_name: 'git-for-windows/git'
+        }
+    }, {
+        'x-github-event': 'push'
+    })
+
+    try {
+        expect(await index(context, context.req)).toBeUndefined()
+        expect(context.res).toEqual({
+            body: `The 'tag-git' workflow run was started at dispatched-workflow-tag-git.yml`,
+            headers: undefined,
+            status: undefined
+        })
+    } catch (e) {
+        context.log.mock.calls.forEach(e => console.log(e[0]))
+        throw e;
+    }
+
+    context.req.body.after = '88811'
+    try {
+        expect(await index(context, context.req)).toBeUndefined()
+        expect(context.res).toEqual({
+            body: `The 'upload-snapshot' workflow run was started at dispatched-workflow-upload-snapshot.yml`,
+            headers: undefined,
+            status: undefined
+        })
     } catch (e) {
         context.log.mock.calls.forEach(e => console.log(e[0]))
         throw e;
