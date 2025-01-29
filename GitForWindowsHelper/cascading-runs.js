@@ -252,7 +252,195 @@ const cascadingRuns = async (context, req) => {
     return `Unhandled action: ${action}`
 }
 
+const handlePush = async (context, req) => {
+    const pushOwner = req.body.repository.owner.login
+    const pushRepo = req.body.repository.name
+    const ref = req.body.ref
+    const commit = req.body.after
+
+    if (pushOwner !== 'git-for-windows' || pushRepo !== 'git') {
+        throw new Error(`Refusing to handle push to ${pushOwner}/${pushRepo}`)
+    }
+
+    if (ref !== 'refs/heads/main') return `Ignoring push to ${ref}`
+
+    // See whether there was are already a `tag-git` check-run for this commit
+    const { listCheckRunsForCommit, queueCheckRun, updateCheckRun } = require('./check-runs')
+    const gitToken = await getToken(context, pushOwner, pushRepo)
+    const runs =  await listCheckRunsForCommit(
+        context,
+        gitToken,
+        pushOwner,
+        pushRepo,
+        commit,
+        'tag-git'
+    )
+
+    const latest = runs
+        .sort((a, b) => a.id - b.id)
+        .pop()
+
+    if (latest && latest.status !== 'completed') throw new Error(`The 'tag-git' run at ${latest.html_url} did not complete yet before ${commit} was pushed to ${ref}!`)
+
+    const gitForWindowsAutomationToken =
+        await getToken(context, pushOwner, 'git-for-windows-automation')
+    const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+    if (!latest) {
+        // There is no `tag-git` workflow run; Trigger it to build a new snapshot
+        const tagGitCheckRunTitle = `Tag snapshot Git @${commit}`
+        const tagGitCheckRunId = await queueCheckRun(
+            context,
+            gitForWindowsAutomationToken,
+            pushOwner,
+            pushRepo,
+            commit,
+            'tag-git',
+            tagGitCheckRunTitle,
+            tagGitCheckRunTitle
+        )
+
+        try {
+            const answer = await triggerWorkflowDispatch(
+                context,
+                gitForWindowsAutomationToken,
+                pushOwner,
+                'git-for-windows-automation',
+                'tag-git.yml',
+                'main', {
+                    rev: commit,
+                    owner: pushOwner,
+                    repo: pushRepo,
+                    snapshot: 'true'
+                }
+            )
+            return `The 'tag-git' workflow run was started at ${answer.html_url}`
+        } catch (e) {
+            await updateCheckRun(
+                context,
+                gitForWindowsAutomationToken,
+                pushOwner,
+                pushRepo,
+                tagGitCheckRunId, {
+                    status: 'completed',
+                    conclusion: 'failure',
+                    output: {
+                        title: tagGitCheckRunTitle,
+                        summary: tagGitCheckRunTitle,
+                        text: e.message || JSON.stringify(e, null, 2)
+                    }
+                }
+            )
+            throw e
+        }
+    }
+
+    if (latest.conclusion !== 'success') throw new Error(
+        `The 'tag-git' run at ${latest.html_url} did not succeed (conclusion = ${latest.conclusion}).`
+    )
+
+    // There is already a `tag-git` workflow run; Is there already an `upload-snapshot` run?
+    const latestUploadSnapshotRun = (await listCheckRunsForCommit(
+        context,
+        gitToken,
+        pushOwner,
+        pushRepo,
+        commit,
+        'upload-snapshot'
+    )).pop()
+    if (latestUploadSnapshotRun) return `The 'upload-snapshot' check-run already exists for ${commit}: ${latestUploadSnapshotRun.html_url}`
+
+    // Trigger the `upload-snapshot` run directly
+    const tagGitCheckRunTitle = `Upload snapshot Git @${commit}`
+    const tagGitCheckRunId = await queueCheckRun(
+        context,
+        await getToken(),
+        pushOwner,
+        pushRepo,
+        commit,
+        'tag-git',
+        tagGitCheckRunTitle,
+        tagGitCheckRunTitle
+    )
+
+    const match = latest.output.summary.match(/^Tag Git (\S+) @([0-9a-f]+)$/)
+    if (!match) throw new Error(`Unexpected summary '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
+    if (!match[2] === commit) throw new Error(`Unexpected revision ${match[2]} '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
+    const ver = match[1]
+
+    try {
+        const workFlowRunIDs = {}
+        for (const architecture of ['x86_64', 'i686', 'aarch64']) {
+            const workflowName = `git-artifacts-${architecture}`
+            const runs = await listCheckRunsForCommit(
+                context,
+                gitToken,
+                pushOwner,
+                pushRepo,
+                commit,
+                workflowName
+            )
+            const needle =
+                `Build Git ${ver} artifacts from commit ${commit} (tag-git run #${latest.id})`
+            const latest2 = runs
+                .filter(run => run.output.summary === needle)
+                .sort((a, b) => a.id - b.id)
+                .pop()
+            if (latest2) {
+                if (latest2.status !== 'completed' || latest2.conclusion !== 'success') {
+                    throw new Error(`The '${workflowName}' run at ${latest2.html_url} did not succeed.`)
+                }
+
+                const match = latest2.output.text.match(
+                    /For details, see \[this run\]\(https:\/\/github.com\/([^/]+)\/([^/]+)\/actions\/runs\/(\d+)\)/
+                )
+                if (!match) throw new Error(`Unhandled 'text' attribute of git-artifacts run ${latest2.id}: ${latest2.url}`)
+                const owner = match[1]
+                const repo = match[2]
+                workFlowRunIDs[architecture] = match[3]
+                if (owner !== 'git-for-windows' || repo !== 'git-for-windows-automation') {
+                    throw new Error(`Unexpected repository ${owner}/${repo} for git-artifacts run ${latest2.id}: ${latest2.url}`)
+                }
+            } else {
+                return `Won't trigger 'upload-snapshot' on pushing ${commit} because the '${workflowName}' run does not exist.`
+            }
+        }
+
+        const answer = await triggerWorkflowDispatch(
+            context,
+            gitForWindowsAutomationToken,
+            pushRepo,
+            'git-for-windows-automation',
+            'upload-snapshot.yml',
+            'main', {
+                git_artifacts_x86_64_workflow_run_id: workFlowRunIDs['x86_64'],
+                git_artifacts_i686_workflow_run_id: workFlowRunIDs['i686'],
+                git_artifacts_aarch64_workflow_run_id: workFlowRunIDs['aarch64'],
+            }
+        )
+
+        return `The 'upload-snapshot' workflow run was started at ${answer.html_url}`
+    } catch (e) {
+        await updateCheckRun(
+            context,
+            gitForWindowsAutomationToken,
+            pushOwner,
+            pushRepo,
+            tagGitCheckRunId, {
+                status: 'completed',
+                conclusion: 'failure',
+                output: {
+                    title: tagGitCheckRunTitle,
+                    summary: tagGitCheckRunTitle,
+                    text: e.message || JSON.stringify(e, null, 2)
+                }
+            }
+        )
+        throw e
+    }
+}
+
 module.exports = {
     triggerGitArtifactsRuns,
-    cascadingRuns
+    cascadingRuns,
+    handlePush
 }
