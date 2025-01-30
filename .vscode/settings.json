@@ -8,7 +8,8 @@
         "gnutls",
         "Heimdal",
         "MSYS",
-        "relnote"
+        "relnote",
+        "updpkgsums"
     ],
     "cSpell.ignoreRegExpList": [
         "AZURE_FUNCTIONAPP_PUBLISH_PROFILE",
