@@ -49,7 +49,7 @@ module.exports = async (context, req) => {
     const thumbsUp = async () => react('+1')
 
     try {
-        if (command == '/open pr') {
+        if (command === '/open pr') {
             if (owner !== 'git-for-windows' || !['git', 'msys2-runtime'].includes(repo)) return `Ignoring ${command} in unexpected repo: ${commentURL}`
 
             await checkPermissions()
@@ -111,7 +111,7 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${commentURL}`
         }
 
-        if (command == '/updpkgsums') {
+        if (command === '/updpkgsums') {
             if (owner !== 'git-for-windows'
              || !req.body.issue.pull_request
              || !['build-extra', 'MINGW-packages', 'MSYS2-packages'].includes(repo)) {
@@ -265,7 +265,7 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${answer.html_url}`
         }
 
-        if (command == '/git-artifacts') {
+        if (command === '/git-artifacts') {
             if (owner !== 'git-for-windows'
              || repo !== 'git'
              || !req.body.issue.pull_request
@@ -367,7 +367,7 @@ module.exports = async (context, req) => {
             }
         }
 
-        if (command == '/release') {
+        if (command === '/release') {
             if (owner !== 'git-for-windows'
               || repo !== 'git'
               || !req.body.issue.pull_request
