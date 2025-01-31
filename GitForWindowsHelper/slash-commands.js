@@ -49,7 +49,7 @@ module.exports = async (context, req) => {
     const thumbsUp = async () => react('+1')
 
     try {
-        if (command == '/open pr') {
+        if (command === '/open pr') {
             if (owner !== 'git-for-windows' || !['git', 'msys2-runtime'].includes(repo)) return `Ignoring ${command} in unexpected repo: ${commentURL}`
 
             await checkPermissions()
@@ -111,7 +111,7 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${commentURL}`
         }
 
-        if (command == '/updpkgsums') {
+        if (command === '/updpkgsums') {
             if (owner !== 'git-for-windows'
              || !req.body.issue.pull_request
              || !['build-extra', 'MINGW-packages', 'MSYS2-packages'].includes(repo)) {
@@ -265,7 +265,7 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${answer.html_url}`
         }
 
-        if (command == '/git-artifacts') {
+        if (command === '/git-artifacts') {
             if (owner !== 'git-for-windows'
              || repo !== 'git'
              || !req.body.issue.pull_request
@@ -367,7 +367,7 @@ module.exports = async (context, req) => {
             }
         }
 
-        if (command == '/release') {
+        if (command === '/release') {
             if (owner !== 'git-for-windows'
               || repo !== 'git'
               || !req.body.issue.pull_request
@@ -528,6 +528,50 @@ module.exports = async (context, req) => {
             )
             const answer2 = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The workflow run [was started](${answer.html_url})`)
             return `I edited the comment: ${answer2.html_url}`
+        }
+
+        if (command === '/synchronize-sdks' || command === '/sync') {
+            if (owner !== 'git-for-windows') {
+                return `Ignoring ${command} in unexpected repo: ${commentURL}`
+            }
+
+            await checkPermissions()
+
+            await thumbsUp()
+
+            const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+            const triggerSync = async (sdkRepo) =>
+                await triggerWorkflowDispatch(
+                    context,
+                    await getToken('git-for-windows', sdkRepo),
+                    'git-for-windows',
+                    sdkRepo,
+                    'sync.yml',
+                    'main'
+                )
+
+            const { appendToIssueComment } = require('./issues')
+            const appendToComment = async (text) =>
+                await appendToIssueComment(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    commentId,
+                    text
+                )
+
+            for (const architecture of ['aarch64', 'x86_64', 'i686']) {
+                const sdkRepo = {
+                    aarch64: 'git-sdk-arm64',
+                    x86_64: 'git-sdk-64',
+                    i686: 'git-sdk-32'
+                }[architecture]
+                const sync = await triggerSync(sdkRepo)
+                commentURL = (await appendToComment(`The ['sync' run for ${architecture}](${sync.html_url}) was started.`)).html_url
+            }
+
+            return `I edited the comment: ${commentURL}`
         }
     } catch (e) {
         await react('confused')

@@ -45,6 +45,12 @@ For convenience, the command can be abbreviated as `/add relnote <type> <message
 
 **What does it do?** This triggers one ore more [GitHub workflow runs](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/build-and-deploy.yml) to build and deploy Git for Windows' [Pacman packages](https://github.com/git-for-windows/git/wiki/Package-management).
 
+### `/synchronize-sdks`
+
+**Where can it be called?** In Issues and Pull Requests of Git for Windows' repositories.
+
+**What does it do?** This triggers the `sync` GitHub workflow runs in Git for Windows' `git-sdk-*` repositories, i.e. updates them with the newest package versions as per the Pacman repositories.
+
 ### `/git-artifacts`
 
 **Where can it be called?** In `git-for-windows/git`'s [Pull Requests](https://github.com/git-for-windows/git/pulls)
