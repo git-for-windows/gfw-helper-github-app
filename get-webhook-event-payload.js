@@ -80,7 +80,7 @@
         if (answer.oldest.epoch > until) {
             let tooNew = answer.oldest
             // first find a good starting cursor
-            while (answer.oldest.epoch > until) {
+            while (answer.oldest?.epoch && answer.oldest.epoch > until) {
                 tooNew = answer.oldest
 
                 const rate = (answer.newest.id - answer.oldest.id) / (answer.newest.epoch - answer.oldest.epoch)
@@ -88,7 +88,7 @@
                 answer = await getAtCursor(cursor)
             }
 
-            while (answer.newest.epoch < until) {
+            while (answer.newest?.epoch && answer.newest.epoch < until) {
                 const tooOldID = answer.newest.id
                 // we overshot, now the time window does not include `until`, backtrack via bisecting
                 const rate = (tooNew.id - answer.newest.id) / (tooNew.epoch - answer.newest.epoch)
@@ -101,14 +101,14 @@
                 }
             }
 
-            while (answer.oldest.epoch > until) {
+            while (answer.oldest?.epoch && answer.oldest.epoch > until) {
                 // we overshot, maybe again, now even the oldest is too new
                 answer = await getAtCursor(answer.oldest.id - 1)
             }
         }
 
         const events = [...answer.events]
-        while (answer.oldest.epoch > since) {
+        while (answer.oldest?.epoch && answer.oldest.epoch > since) {
             answer = await getAtCursor(answer.oldest.id - 1)
             events.push(...answer.events)
         }
