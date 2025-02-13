@@ -58,5 +58,20 @@ module.exports = async (context, req) => {
         force: false // require fast-forward
     })
 
-    return `Took care of pushing the \`main\` branch to close PR ${prNumber}`
+    // trigger "upload artifacts" workflow
+    const { handlePush } = require('./cascading-runs')
+    const uploadSnapshotAnswer = await handlePush(context, {
+        body: {
+            repository: {
+                owner: {
+                    login: owner,
+                },
+                name: repo,
+            },
+            ref: 'refs/heads/main',
+            after: sha,
+        }
+    })
+
+    return `Took care of pushing the \`main\` branch to close PR ${prNumber}\n${uploadSnapshotAnswer}`
 }

@@ -943,11 +943,14 @@ test('a completed `release-git` run updates the `main` branch in git-for-windows
     try {
         expect(await index(context, context.req)).toBeUndefined()
         expect(context.res).toEqual({
-            body: `Took care of pushing the \`main\` branch to close PR 765`,
+            body: [
+                'Took care of pushing the `main` branch to close PR 765',
+                `The 'tag-git' workflow run was started at dispatched-workflow-tag-git.yml`,
+            ].join('\n'),
             headers: undefined,
             status: undefined
         })
-        expect(mockGitHubApiRequest).toHaveBeenCalledTimes(4)
+        expect(mockGitHubApiRequest).toHaveBeenCalledTimes(7)
         expect(mockGitHubApiRequest.mock.calls[3].slice(1)).toEqual([
             'installation-access-token',
             'PATCH',
