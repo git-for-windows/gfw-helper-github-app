@@ -22,6 +22,9 @@ const triggerAzurePipeline = async (context, token, organization, project, build
 }
 
 const triggerGitArtifacts = async (context, prNumber) => {
+    if ('true' === process.env.DO_NOT_TRIGGER_ANYTHING) {
+        throw new Error(`Would have triggered GitArtifacts for PR ${prNumber}`)
+    }
     const githubApiRequest = require('./github-api-request')
     const answer = await githubApiRequest(
         context,
@@ -132,6 +135,9 @@ const createRelease = async (
 }
 
 const releaseGitArtifacts = async (context, prNumber) => {
+    if ('true' === process.env.DO_NOT_TRIGGER_ANYTHING) {
+        throw new Error(`Would have triggered release for PR ${prNumber}`)
+    }
     const githubApiRequest = require('./github-api-request')
     const answer = await githubApiRequest(
         context,

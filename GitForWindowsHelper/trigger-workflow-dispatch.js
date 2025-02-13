@@ -36,6 +36,9 @@ const waitForWorkflowRun = async (context, owner, repo, workflow_id, after, toke
 }
 
 const triggerWorkflowDispatch = async (context, token, owner, repo, workflow_id, ref, inputs) => {
+    if ('true' === process.env.DO_NOT_TRIGGER_ANYTHING) {
+        throw new Error(`Would have triggered workflow ${workflow_id} on ${owner}/${repo} with ref ${ref} and inputs ${JSON.stringify(inputs)}`)
+    }
     const { headers: { date } } = await githubApiRequest(
         context,
         token,
