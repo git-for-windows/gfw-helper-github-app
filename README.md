@@ -55,13 +55,13 @@ For convenience, the command can be abbreviated as `/add relnote <type> <message
 
 **Where can it be called?** In `git-for-windows/git`'s [Pull Requests](https://github.com/git-for-windows/git/pulls)
 
-**What does it do?** This command starts [the `Git artifacts` Azure Pipeline](https://dev.azure.com/git-for-windows/git/_build?definitionId=34&_a=summary) that builds all of the artifacts of a full Git for Windows release: installer, Portable Git, MinGit, etc
+**What does it do?** This command starts [the `git-artifacts` workflow](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/git-artifacts.yml) that builds all of the artifacts of a full Git for Windows release: installer, Portable Git, MinGit, etc
 
 ### `/release`
 
 **Where can it be called?** In `git-for-windows/git`'s [Pull Requests](https://github.com/git-for-windows/git/pulls)
 
-**What does it do?** Call this command after a `/git-artifacts` command successfully produced the artifacts _and_ after the installer artifact has been validated manually, using [the "pre-flight checklist"](https://github.com/git-for-windows/build-extra/blob/HEAD/installer/checklist.txt). This will start [the Azure Release Pipeline](https://dev.azure.com/git-for-windows/git/_release?_a=releases&view=mine&definitionId=1) to publish the artifacts in a new GitHub Release.
+**What does it do?** Call this command after a `/git-artifacts` command successfully produced the artifacts _and_ after the installer artifact has been validated manually, using [the "pre-flight checklist"](https://github.com/git-for-windows/build-extra/blob/HEAD/installer/checklist.txt). This will start [the `release-git` workflow](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/release-git.yml) to publish the artifacts in a new GitHub Release.
 
 ## Spinning up Windows/ARM64 runners
 
@@ -94,7 +94,6 @@ Then, configure [the `GITHUB_*` variables](#some-environment-variables) locally,
   "IsEncrypted": false,
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "node",
-    "AZURE_PIPELINE_TRIGGER_TOKEN": "<personal-access-token>",
     "AzureWebJobsStorage": "<storage-key>",
     "GITHUB_APP_ID": "<app-id>",
     "GITHUB_APP_CLIENT_ID": "<client-id>",
@@ -128,7 +127,7 @@ After the deployment succeeded, in the "Overview" tab, there is a "Get publish p
 
 A few environment variables will have to be configured for use with the Azure Function. This can be done on the "Configuration" tab, which is in the "Settings" group.
 
-Concretely, the environment variables `AZURE_PIPELINE_TRIGGER_TOKEN`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_CLIENT_ID` and `GITHUB_APP_ID` need to be set. For the first, a generated random string was used. The private key, client secret and ID of the GitHub App are not known at this time, though, therefore they will have to be set in the Azure Function Configuration later.
+Concretely, the environment variables `GITHUB_WEBHOOK_SECRET`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_CLIENT_ID` and `GITHUB_APP_ID` need to be set. For the first, a generated random string was used. The private key, client secret and ID of the GitHub App are not known at this time, though, therefore they will have to be set in the Azure Function Configuration later.
 
 ### The repository
 
