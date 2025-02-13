@@ -69,7 +69,6 @@
 
     // avoid accidentally triggering anything
     delete process.env.GITHUB_APP_PRIVATE_KEY
-    delete process.env.AZURE_PIPELINE_TRIGGER_TOKEN
     process.env.DO_NOT_TRIGGER_ANYTHING = 'true'
 
     const index = require('./GitForWindowsHelper/index')
