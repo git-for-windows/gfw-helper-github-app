@@ -175,7 +175,7 @@ The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git
     }
     if (method === 'GET' && requestPath ===
         '/repos/git-for-windows/git/compare/HEAD...0c796d3013a57e8cc894c152f0200107226e5dd1') {
-        return { behind_by: 0 }
+        return { ahead_by: 0 }
     }
     throw new Error(`Unhandled ${method}-${requestPath}-${JSON.stringify(payload)}`)
 })

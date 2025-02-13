@@ -166,13 +166,14 @@ const cascadingRuns = async (context, req) => {
 
             // Next, check that the commit is on the `main` branch
             const gitToken = await getToken(context, checkRunOwner, checkRunRepo)
-            const { behind_by } = await githubApiRequest(
+            const { ahead_by } = await githubApiRequest(
                 context,
                 gitToken,
                 'GET',
                 `/repos/${checkRunOwner}/${checkRunRepo}/compare/HEAD...${commit}`,
+                // `/repos/dscho/git/compare/HEAD...${commit}`,
             )
-            if (behind_by > 0) {
+            if (ahead_by > 0) {
                 return `Ignoring ${name} check-run because its corresponding commit ${commit} is not on the main branch`
             }
 
