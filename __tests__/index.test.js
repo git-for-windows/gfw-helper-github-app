@@ -175,7 +175,7 @@ The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git
     }
     if (method === 'GET' && requestPath ===
         '/repos/git-for-windows/git/compare/HEAD...0c796d3013a57e8cc894c152f0200107226e5dd1') {
-        return { behind_by: 0 }
+        return { ahead_by: 0, behind_by: 99 }
     }
     throw new Error(`Unhandled ${method}-${requestPath}-${JSON.stringify(payload)}`)
 })
@@ -943,11 +943,14 @@ test('a completed `release-git` run updates the `main` branch in git-for-windows
     try {
         expect(await index(context, context.req)).toBeUndefined()
         expect(context.res).toEqual({
-            body: `Took care of pushing the \`main\` branch to close PR 765`,
+            body: [
+                'Took care of pushing the `main` branch to close PR 765',
+                `The 'tag-git' workflow run was started at dispatched-workflow-tag-git.yml`,
+            ].join('\n'),
             headers: undefined,
             status: undefined
         })
-        expect(mockGitHubApiRequest).toHaveBeenCalledTimes(4)
+        expect(mockGitHubApiRequest).toHaveBeenCalledTimes(7)
         expect(mockGitHubApiRequest.mock.calls[3].slice(1)).toEqual([
             'installation-access-token',
             'PATCH',
@@ -994,7 +997,7 @@ test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-s
     try {
         expect(await index(context, context.req)).toBeUndefined()
         expect(context.res).toEqual({
-            body: `The 'upload-snapshot' workflow run was started at dispatched-workflow-upload-snapshot.yml`,
+            body: `The 'upload-snapshot' workflow run was started at dispatched-workflow-upload-snapshot.yml (ahead by 0, behind by 99)`,
             headers: undefined,
             status: undefined
         })

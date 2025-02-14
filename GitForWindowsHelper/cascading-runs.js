@@ -166,14 +166,15 @@ const cascadingRuns = async (context, req) => {
 
             // Next, check that the commit is on the `main` branch
             const gitToken = await getToken(context, checkRunOwner, checkRunRepo)
-            const { behind_by } = await githubApiRequest(
+            const { ahead_by, behind_by } = await githubApiRequest(
                 context,
                 gitToken,
                 'GET',
                 `/repos/${checkRunOwner}/${checkRunRepo}/compare/HEAD...${commit}`,
+                // `/repos/dscho/git/compare/HEAD...${commit}`,
             )
-            if (behind_by > 0) {
-                return `Ignoring ${name} check-run because its corresponding commit ${commit} is not on the main branch`
+            if (ahead_by > 0) {
+                return `Ignoring ${name} check-run because its corresponding commit ${commit} is not on the main branch (ahead by ${ahead_by}, behind by ${behind_by})`
             }
 
             const workFlowRunIDs = {}
@@ -245,7 +246,7 @@ const cascadingRuns = async (context, req) => {
                 }
             )
 
-            return `The 'upload-snapshot' workflow run was started at ${answer.html_url}`
+            return `The 'upload-snapshot' workflow run was started at ${answer.html_url} (ahead by ${ahead_by}, behind by ${behind_by})`
         }
         return `Not a cascading run: ${name}; Doing nothing.`
     }
