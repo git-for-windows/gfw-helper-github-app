@@ -211,6 +211,16 @@ http://www.gnutls.org/news.html#2023-02-10`
         package: 'msys2-runtime',
         version: '3.4.7'
     })
+    expect(await guessReleaseNotes(context, {
+        labels: [{ name: 'component-update' }],
+        title: '[New pcre2 version] pcre2-10.45',
+        body: `\n\nhttps://github.com/PCRE2Project/pcre2/releases/tag/pcre2-10.45`
+    })).toEqual({
+        type: 'feature',
+        message: 'Comes with [PCRE2 v10.45](https://github.com/PCRE2Project/pcre2/releases/tag/pcre2-10.45).',
+        package: 'pcre2',
+        version: '10.45'
+    })
 })
 
 test('getMissingDeployments()', async () => {

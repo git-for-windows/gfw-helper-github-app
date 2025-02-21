@@ -14,7 +14,7 @@ const guessComponentUpdateDetails = (title, body) => {
     else if (['clang', 'llvm', 'mingw-w64-clang'].includes(package_name)) package_name = 'mingw-w64-llvm'
 
     version = version
-        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-|curl-|gnupg-|is-)/, '')
+        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-|curl-|gnupg-|is-|pcre2-)/, '')
         .replace(/\s+patch\s+/, '.')
         .replace(/_/g, '.')
         .replace(/-release$/, '')
