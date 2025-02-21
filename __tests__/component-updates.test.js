@@ -84,13 +84,20 @@ href="20230616162552.879387-1-corinna-cygwin@cygwin.com/">cygwin 3.4.7-1</a></b>
 </pre>[... even more stuff...]</body></html>`
 }
 const missingURL = 'https://wingit.blob.core.windows.net/x86-64/curl-8.1.2-1-x86_64.pkg.tar.xz'
+const missingAarch64URL = 'https://wingit.blob.core.windows.net/aarch64/mingw-w64-clang-aarch64-curl-8.1.2-1-any.pkg.tar.xz'
 const missingMinTTYURL = 'https://wingit.blob.core.windows.net/i686/mintty-1~3.6.5-1-i686.pkg.tar.xz'
 const bogus32BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/i686/msys2-runtime-3.4.9-1-i686.pkg.tar.xz'
 const bogus64BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/x86-64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
 const missingOpenSSHURL = 'https://wingit.blob.core.windows.net/i686/openssh-9.5p1-1-i686.pkg.tar.xz'
 const missingBashURL = 'https://wingit.blob.core.windows.net/x86-64/bash-5.2.020-1-x86_64.pkg.tar.xz'
 const mockDoesURLReturn404 = jest.fn(url => [
-    missingURL, missingMinTTYURL, bogus32BitMSYS2RuntimeURL, bogus64BitMSYS2RuntimeURL, missingOpenSSHURL, missingBashURL
+    missingURL,
+    missingAarch64URL,
+    missingMinTTYURL,
+    bogus32BitMSYS2RuntimeURL,
+    bogus64BitMSYS2RuntimeURL,
+    missingOpenSSHURL,
+    missingBashURL
 ].includes(url))
 jest.mock('../GitForWindowsHelper/https-request', () => {
     return {
@@ -207,7 +214,7 @@ http://www.gnutls.org/news.html#2023-02-10`
 })
 
 test('getMissingDeployments()', async () => {
-    expect(await getMissingDeployments('curl', '8.1.2')).toEqual([missingURL])
+    expect(await getMissingDeployments('curl', '8.1.2')).toEqual([missingURL, missingAarch64URL])
     expect(await getMissingDeployments('mintty', '3.6.5')).toEqual([missingMinTTYURL])
     expect(await getMissingDeployments('msys2-runtime', '3.4.9')).toEqual([])
     expect(await getMissingDeployments('msys2-runtime-3.3', '3.3.7')).toEqual([])

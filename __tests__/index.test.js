@@ -737,7 +737,7 @@ The workflow run [was started](dispatched-workflow-add-release-note.yml)`,
     })
     expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
     expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
-    expect(mockDoesURLReturn404).toHaveBeenCalledTimes(4)
+    expect(mockDoesURLReturn404).toHaveBeenCalledTimes(5)
     expect(dispatchedWorkflows).toHaveLength(1)
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
         message: 'Comes with [GNU TLS v3.8.0](https://lists.gnupg.org/pipermail/gnutls-help/2023-February/004816.html).',
@@ -763,7 +763,7 @@ testIssueComment({ comment: '/add release note', note: 'missing deployment' }, {
     })
     expect(mockGetInstallationAccessToken).toHaveBeenCalledTimes(1)
     expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
-    expect(mockDoesURLReturn404).toHaveBeenCalledTimes(2)
+    expect(mockDoesURLReturn404).toHaveBeenCalledTimes(3)
     expect(dispatchedWorkflows).toHaveLength(0)
 })
 
