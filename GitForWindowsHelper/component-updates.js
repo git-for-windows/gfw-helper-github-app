@@ -14,7 +14,7 @@ const guessComponentUpdateDetails = (title, body) => {
     else if (['clang', 'llvm', 'mingw-w64-clang'].includes(package_name)) package_name = 'mingw-w64-llvm'
 
     version = version
-        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-|curl-|gnupg-|is-)/, '')
+        .replace(/^(GCM |openssl-|OpenSSL_|v|V_|GnuTLS |tig-|Heimdal |cygwin-|PCRE2-|Bash-|curl-|gnupg-|is-|pcre2-)/, '')
         .replace(/\s+patch\s+/, '.')
         .replace(/_/g, '.')
         .replace(/-release$/, '')
@@ -147,7 +147,8 @@ const pacmanRepositoryURLs = (package_name, version, architectures) =>
     architectures.map(arch => {
         const fileName = isMSYSPackage(package_name)
             ? `${package_name}-${version}-1-${arch}.pkg.tar.xz`
-            : `${package_name.replace(/^mingw-w64/, `$&-${arch}`)}-${version}-1-any.pkg.tar.xz`
+            : `${package_name.replace(/^mingw-w64/,
+                `$&-${arch === 'aarch64' ? `clang-${arch}` : arch}`)}-${version}-1-any.pkg.tar.xz`
         return `${pacmanRepositoryBaseURL}${arch.replace(/_/g, '-')}/${fileName}`
     })
 
@@ -163,11 +164,14 @@ const getMissingDeployments = async (package_name, version) => {
     if (package_name === 'msys2-runtime') architectures.shift()
     else if (package_name === 'msys2-runtime-3.3') architectures.pop()
 
+    const mingwArchitectures = [...architectures, 'aarch64']
     const urls = []
     const msysName = package_name.replace(/^mingw-w64-/, '')
     if (packageNeedsBothMSYSAndMINGW(msysName)) {
         urls.push(...pacmanRepositoryURLs(msysName, version, architectures))
-        urls.push(...pacmanRepositoryURLs(`mingw-w64-${msysName}`, version, architectures))
+        urls.push(...pacmanRepositoryURLs(`mingw-w64-${msysName}`, version, mingwArchitectures))
+    } else if (package_name !== msysName) {
+        urls.push(...pacmanRepositoryURLs(package_name, version, mingwArchitectures))
     } else {
         urls.push(...pacmanRepositoryURLs(package_name, version, architectures))
     }
