@@ -465,9 +465,10 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
             conclusion: 'success',
             status: 'completed',
             output: {
-                summary: 'Tag Git already-tagged @88811'
+                summary: 'Tag Git already-tagged @88811',
+                text: 'For details, see [this run](https://github.com/x/y/actions/runs/123).\nTagged already-tagged\nDone!.'
             },
-            id: 123
+            id: 123456789
         }]
         if (checkRunName.startsWith('git-artifacts')) {
             const id = {
