@@ -354,7 +354,7 @@ const handlePush = async (context, req) => {
     const tagGitCheckRunTitle = `Upload snapshot Git @${commit}`
     const tagGitCheckRunId = await queueCheckRun(
         context,
-        await getToken(),
+        await getToken(context, pushOwner, pushRepo),
         pushOwner,
         pushRepo,
         commit,
