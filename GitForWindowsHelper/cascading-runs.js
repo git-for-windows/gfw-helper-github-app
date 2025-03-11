@@ -413,7 +413,7 @@ const handlePush = async (context, req) => {
         const answer = await triggerWorkflowDispatch(
             context,
             gitForWindowsAutomationToken,
-            pushRepo,
+            pushOwner,
             'git-for-windows-automation',
             'upload-snapshot.yml',
             'main', {
