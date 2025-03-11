@@ -358,7 +358,7 @@ const handlePush = async (context, req) => {
         pushOwner,
         pushRepo,
         commit,
-        'tag-git',
+        'upload-snapshot',
         tagGitCheckRunTitle,
         tagGitCheckRunTitle
     )
