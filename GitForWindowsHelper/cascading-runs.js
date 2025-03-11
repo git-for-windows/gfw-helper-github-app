@@ -339,6 +339,11 @@ const handlePush = async (context, req) => {
         `The 'tag-git' run at ${latest.html_url} did not succeed (conclusion = ${latest.conclusion}).`
     )
 
+    const match = latest.output.summary.match(/^Tag Git (\S+) @([0-9a-f]+)$/)
+    if (!match) throw new Error(`Unexpected summary '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
+    if (!match[2] === commit) throw new Error(`Unexpected revision ${match[2]} '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
+    const ver = match[1]
+
     // There is already a `tag-git` workflow run; Is there already an `upload-snapshot` run?
     const latestUploadSnapshotRun = (await listCheckRunsForCommit(
         context,
@@ -362,11 +367,6 @@ const handlePush = async (context, req) => {
         tagGitCheckRunTitle,
         tagGitCheckRunTitle
     )
-
-    const match = latest.output.summary.match(/^Tag Git (\S+) @([0-9a-f]+)$/)
-    if (!match) throw new Error(`Unexpected summary '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
-    if (!match[2] === commit) throw new Error(`Unexpected revision ${match[2]} '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
-    const ver = match[1]
 
     try {
         const workFlowRunIDs = {}
