@@ -1,4 +1,7 @@
 const queueCheckRun = async (context, token, owner, repo, ref, checkRunName, title, summary) => {
+    if ('true' === process.env.DO_NOT_TRIGGER_ANYTHING) {
+        throw new Error(`Would have queued Check Run ${checkRunName} in ${owner}/${repo} with ref ${ref}`)
+    }
     const githubApiRequest = require('./github-api-request')
     // is there an existing check-run we can re-use?
     const { check_runs } = await githubApiRequest(
@@ -47,6 +50,9 @@ const queueCheckRun = async (context, token, owner, repo, ref, checkRunName, tit
 }
 
 const updateCheckRun = async (context, token, owner, repo, checkRunId, parameters) => {
+    if ('true' === process.env.DO_NOT_TRIGGER_ANYTHING) {
+        throw new Error(`Would have updated Check Run ${checkRunId} in ${owner}/${repo} with parameters ${JSON.stringify(parameters)}`)
+    }
     const githubApiRequest = require('./github-api-request')
 
     await githubApiRequest(
@@ -59,6 +65,9 @@ const updateCheckRun = async (context, token, owner, repo, checkRunId, parameter
 }
 
 const cancelWorkflowRun = async (context, token, owner, repo, workflowRunId) => {
+    if ('true' === process.env.DO_NOT_TRIGGER_ANYTHING) {
+        throw new Error(`Would have canceled workflow run ${workflowRunId} in ${owner}/${repo}`)
+    }
     const githubApiRequest = require('./github-api-request')
 
     const answer = await githubApiRequest(
