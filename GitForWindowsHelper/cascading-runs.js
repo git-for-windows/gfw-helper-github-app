@@ -339,6 +339,15 @@ const handlePush = async (context, req) => {
         `The 'tag-git' run at ${latest.html_url} did not succeed (conclusion = ${latest.conclusion}).`
     )
 
+    const match = latest.output.summary.match(/^Tag Git (\S+) @([0-9a-f]+)$/)
+    if (!match) throw new Error(`Unexpected summary '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
+    if (!match[2] === commit) throw new Error(`Unexpected revision ${match[2]} '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
+    const ver = match[1]
+
+    const match2 = latest.output.text.match(/^For details, see \[this run\]\(https:\/\/github.com\/([^/]+)\/([^/]+)\/actions\/runs\/(\d+)\)/)
+    if (!match2) throw new Error(`Unexpected summary '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
+    const [, , , tagGitWorkflowRunId] = match2
+
     // There is already a `tag-git` workflow run; Is there already an `upload-snapshot` run?
     const latestUploadSnapshotRun = (await listCheckRunsForCommit(
         context,
@@ -354,19 +363,14 @@ const handlePush = async (context, req) => {
     const tagGitCheckRunTitle = `Upload snapshot Git @${commit}`
     const tagGitCheckRunId = await queueCheckRun(
         context,
-        await getToken(),
+        await getToken(context, pushOwner, pushRepo),
         pushOwner,
         pushRepo,
         commit,
-        'tag-git',
+        'upload-snapshot',
         tagGitCheckRunTitle,
         tagGitCheckRunTitle
     )
-
-    const match = latest.output.summary.match(/^Tag Git (\S+) @([0-9a-f]+)$/)
-    if (!match) throw new Error(`Unexpected summary '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
-    if (!match[2] === commit) throw new Error(`Unexpected revision ${match[2]} '${latest.output.summary}' of tag-git run: ${latest.html_url}`)
-    const ver = match[1]
 
     try {
         const workFlowRunIDs = {}
@@ -381,7 +385,7 @@ const handlePush = async (context, req) => {
                 workflowName
             )
             const needle =
-                `Build Git ${ver} artifacts from commit ${commit} (tag-git run #${latest.id})`
+                `Build Git ${ver} artifacts from commit ${commit} (tag-git run #${tagGitWorkflowRunId})`
             const latest2 = runs
                 .filter(run => run.output.summary === needle)
                 .sort((a, b) => a.id - b.id)
@@ -409,7 +413,7 @@ const handlePush = async (context, req) => {
         const answer = await triggerWorkflowDispatch(
             context,
             gitForWindowsAutomationToken,
-            pushRepo,
+            pushOwner,
             'git-for-windows-automation',
             'upload-snapshot.yml',
             'main', {

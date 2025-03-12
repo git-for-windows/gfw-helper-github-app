@@ -465,9 +465,10 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
             conclusion: 'success',
             status: 'completed',
             output: {
-                summary: 'Tag Git already-tagged @88811'
+                summary: 'Tag Git already-tagged @88811',
+                text: 'For details, see [this run](https://github.com/x/y/actions/runs/123).\nTagged already-tagged\nDone!.'
             },
-            id: 123
+            id: 123456789
         }]
         if (checkRunName.startsWith('git-artifacts')) {
             const id = {
@@ -943,14 +944,11 @@ test('a completed `release-git` run updates the `main` branch in git-for-windows
     try {
         expect(await index(context, context.req)).toBeUndefined()
         expect(context.res).toEqual({
-            body: [
-                'Took care of pushing the `main` branch to close PR 765',
-                `The 'tag-git' workflow run was started at dispatched-workflow-tag-git.yml`,
-            ].join('\n'),
+            body: `Took care of pushing the \`main\` branch to close PR 765`,
             headers: undefined,
             status: undefined
         })
-        expect(mockGitHubApiRequest).toHaveBeenCalledTimes(7)
+        expect(mockGitHubApiRequest).toHaveBeenCalledTimes(4)
         expect(mockGitHubApiRequest.mock.calls[3].slice(1)).toEqual([
             'installation-access-token',
             'PATCH',
