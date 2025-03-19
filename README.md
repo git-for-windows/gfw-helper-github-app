@@ -43,7 +43,7 @@ For convenience, the command can be abbreviated as `/add relnote <type> <message
 
 **Where can it be called?** In Pull Requests of Git for Windows' [`build-extra`](https://github.com/git-for-windows/build-extra), [`MINGW-packages`](https://github.com/git-for-windows/MINGW-packages) and [`MSYS2-packages`](https://github.com/git-for-windows/MSYS2-packages) repositories.
 
-**What does it do?** This triggers one ore more [GitHub workflow runs](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/build-and-deploy.yml) to build and deploy Git for Windows' [Pacman packages](https://github.com/git-for-windows/git/wiki/Package-management).
+**What does it do?** This triggers one ore more [GitHub workflow runs](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/build-and-deploy.yml) to build and deploy Git for Windows' [Pacman packages](https://gitforwindows.org/package-management).
 
 ### `/synchronize-sdks`
 
