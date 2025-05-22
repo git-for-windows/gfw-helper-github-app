@@ -63,14 +63,6 @@ For convenience, the command can be abbreviated as `/add relnote <type> <message
 
 **What does it do?** Call this command after a `/git-artifacts` command successfully produced the artifacts _and_ after the installer artifact has been validated manually, using [the "pre-flight checklist"](https://github.com/git-for-windows/build-extra/blob/HEAD/installer/checklist.txt). This will start [the `release-git` workflow](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/release-git.yml) to publish the artifacts in a new GitHub Release.
 
-## Spinning up Windows/ARM64 runners
-
-As GitHub Actions do not offer hosted Windows/ARM64 runners, Git for Windows needs to use self-hosted Windows/ARM64 runners to build the `clang-aarch64` versions of its MINGW packages.
-
-To this end, the GitForWindowsHelper App notices when a job was queued [in the `git-for-windows-automation` repository](https://github.com/git-for-windows/git-for-windows-automation/actions/) that requires a Windows/ARM64 runner, and starts [the GitHub workflow to spin up an Azure VM with such a runner](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/create-azure-self-hosted-runners.yml). This VM is created from scratch and its runner is marked as ephemeral (meaning: it will run exactly one job for security reasons). Once the job is finished, the GitForWindowsHelper App starts [the GitHub workflow](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/delete-self-hosted-runner.yml) to decommission the VM.
-
-The GitForWindowsHelper App will also notice when jobs are queued for PRs originating in forks, and immediately cancel them. This helps with keeping the cost of self-hosting these Windows/ARM64 at reasonable levels.
-
 ## Tips & Tricks for developing this GitHub App
 
 ### Debug/test-run as much Javascript via the command-line as possible
