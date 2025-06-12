@@ -84,6 +84,17 @@ module.exports = async function (context, req) {
     }
 
     try {
+        const {closeReleaseMilestone} = require('./update-milestones')
+        if (req.headers['x-github-event'] === 'pull_request'
+            && req.body.repository.full_name === 'git-for-windows/git'
+            && req.body.action === 'closed'
+            && req.body.pull_request.merged === 'true') return ok(await closeReleaseMilestone(context, req))
+    } catch (e) {
+        context.log(e)
+        return withStatus(500, undefined, e.message || JSON.stringify(e, null, 2))
+    }
+
+    try {
         const { cascadingRuns, handlePush } = require('./cascading-runs.js')
         if (req.headers['x-github-event'] === 'check_run'
             && req.body.repository.full_name === 'git-for-windows/git'
