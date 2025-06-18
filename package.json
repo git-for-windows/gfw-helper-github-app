@@ -2,7 +2,7 @@
   "devDependencies": {
     "eslint": "^9.29.0",
     "eslint-plugin-jest": "^28.14.0",
-    "jest": "^30.0.0"
+    "jest": "^30.0.1"
   },
   "scripts": {
     "lint": "eslint -c eslint.config.js '**/*.js'",
