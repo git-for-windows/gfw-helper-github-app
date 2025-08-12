@@ -14,7 +14,7 @@ jobs:
     environment: deploy-to-azure
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: Azure/functions-action@v1
         with:
           app-name: GitForWindowsHelper
