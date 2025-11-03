@@ -200,7 +200,7 @@ module.exports = async (context, req) => {
                     )
                 }
 
-                if (package_name !== 'msys2-runtime') {
+                if (package_name !== 'msys2-runtime' && package_name !== 'pcre2') {
                     toTrigger.push(
                         { architecture: 'i686' }
                     )
