@@ -168,7 +168,13 @@ const getMissingDeployments = async (package_name, version) => {
     const urls = []
     const msysName = package_name.replace(/^mingw-w64-/, '')
     if (packageNeedsBothMSYSAndMINGW(msysName)) {
-        urls.push(...pacmanRepositoryURLs(msysName, version, architectures))
+        urls.push(...pacmanRepositoryURLs(
+            msysName,
+            version,
+            package_name === 'pcre2'
+                ? architectures.filter(e => e !== 'i686')
+                : architectures
+        ))
         urls.push(...pacmanRepositoryURLs(`mingw-w64-${msysName}`, version, mingwArchitectures))
     } else if (package_name !== msysName) {
         urls.push(...pacmanRepositoryURLs(package_name, version, mingwArchitectures))
