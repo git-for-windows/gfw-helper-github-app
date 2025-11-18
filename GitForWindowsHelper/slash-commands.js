@@ -289,6 +289,7 @@ module.exports = async (context, req) => {
                 'tag-git'
             )
             const latest = runs
+                .filter(run => run.app?.slug === 'gitforwindowshelper')
                 .sort((a, b) => a.id - b.id)
                 .pop()
             if (latest && latest.status === 'completed' && latest.conclusion === 'success') {
@@ -411,7 +412,7 @@ module.exports = async (context, req) => {
                         workflowName
                     )
                     const latest = runs
-                        .filter(run => run.output.summary.indexOf(` from commit ${commitSHA} ` > 0))
+                        .filter(run => run.app?.slug === 'gitforwindowshelper' && run.output.summary.indexOf(` from commit ${commitSHA} ` > 0))
                         .sort((a, b) => a.id - b.id)
                         .pop()
                     if (latest) {
