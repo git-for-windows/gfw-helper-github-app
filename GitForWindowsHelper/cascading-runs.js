@@ -271,12 +271,15 @@ const handlePush = async (context, req) => {
     const pushRepo = req.body.repository.name
     const ref = req.body.ref
     const commit = req.body.after
+    const sender = req.body.sender.login
 
     if (pushOwner !== 'git-for-windows' || pushRepo !== 'git') {
         throw new Error(`Refusing to handle push to ${pushOwner}/${pushRepo}`)
     }
 
     if (ref !== 'refs/heads/main') return `Ignoring push to ${ref}`
+
+    if (!await isAllowed(sender)) throw new Error(`${sender} is not allowed to do that`)
 
     // See whether there was are already a `tag-git` check-run for this commit
     const { listCheckRunsForCommit, queueCheckRun, updateCheckRun } = require('./check-runs')
