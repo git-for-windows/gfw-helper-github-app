@@ -52,6 +52,8 @@ module.exports = async function (context, req) {
     try {
         const finalizeGitForWindowsRelease = require('./finalize-g4w-release')
         if (req.headers['x-github-event'] === 'workflow_run'
+            && req.body.workflow_run?.event === 'workflow_dispatch'
+            && req.body.workflow_run?.head_branch === 'main'
             && req.body.repository.full_name === 'git-for-windows/git-for-windows-automation'
             && req.body.action === 'completed'
             && req.body.workflow_run.path === '.github/workflows/release-git.yml'
