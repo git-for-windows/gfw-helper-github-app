@@ -11,6 +11,14 @@ const getToken = (() => {
     return async (context, owner, repo) => tokens[[owner, repo]] || (tokens[[owner, repo]] = await get(context, owner, repo))
 })()
 
+const isAllowed = async (login) => {
+    if (login === 'gitforwindowshelper[bot]') return true
+    const getCollaboratorPermissions = require('./get-collaborator-permissions')
+    const token = await getToken()
+    const permission = await getCollaboratorPermissions(context, token, owner, repo, login)
+    return ['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission.toString())
+}
+
 const triggerGitArtifactsRuns = async (context, checkRunOwner, checkRunRepo, tagGitCheckRun) => {
     const commitSHA = tagGitCheckRun.head_sha
     const conclusion = tagGitCheckRun.conclusion
@@ -107,12 +115,15 @@ const cascadingRuns = async (context, req) => {
     const checkRunRepo = req.body.repository.name
     const checkRun = req.body.check_run
     const name = checkRun.name
+    const sender = req.body.sender.login
 
     if (action === 'completed') {
         if (name === 'tag-git') {
             if (checkRunOwner !== 'git-for-windows' || checkRunRepo !== 'git') {
                 throw new Error(`Refusing to handle cascading run in ${checkRunOwner}/${checkRunRepo}`)
             }
+
+            if (!await isAllowed(sender)) throw new Error(`${sender} is not allowed to do that`)
 
             const comment = await triggerGitArtifactsRuns(context, checkRunOwner, checkRunRepo, checkRun)
 
@@ -136,6 +147,8 @@ const cascadingRuns = async (context, req) => {
         if (checkRunOwner === 'git-for-windows'
             && checkRunRepo === 'git'
             && name.startsWith('git-artifacts-')) {
+            if (!await isAllowed(sender)) throw new Error(`${sender} is not allowed to do that`)
+
             const output = req.body.check_run.output
             const match = output.summary.match(
                 /Build Git (\S+) artifacts from commit (\S+) \(tag-git run #(\d+)\)/
