@@ -184,7 +184,6 @@ const cascadingRuns = async (context, req) => {
                 gitToken,
                 'GET',
                 `/repos/${checkRunOwner}/${checkRunRepo}/compare/HEAD...${commit}`,
-                // `/repos/dscho/git/compare/HEAD...${commit}`,
             )
             if (ahead_by > 0) {
                 return `Ignoring ${name} check-run because its corresponding commit ${commit} is not on the main branch (ahead by ${ahead_by}, behind by ${behind_by})`
