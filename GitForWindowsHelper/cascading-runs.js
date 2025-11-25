@@ -14,7 +14,7 @@ const getToken = (() => {
 const isAllowed = async (context, owner, repo, login) => {
     if (login === 'gitforwindowshelper[bot]') return true
     const getCollaboratorPermissions = require('./get-collaborator-permissions')
-    const token = await getToken()
+    const token = await getToken(context, owner, repo)
     const permission = await getCollaboratorPermissions(context, token, owner, repo, login)
     return ['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission.toString())
 }
