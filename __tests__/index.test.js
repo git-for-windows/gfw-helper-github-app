@@ -189,6 +189,15 @@ afterEach(() => {
 })
 
 const makeContext = (body, headers) => {
+    body = {
+        app: {
+            slug: 'gitforwindowshelper'
+        },
+        sender: {
+            login: 'gitforwindowshelper[bot]'
+        },
+        ...body
+    }
     const rawBody = JSON.stringify(body)
     const sha256 = crypto.createHmac('sha256', process.env['GITHUB_WEBHOOK_SECRET']).update(rawBody).digest('hex')
     return {
@@ -421,6 +430,9 @@ The workflow run [was started](dispatched-workflow-updpkgsums.yml).`
 let mockQueueCheckRun = jest.fn(() => 'check-run-id')
 let mockUpdateCheckRun = jest.fn()
 let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, checkRunName) => {
+    const app = {
+        slug: 'gitforwindowshelper'
+    }
     if (rev === 'this-will-be-rc2') {
         const id = {
             'git-artifacts-x86_64': 8664,
@@ -432,7 +444,7 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
             summary: 'Build Git -rc2 artifacts from commit this-will-be-rc2 (tag-git run #987)',
             text: `For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/${id})`
         }
-        return [{ id, status: 'completed', conclusion: 'success', output }]
+        return [{ id, status: 'completed', conclusion: 'success', output, app }]
     }
     if (rev === '0c796d3013a57e8cc894c152f0200107226e5dd1') {
         const id = {
@@ -456,7 +468,8 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
                 title: 'Tag Git -rc1½',
                 summary: `Tag Git -rc1½ @${rev}`,
                 text: 'For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/341).'
-            }
+            },
+            app,
         }]
         return []
     }
@@ -935,7 +948,9 @@ test('a completed `release-git` run updates the `main` branch in git-for-windows
         workflow_run: {
             id: 54321,
             path: '.github/workflows/release-git.yml',
-            conclusion: 'success'
+            conclusion: 'success',
+            event: 'workflow_dispatch',
+            head_branch: 'main',
         }
     }, {
         'x-github-event': 'workflow_run'
