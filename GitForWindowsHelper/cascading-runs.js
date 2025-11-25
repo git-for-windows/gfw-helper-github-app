@@ -11,7 +11,7 @@ const getToken = (() => {
     return async (context, owner, repo) => tokens[[owner, repo]] || (tokens[[owner, repo]] = await get(context, owner, repo))
 })()
 
-const isAllowed = async (login) => {
+const isAllowed = async (context, owner, repo, login) => {
     if (login === 'gitforwindowshelper[bot]') return true
     const getCollaboratorPermissions = require('./get-collaborator-permissions')
     const token = await getToken()
@@ -123,7 +123,7 @@ const cascadingRuns = async (context, req) => {
                 throw new Error(`Refusing to handle cascading run in ${checkRunOwner}/${checkRunRepo}`)
             }
 
-            if (!await isAllowed(sender)) throw new Error(`${sender} is not allowed to do that`)
+            if (!await isAllowed(context, checkRunOwner, checkRunRepo, sender)) throw new Error(`${sender} is not allowed to do that`)
 
             const comment = await triggerGitArtifactsRuns(context, checkRunOwner, checkRunRepo, checkRun)
 
@@ -147,7 +147,7 @@ const cascadingRuns = async (context, req) => {
         if (checkRunOwner === 'git-for-windows'
             && checkRunRepo === 'git'
             && name.startsWith('git-artifacts-')) {
-            if (!await isAllowed(sender)) throw new Error(`${sender} is not allowed to do that`)
+            if (!await isAllowed(context, checkRunOwner, checkRunRepo, sender)) throw new Error(`${sender} is not allowed to do that`)
 
             const output = req.body.check_run.output
             const match = output.summary.match(
@@ -279,7 +279,7 @@ const handlePush = async (context, req) => {
 
     if (ref !== 'refs/heads/main') return `Ignoring push to ${ref}`
 
-    if (!await isAllowed(sender)) throw new Error(`${sender} is not allowed to do that`)
+    if (!await isAllowed(context, pushOwner, pushRepo, sender)) throw new Error(`${sender} is not allowed to do that`)
 
     // See whether there was are already a `tag-git` check-run for this commit
     const { listCheckRunsForCommit, queueCheckRun, updateCheckRun } = require('./check-runs')
