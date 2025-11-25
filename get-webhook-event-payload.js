@@ -96,9 +96,19 @@
             while (answer.oldest?.epoch && answer.oldest.epoch > until) {
                 tooNew = answer.oldest
 
-                const rate = (answer.newest.id - answer.oldest.id) / (answer.newest.epoch - answer.oldest.epoch)
+                const previousAnswer = answer
+                let rate = (answer.newest.id - answer.oldest.id) / (answer.newest.epoch - answer.oldest.epoch)
                 let cursor = Math.floor(answer.oldest.id - rate * (answer.oldest.epoch - until))
-                answer = await getAtCursor(cursor)
+                for (;;) {
+                    answer = await getAtCursor(cursor)
+                    console.log(`got answer ${JSON.stringify(answer)} for cursor ${cursor}`)
+                    if (answer.newest) break
+                    rate /= 2
+                    const newCursor = Math.floor(previousAnswer.oldest.id - rate * (previousAnswer.oldest.epoch - until))
+                    if (newCursor === cursor) break
+                    cursor = newCursor
+                }
+                console.log(`got final answer ${JSON.stringify(answer)} for cursor ${cursor}`)
             }
 
             while (answer.newest?.epoch && answer.newest.epoch < until) {
