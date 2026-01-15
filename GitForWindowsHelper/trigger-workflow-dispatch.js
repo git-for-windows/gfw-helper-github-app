@@ -28,7 +28,7 @@ const waitForWorkflowRun = async (context, owner, repo, workflow_id, after, toke
             'GET',
             `/repos/${owner}/${repo}/actions/runs?actor=${actor}&event=workflow_dispatch&created>=${after}`
         )
-        const filtered = res.workflow_runs.filter(e => e.path === `.github/workflows/${workflow_id}`)
+        const filtered = res.workflow_runs.filter(e => e.path === `.github/workflows/${workflow_id}` && after.localeCompare(e.created_at) <= 0)
         if (filtered.length > 0) return filtered
         if (counter++ > 30) throw new Error(`Times out waiting for workflow?`)
         await sleep(1000)
