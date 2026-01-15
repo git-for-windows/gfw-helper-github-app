@@ -793,7 +793,10 @@ test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
                 title: 'Tag Git v2.40.0-rc1.windows.1 @c8edb521bdabec14b07e9142e48cab77a40ba339',
                 summary: 'Tag Git v2.40.0-rc1.windows.1 @c8edb521bdabec14b07e9142e48cab77a40ba339',
                 text: 'For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/4322343196).\nTagged Git v2.40.0-rc1.windows.1\nDone!.'
-            }
+            },
+            app: {
+                slug: 'gitforwindowshelper',
+            },
         },
         installation: {
             id: 123
@@ -991,7 +994,10 @@ test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-s
                 title: 'Build Git v2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446 artifacts',
                 summary: 'Build Git v2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446 artifacts from commit 0c796d3013a57e8cc894c152f0200107226e5dd1 (tag-git run #13009996573)',
                 text: 'For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/13010016895).'
-            }
+            },
+            app: {
+                slug: 'gitforwindowshelper',
+            },
         },
         installation: {
             id: 123
