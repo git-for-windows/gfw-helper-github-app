@@ -26,7 +26,7 @@ const waitForWorkflowRun = async (context, owner, repo, workflow_id, after, toke
             context,
             token,
             'GET',
-            `/repos/${owner}/${repo}/actions/runs?actor=${actor}&event=workflow_dispatch&created=>${after}`
+            `/repos/${owner}/${repo}/actions/runs?actor=${actor}&event=workflow_dispatch&created>=${after}`
         )
         const filtered = res.workflow_runs.filter(e => e.path === `.github/workflows/${workflow_id}`)
         if (filtered.length > 0) return filtered
