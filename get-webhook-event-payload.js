@@ -144,4 +144,7 @@
         const fullEvent = await gitHubRequestAsApp(console, 'GET', `/app/hook/deliveries/${e.id}`)
         console.log(`id: ${e.id}\naction: ${e.action}\nevent: ${JSON.stringify(fullEvent, null, 2)}`)
     }
-})().catch(console.log)
+})().catch(e => {
+    console.error(e)
+    process.exitCode = 1
+})
