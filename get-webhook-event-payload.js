@@ -101,14 +101,14 @@
                 let cursor = Math.floor(answer.oldest.id - rate * (answer.oldest.epoch - until))
                 for (;;) {
                     answer = await getAtCursor(cursor)
-                    console.log(`got answer ${JSON.stringify(answer)} for cursor ${cursor}`)
+                    console.error(`got answer ${JSON.stringify(answer)} for cursor ${cursor}`)
                     if (answer.newest) break
                     rate /= 2
                     const newCursor = Math.floor(previousAnswer.oldest.id - rate * (previousAnswer.oldest.epoch - until))
                     if (newCursor === cursor) break
                     cursor = newCursor
                 }
-                console.log(`got final answer ${JSON.stringify(answer)} for cursor ${cursor}`)
+                console.error(`got final answer ${JSON.stringify(answer)} for cursor ${cursor}`)
             }
 
             while (answer.newest?.epoch && answer.newest.epoch < until) {
@@ -144,4 +144,7 @@
         const fullEvent = await gitHubRequestAsApp(console, 'GET', `/app/hook/deliveries/${e.id}`)
         console.log(`id: ${e.id}\naction: ${e.action}\nevent: ${JSON.stringify(fullEvent, null, 2)}`)
     }
-})().catch(console.log)
+})().catch(e => {
+    console.error(e)
+    process.exitCode = 1
+})

@@ -18,6 +18,17 @@ const httpsRequest = async (context, hostname, method, requestPath, body, header
         path: requestPath,
         headers
     }
+    if (process.env.LOG_HTTPS_REQUESTS === 'true') {
+        const quote = s => !s.match(/[\][.?*\\^_"'`{}()<>@~&+:;$%"; // \t\r\n]/) ? s : `'${s.replace(/'/g, "'\\''")}'`
+        const commandLine = [
+            'curl',
+            options.method === 'GET' ? '' : `-X ${options.method}`,
+            ...Object.entries(options.headers).map(([key, value]) => `-H ${quote(`${key}: ${value}`)}`),
+            body ? `-d ${quote(body)}` : '',
+            `https://${options.hostname}${options.path}`,
+        ].filter(e => e).join(' ')
+        ;(context.error || console.error)(commandLine)
+    }
     return new Promise((resolve, reject) => {
         try {
             const https = require('https')
