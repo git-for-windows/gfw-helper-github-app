@@ -179,7 +179,13 @@ const getMissingDeployments = async (package_name, version) => {
     } else if (package_name !== msysName) {
         urls.push(...pacmanRepositoryURLs(package_name, version, mingwArchitectures))
     } else {
-        urls.push(...pacmanRepositoryURLs(package_name, version, architectures))
+        urls.push(...pacmanRepositoryURLs(
+            package_name,
+            version,
+            package_name === 'bash'
+                ? architectures.filter(e => e !== 'i686')
+                : architectures
+        ))
     }
     const { doesURLReturn404 } = require('./https-request')
     const result = await Promise.all(urls.map(async url => doesURLReturn404(url)))
