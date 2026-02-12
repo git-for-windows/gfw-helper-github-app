@@ -25,7 +25,7 @@ const httpsRequest = async (context, hostname, method, requestPath, body, header
             options.method === 'GET' ? '' : `-X ${options.method}`,
             ...Object.entries(options.headers).map(([key, value]) => `-H ${quote(`${key}: ${value}`)}`),
             body ? `-d ${quote(body)}` : '',
-            `https://${options.hostname}${options.path}`,
+            `'https://${options.hostname}${encodeURI(options.path)}'`,
         ].filter(e => e).join(' ')
         ;(context.error || console.error)(commandLine)
     }
