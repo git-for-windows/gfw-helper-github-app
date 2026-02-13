@@ -1,4 +1,4 @@
-const { activeOrg } = require('./org')
+const { activeOrg, activeBot } = require('./org')
 
 module.exports = async (context, req) => {
     const action = req.body.action
@@ -20,7 +20,7 @@ module.exports = async (context, req) => {
     })()
 
     const isAllowed = async (login) => {
-        if (login === 'gitforwindowshelper[bot]') return true
+        if (login === activeBot) return true
         const getCollaboratorPermissions = require('./get-collaborator-permissions')
         const token = await getToken()
         const permission = await getCollaboratorPermissions(context, token, owner, repo, login)

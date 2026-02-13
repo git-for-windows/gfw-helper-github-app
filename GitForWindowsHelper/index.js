@@ -1,5 +1,5 @@
 const validateGitHubWebHook = require('./validate-github-webhook')
-const { activeOrg } = require('./org')
+const { activeBot, activeOrg } = require('./org')
 
 module.exports = async function (context, req) {
     const withStatus = (status, headers, body) => {
@@ -67,7 +67,7 @@ module.exports = async function (context, req) {
     try {
         const { cascadingRuns, handlePush } = require('./cascading-runs.js')
         if (req.headers['x-github-event'] === 'check_run'
-            && req.body.check_run?.app?.slug === 'gitforwindowshelper'
+            && req.body.check_run?.app?.slug === activeBot
             && req.body.repository.full_name === `${activeOrg}/git`
             && req.body.action === 'completed') return ok(await cascadingRuns(context, req))
 

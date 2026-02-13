@@ -1,4 +1,4 @@
-const { activeOrg } = require('./org')
+const { activeBot, activeOrg } = require('./org')
 
 const getToken = (() => {
     const tokens = {}
@@ -14,7 +14,7 @@ const getToken = (() => {
 })()
 
 const isAllowed = async (context, owner, repo, login) => {
-    if (login === 'gitforwindowshelper[bot]') return true
+    if (login === activeBot) return true
     const getCollaboratorPermissions = require('./get-collaborator-permissions')
     const token = await getToken(context, owner, repo)
     const permission = await getCollaboratorPermissions(context, token, owner, repo, login)
@@ -117,8 +117,8 @@ const cascadingRuns = async (context, req) => {
     const checkRunRepo = req.body.repository.name
     const checkRun = req.body.check_run
     const name = checkRun.name
-    const sender = req.body.sender.login === 'ghost' && checkRun?.app?.slug === 'gitforwindowshelper'
-        ? 'gitforwindowshelper[bot]' : req.body.sender.login
+    const sender = req.body.sender.login === 'ghost' && checkRun?.app?.slug === activeBot
+        ? activeBot : req.body.sender.login
 
     if (action === 'completed') {
         if (name === 'tag-git') {

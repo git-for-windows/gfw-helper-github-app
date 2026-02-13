@@ -798,6 +798,9 @@ test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
                 slug: 'gitforwindowshelper',
             },
         },
+        sender: {
+            login: 'ghost'
+        },
         installation: {
             id: 123
         },
@@ -998,6 +1001,9 @@ test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-s
             app: {
                 slug: 'gitforwindowshelper',
             },
+        },
+        sender: {
+            login: 'ghost'
         },
         installation: {
             id: 123
