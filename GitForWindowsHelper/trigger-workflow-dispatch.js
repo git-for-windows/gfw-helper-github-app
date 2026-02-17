@@ -47,7 +47,9 @@ const triggerWorkflowDispatch = async (context, token, owner, repo, workflow_id,
         { ref, inputs }
     )
 
-    const runs = await waitForWorkflowRun(context, owner, repo, workflow_id, new Date(date).toISOString(), token)
+    // to avoid any potential clock skew, we set the "after" time to 15 seconds before the current time
+    const after = new Date(Date.parse(date) - 15000).toISOString()
+    const runs = await waitForWorkflowRun(context, owner, repo, workflow_id, after, token)
     return runs[0]
 }
 

@@ -1,3 +1,5 @@
+const { activeOrg } = require('./org')
+
 const guessComponentUpdateDetails = (title, body) => {
     let [ , package_name, version ] =
         title.match(/^\[New (\S+) version\] (?:[^0-9]+\s+)?(\S+(?:\s+patch\s+\d+)?)(?! new items)/) ||
@@ -115,14 +117,14 @@ const guessReleaseNotes = async (context, issue) => {
         const match = issue.body.match(/See (https:\/\/\S+) for details/)
         if (match) return match[1]
 
-        const issueMatch = issue.body.match(/https:\/\/github\.com\/git-for-windows\/git\/issues\/(\d+)/)
+        const issueMatch = issue.body.match(new RegExp(`https://github.com/${activeOrg}/git/issues/(\\d+)`))
         if (issueMatch) {
             const githubApiRequest = require('./github-api-request')
             const issue = await githubApiRequest(
                 context,
                 null,
                 'GET',
-                `/repos/git-for-windows/git/issues/${issueMatch[1]}`
+                `/repos/${activeOrg}/git/issues/${issueMatch[1]}`
             )
             return matchURLInIssue(issue)
         }
