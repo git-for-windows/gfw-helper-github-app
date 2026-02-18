@@ -37,19 +37,6 @@ module.exports = async function (context, req) {
     }
 
     try {
-        const selfHostedARM64Runners = require('./self-hosted-arm64-runners')
-        if (req.headers['x-github-event'] === 'workflow_job'
-            && ['git-for-windows/git-for-windows-automation', 'git-for-windows/git-sdk-arm64'].includes(req.body.repository.full_name)
-            && ['queued', 'completed'].includes(req.body.action)
-            && req.body.workflow_job.labels.length === 2
-            && req.body.workflow_job.labels[0] === 'Windows'
-            && req.body.workflow_job.labels[1] === 'ARM64') return ok(await selfHostedARM64Runners(context, req))
-    } catch (e) {
-        context.log(e)
-        return withStatus(500, undefined, e.message || JSON.stringify(e, null, 2))
-    }
-
-    try {
         const finalizeGitForWindowsRelease = require('./finalize-g4w-release')
         if (req.headers['x-github-event'] === 'workflow_run'
             && req.body.workflow_run?.event === 'workflow_dispatch'
