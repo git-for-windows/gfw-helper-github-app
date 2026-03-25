@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "eslint": "^9.39.1",
+    "eslint": "^10.1.0",
     "eslint-plugin-jest": "^29.15.1",
     "jest": "^30.3.0"
   },
