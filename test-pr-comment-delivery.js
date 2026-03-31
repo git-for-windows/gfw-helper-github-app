@@ -70,6 +70,7 @@
     // avoid accidentally triggering anything
     delete process.env.GITHUB_APP_PRIVATE_KEY
     process.env.DO_NOT_TRIGGER_ANYTHING = 'true'
+    process.env.LOG_HTTPS_REQUESTS = 'true'
 
     const index = require('./GitForWindowsHelper/index')
     console.log(await index(context, req) || context.res)

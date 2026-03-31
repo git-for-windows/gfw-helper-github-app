@@ -91,6 +91,12 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
             path: `.github/workflows/${match[1]}`,
             payload
         })
+        // Exercise the 204 fallback path for upload-snapshot.yml
+        if (payload?.return_run_details && match[1] !== 'upload-snapshot.yml') return {
+            workflow_run_id: 12345,
+            run_url: `https://api.github.com/repos/test/test/actions/runs/12345`,
+            html_url: `dispatched-workflow-${match[1]}`
+        }
         return {
             headers: {
                 date: (new Date()).toISOString()
@@ -338,14 +344,16 @@ The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`,
     expect(dispatchedWorkflows).toHaveLength(2)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.package)).toEqual(['mingw-w64-gnutls', 'gnutls'])
     expect(mockGitHubApiRequest).toHaveBeenCalled()
-    const msysComment = mockGitHubApiRequest.mock.calls[mockGitHubApiRequest.mock.calls.length - 6]
+    const patchCalls = mockGitHubApiRequest.mock.calls.filter(c => c[2] === 'PATCH')
+    expect(patchCalls).toHaveLength(2)
+    const msysComment = patchCalls[0]
     expect(msysComment[3]).toEqual('/repos/git-for-windows/git/issues/comments/0')
     expect(msysComment[4]).toEqual({
         body: `existing comment body
 
 The MSYS workflow run [was started](dispatched-workflow-open-pr.yml)`
     })
-    const mingwComment = mockGitHubApiRequest.mock.calls[mockGitHubApiRequest.mock.calls.length - 1]
+    const mingwComment = patchCalls[1]
     expect(mingwComment[3]).toEqual('/repos/git-for-windows/git/issues/comments/0')
     expect(mingwComment[4]).toEqual({
         body: `existing comment body
@@ -798,6 +806,9 @@ test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
                 slug: 'gitforwindowshelper',
             },
         },
+        sender: {
+            login: 'ghost'
+        },
         installation: {
             id: 123
         },
@@ -831,7 +842,8 @@ The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git
                 inputs: {
                     architecture: 'i686',
                     tag_git_workflow_run_id: "4322343196"
-                }
+                },
+                return_run_details: true
             }
         ])
     } catch (e) {
@@ -999,6 +1011,9 @@ test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-s
                 slug: 'gitforwindowshelper',
             },
         },
+        sender: {
+            login: 'ghost'
+        },
         installation: {
             id: 123
         },
@@ -1035,7 +1050,8 @@ test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-s
                     git_artifacts_aarch64_workflow_run_id: "13010016895",
                     git_artifacts_i686_workflow_run_id: "13010015938",
                     git_artifacts_x86_64_workflow_run_id: "13010015190"
-                }
+                },
+                return_run_details: true
             }
         ])
     } catch (e) {
