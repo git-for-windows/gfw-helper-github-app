@@ -39,15 +39,19 @@ const triggerWorkflowDispatch = async (context, token, owner, repo, workflow_id,
     if ('true' === process.env.DO_NOT_TRIGGER_ANYTHING) {
         throw new Error(`Would have triggered workflow ${workflow_id} on ${owner}/${repo} with ref ${ref} and inputs ${JSON.stringify(inputs)}`)
     }
-    const { headers: { date } } = await githubApiRequest(
+    const response = await githubApiRequest(
         context,
         token,
         'POST',
         `/repos/${owner}/${repo}/actions/workflows/${workflow_id}/dispatches`,
-        { ref, inputs }
+        { ref, inputs, return_run_details: true }
     )
 
-    // to avoid any potential clock skew, we set the "after" time to 5 seconds before the current time
+    // If the API returned run details (200), use them directly
+    if (response.workflow_run_id) return response
+
+    // Fall back to polling if we got a 204 (no run details)
+    const date = response.headers?.date || new Date().toISOString()
     const after = new Date(Date.parse(date) - 5000).toISOString()
     const runs = await waitForWorkflowRun(context, owner, repo, workflow_id, after, token)
     return runs[0]
