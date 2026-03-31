@@ -12,7 +12,7 @@
     while (args.length) {
         let option = args.shift()
 
-        const issueCommentMatch = option.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/\d+#issuecomment-(\d+)$/)
+        const issueCommentMatch = option.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/(?:pull|issues)\/\d+#issuecomment-(\d+)$/)
         if (issueCommentMatch) {
             eventType = 'issue_comment'
             const githubRequest = require('./GitForWindowsHelper/github-api-request')
