@@ -267,6 +267,88 @@ module.exports = async (context, req) => {
             return `I edited the comment: ${answer.html_url}`
         }
 
+        if (command === '/snapshot') {
+            if (owner !== activeOrg
+             || repo !== 'git'
+             || !req.body.issue.pull_request
+            ) {
+                return `Ignoring ${command} in unexpected repo: ${commentURL}`
+            }
+
+            await checkPermissions()
+            await thumbsUp()
+
+            const githubApiRequest = require('./github-api-request')
+            const pr = await githubApiRequest(
+                context,
+                await getToken(),
+                'GET',
+                `/repos/${owner}/${repo}/pulls/${issueNumber}`
+            )
+            const rev = pr.merge_commit_sha
+            if (!rev || pr.mergeable === false) {
+                throw new Error(`PR #${issueNumber} is not mergeable`)
+            }
+
+            const { queueCheckRun, updateCheckRun } = require('./check-runs')
+            const tagGitCheckRunTitle = `Snapshot @${rev}`
+            const tagGitCheckRunId = await queueCheckRun(
+                context,
+                await getToken(),
+                owner,
+                repo,
+                rev,
+                'tag-git',
+                tagGitCheckRunTitle,
+                tagGitCheckRunTitle
+            )
+
+            try {
+                const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+                const answer = await triggerWorkflowDispatch(
+                    context,
+                    await getToken(),
+                    activeOrg,
+                    'git-for-windows-automation',
+                    'tag-git.yml',
+                    'main', {
+                        rev,
+                        owner,
+                        repo,
+                        snapshot: 'true'
+                    }
+                )
+
+                const { appendToIssueComment } = require('./issues')
+                const answer2 = await appendToIssueComment(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    commentId,
+                    `The \`tag-git\` workflow run [was started](${answer.html_url}) for merge commit ${rev}`
+                )
+                return `I edited the comment: ${answer2.html_url}`
+            } catch (e) {
+                await updateCheckRun(
+                    context,
+                    await getToken(),
+                    owner,
+                    repo,
+                    tagGitCheckRunId, {
+                        status: 'completed',
+                        conclusion: 'failure',
+                        output: {
+                            title: tagGitCheckRunTitle,
+                            summary: tagGitCheckRunTitle,
+                            text: e.message || JSON.stringify(e, null, 2)
+                        }
+                    }
+                )
+                throw e
+            }
+        }
+
         if (command === '/git-artifacts') {
             if (owner !== activeOrg
              || repo !== 'git'

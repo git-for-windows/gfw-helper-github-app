@@ -51,6 +51,12 @@ For convenience, the command can be abbreviated as `/add relnote <type> <message
 
 **What does it do?** This triggers the `sync` GitHub workflow runs in Git for Windows' `git-sdk-*` repositories, i.e. updates them with the newest package versions as per the Pacman repositories.
 
+### `/snapshot`
+
+**Where can it be called?** In `git-for-windows/git`'s [Pull Requests](https://github.com/git-for-windows/git/pulls)
+
+**What does it do?** This command builds a snapshot from the PR's temporary merge commit. It triggers [`tag-git`](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/tag-git.yml) with the merge commit SHA and `snapshot: true`. The cascading `git-artifacts` runs will build installers for all architectures, but because the merge commit is not on `main`, no snapshot will be uploaded to `git-snapshots`.
+
 ### `/git-artifacts`
 
 **Where can it be called?** In `git-for-windows/git`'s [Pull Requests](https://github.com/git-for-windows/git/pulls)
