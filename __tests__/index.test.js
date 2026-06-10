@@ -731,7 +731,7 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686'])
 })
 
-const missingURL = 'https://wingit.blob.core.windows.net/x86-64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz'
+const missingURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz'
 const mockDoesURLReturn404 = jest.fn(url => url === missingURL)
 jest.mock('../GitForWindowsHelper/https-request', () => {
     return { doesURLReturn404: mockDoesURLReturn404 }
@@ -779,7 +779,7 @@ testIssueComment({ comment: '/add release note', note: 'missing deployment' }, {
     expect(context.res).toEqual({
         body: `The following deployment(s) are missing:
 
-* https://wingit.blob.core.windows.net/x86-64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz`,
+* https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz`,
         headers: undefined,
         status: 500
     })
