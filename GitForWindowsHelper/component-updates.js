@@ -143,7 +143,7 @@ const guessReleaseNotes = async (context, issue) => {
     }
 }
 
-const pacmanRepositoryBaseURL = 'https://wingit.blob.core.windows.net/'
+const pacmanRepositoryBaseURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/'
 
 const pacmanRepositoryURLs = (package_name, version, architectures) =>
     architectures.map(arch => {
@@ -151,7 +151,7 @@ const pacmanRepositoryURLs = (package_name, version, architectures) =>
             ? `${package_name}-${version}-1-${arch}.pkg.tar.xz`
             : `${package_name.replace(/^mingw-w64/,
                 `$&-${arch === 'aarch64' ? `clang-${arch}` : arch}`)}-${version}-1-any.pkg.tar.xz`
-        return `${pacmanRepositoryBaseURL}${arch.replace(/_/g, '-')}/${fileName}`
+        return `${pacmanRepositoryBaseURL}${arch}/${fileName}`
     })
 
 const getMissingDeployments = async (package_name, version) => {

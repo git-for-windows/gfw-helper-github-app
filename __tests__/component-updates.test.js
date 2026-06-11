@@ -83,13 +83,13 @@ href="20230616162552.879387-1-corinna-cygwin@cygwin.com/">cygwin 3.4.7-1</a></b>
 
 </pre>[... even more stuff...]</body></html>`
 }
-const missingURL = 'https://wingit.blob.core.windows.net/x86-64/curl-8.1.2-1-x86_64.pkg.tar.xz'
-const missingAarch64URL = 'https://wingit.blob.core.windows.net/aarch64/mingw-w64-clang-aarch64-curl-8.1.2-1-any.pkg.tar.xz'
-const missingMinTTYURL = 'https://wingit.blob.core.windows.net/i686/mintty-1~3.6.5-1-i686.pkg.tar.xz'
-const bogus32BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/i686/msys2-runtime-3.4.9-1-i686.pkg.tar.xz'
-const bogus64BitMSYS2RuntimeURL = 'https://wingit.blob.core.windows.net/x86-64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
-const missingOpenSSHURL = 'https://wingit.blob.core.windows.net/i686/openssh-9.5p1-1-i686.pkg.tar.xz'
-const missingBashURL = 'https://wingit.blob.core.windows.net/x86-64/bash-5.2.020-1-x86_64.pkg.tar.xz'
+const missingURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/curl-8.1.2-1-x86_64.pkg.tar.xz'
+const missingAarch64URL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/aarch64/mingw-w64-clang-aarch64-curl-8.1.2-1-any.pkg.tar.xz'
+const missingMinTTYURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/i686/mintty-1~3.6.5-1-i686.pkg.tar.xz'
+const bogus32BitMSYS2RuntimeURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/i686/msys2-runtime-3.4.9-1-i686.pkg.tar.xz'
+const bogus64BitMSYS2RuntimeURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
+const missingOpenSSHURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/i686/openssh-9.5p1-1-i686.pkg.tar.xz'
+const missingBashURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/bash-5.2.020-1-x86_64.pkg.tar.xz'
 const mockDoesURLReturn404 = jest.fn(url => [
     missingURL,
     missingAarch64URL,
