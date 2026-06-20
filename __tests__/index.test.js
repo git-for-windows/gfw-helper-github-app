@@ -148,6 +148,9 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/177')) return {
         head: { sha: '03bdffe5997'}
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/210')) return {
+        head: { sha: '9e7e7a1' }
+    }
     if (method === 'PATCH' && requestPath.endsWith('/git/refs/heads/main')) {
         if (payload.sha !== 'c0ffee1ab7e') throw new Error(`Unexpected sha: ${payload.sha}`)
         if (payload.force !== false) throw new Error(`Unexpected force value: ${payload.force}`)
@@ -591,10 +594,33 @@ testIssueComment('/deploy mingw-w64-curl', {
     expect(await index(context, context.req)).toBeUndefined()
     expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
 
-The [i686/x86_64](dispatched-workflow-build-and-deploy.yml) and the [arm64](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
-    expect(mockQueueCheckRun).toHaveBeenCalledTimes(2)
-    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(2)
-    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', undefined])
+The [i686](dispatched-workflow-build-and-deploy.yml), the [x86_64](dispatched-workflow-build-and-deploy.yml), the [ucrt64](dispatched-workflow-build-and-deploy.yml) and the [arm64](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(4)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(4)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', 'ucrt64', 'x86_64', 'i686'])
+})
+
+testIssueComment('/deploy git-extra', {
+    issue: {
+        number: 210,
+        title: 'git-extra: bump version',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/build-extra/pull/210'
+        }
+    },
+    repository: {
+        name: 'build-extra'
+    }
+}, async (context) => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
+
+The [i686](dispatched-workflow-build-and-deploy.yml), the [x86_64](dispatched-workflow-build-and-deploy.yml), the [ucrt64](dispatched-workflow-build-and-deploy.yml) and the [arm64](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
+    expect(mockQueueCheckRun).toHaveBeenCalledTimes(4)
+    expect(mockUpdateCheckRun).toHaveBeenCalledTimes(4)
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', 'ucrt64', 'x86_64', 'i686'])
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.package)).toEqual(['git-extra', 'git-extra', 'git-extra', 'git-extra'])
 })
 
 testIssueComment('/deploy msys2-runtime', {

@@ -53,14 +53,15 @@ const packageNeedsBothMSYSAndMINGW = package_name => {
     return ['openssl', 'curl', 'gnutls', 'pcre2'].includes(package_name)
 }
 
-const needsSeparateARM64Build = package_name => {
-    if (package_name === 'git-extra') return true
-    return package_name.startsWith('mingw-w64-') && ![
-        'mingw-w64-git-credential-manager',
-        'mingw-w64-git-lfs',
-        'mingw-w64-wintoast'
-    ].includes(package_name)
-}
+// `mingw-w64-git-credential-manager`, `mingw-w64-git-lfs` and
+// `mingw-w64-wintoast` are not built per architecture by us; they are
+// cross-compiled via Visual Studio or downloaded as pre-built artifacts
+// for every architecture (including `clangarm64`) in a single run.
+const buildsAllArchitecturesInOneRun = package_name => [
+    'mingw-w64-git-credential-manager',
+    'mingw-w64-git-lfs',
+    'mingw-w64-wintoast'
+].includes(package_name)
 
 const guessCygwinReleaseNotesURL = async (version) => {
     const { fetchHTML } = require('./https-request')
@@ -200,6 +201,6 @@ module.exports = {
     prettyPackageName,
     isMSYSPackage,
     packageNeedsBothMSYSAndMINGW,
-    needsSeparateARM64Build,
+    buildsAllArchitecturesInOneRun,
     getMissingDeployments
 }
