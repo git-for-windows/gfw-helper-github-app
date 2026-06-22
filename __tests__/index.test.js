@@ -459,7 +459,8 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
         const id = {
             'git-artifacts-x86_64': 13010015190,
             'git-artifacts-i686': 13010015938,
-            'git-artifacts-aarch64': 13010016895
+            'git-artifacts-aarch64': 13010016895,
+            'git-artifacts-ucrt64': 13010017042
         }[checkRunName]
         const output = {
             title: 'Build Git v2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446 artifacts',
@@ -497,6 +498,7 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
                 'git-artifacts-x86_64': 8664,
                 'git-artifacts-i686': 686,
                 'git-artifacts-aarch64':64,
+                'git-artifacts-ucrt64': 64064
             }[checkRunName]
             const output = {
                 title: 'Build already-tagged artifacts',
@@ -1001,7 +1003,7 @@ test('a completed `release-git` run updates the `main` branch in git-for-windows
     }
 })
 
-test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-snapshot`', async () => {
+test('the fourth completed `git-artifacts-<arch>` check-run triggers an `upload-snapshot`', async () => {
     const context = makeContext({
         action: 'completed',
         check_run: {
@@ -1057,7 +1059,8 @@ test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-s
                 inputs: {
                     git_artifacts_aarch64_workflow_run_id: "13010016895",
                     git_artifacts_i686_workflow_run_id: "13010015938",
-                    git_artifacts_x86_64_workflow_run_id: "13010015190"
+                    git_artifacts_x86_64_workflow_run_id: "13010015190",
+                    git_artifacts_ucrt64_workflow_run_id: "13010017042"
                 },
                 return_run_details: true
             }
