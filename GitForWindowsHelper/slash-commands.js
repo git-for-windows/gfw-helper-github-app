@@ -152,7 +152,7 @@ module.exports = async (context, req) => {
 
             await checkPermissions()
 
-            const { guessComponentUpdateDetails, isMSYSPackage, needsSeparateARM64Build } = require('./component-updates')
+            const { guessComponentUpdateDetails, isMSYSPackage, buildsAllArchitecturesInOneRun } = require('./component-updates')
             const { package_name } = deployMatch[2]
                 ? { package_name: deployMatch[2] }
                 : guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
@@ -207,17 +207,24 @@ module.exports = async (context, req) => {
                         { architecture: 'i686' }
                     )
                 }
+            } else if (buildsAllArchitecturesInOneRun(package_name)) {
+                // A single run builds every architecture (including
+                // `clangarm64`) for these packages; see the predicate's
+                // definition for details.
+                toTrigger.push(
+                    { displayArchitecture: 'i686/x86_64/ucrt64/arm64' }
+                )
             } else {
                 if (package_name !== 'mingw-w64-llvm') {
                     toTrigger.push(
-                        { displayArchitecture: 'i686/x86_64' }
+                        { architecture: 'i686' },
+                        { architecture: 'x86_64' },
+                        { architecture: 'ucrt64' }
                     )
                 }
-                if (needsSeparateARM64Build(package_name)) {
-                    toTrigger.push(
-                        { architecture: 'aarch64', displayArchitecture: 'arm64' }
-                    )
-                }
+                toTrigger.push(
+                    { architecture: 'aarch64', displayArchitecture: 'arm64' }
+                )
             }
 
             for (const e of toTrigger) {
