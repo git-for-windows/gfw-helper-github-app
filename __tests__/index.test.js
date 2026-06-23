@@ -175,6 +175,7 @@ The \`tag-git\` workflow run [was started](https://url-to-tag-git/)
 git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-ucrt64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 `)
         return { html_url: 'https://github.com/git-for-windows/git/pull/4322#issuecomment-1450703020' }
     }
@@ -461,7 +462,8 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
         const id = {
             'git-artifacts-x86_64': 13010015190,
             'git-artifacts-i686': 13010015938,
-            'git-artifacts-aarch64': 13010016895
+            'git-artifacts-aarch64': 13010016895,
+            'git-artifacts-ucrt64': 13010017042
         }[checkRunName]
         const output = {
             title: 'Build Git v2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446 artifacts',
@@ -499,6 +501,7 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
                 'git-artifacts-x86_64': 8664,
                 'git-artifacts-i686': 686,
                 'git-artifacts-aarch64':64,
+                'git-artifacts-ucrt64': 64064
             }[checkRunName]
             const output = {
                 title: 'Build already-tagged artifacts',
@@ -855,6 +858,7 @@ test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
             body: `git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-ucrt64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 `,
             headers: undefined,
             status: undefined
@@ -925,25 +929,31 @@ The \`tag-git\` workflow run [was started](dispatched-workflow-tag-git.yml)`,
 The \`git-artifacts-x86_64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-ucrt64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 `,
         headers: undefined,
         status: undefined
     })
     expect(mockGetInstallationAccessToken).toHaveBeenCalled()
     expect(mockGitHubApiRequestAsApp).not.toHaveBeenCalled()
-    expect(dispatchedWorkflows).toHaveLength(3)
+    expect(dispatchedWorkflows).toHaveLength(4)
     expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
-        architecture: 'aarch64',
+        architecture: 'ucrt64',
         tag_git_workflow_run_id: "341"
     })
     expect(dispatchedWorkflows[1].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[1].payload.inputs).toEqual({
-        architecture: 'i686',
+        architecture: 'aarch64',
         tag_git_workflow_run_id: "341"
     })
     expect(dispatchedWorkflows[2].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[2].payload.inputs).toEqual({
+        architecture: 'i686',
+        tag_git_workflow_run_id: "341"
+    })
+    expect(dispatchedWorkflows[3].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
+    expect(dispatchedWorkflows[3].payload.inputs).toEqual({
         architecture: 'x86_64',
         tag_git_workflow_run_id: "341"
     })
@@ -1019,7 +1029,7 @@ test('a completed `release-git` run updates the `main` branch in git-for-windows
     }
 })
 
-test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-snapshot`', async () => {
+test('the fourth completed `git-artifacts-<arch>` check-run triggers an `upload-snapshot`', async () => {
     const context = makeContext({
         action: 'completed',
         check_run: {
@@ -1075,7 +1085,8 @@ test('the third completed `git-artifacts-<arch>` check-run triggers an `upload-s
                 inputs: {
                     git_artifacts_aarch64_workflow_run_id: "13010016895",
                     git_artifacts_i686_workflow_run_id: "13010015938",
-                    git_artifacts_x86_64_workflow_run_id: "13010015190"
+                    git_artifacts_x86_64_workflow_run_id: "13010015190",
+                    git_artifacts_ucrt64_workflow_run_id: "13010017042"
                 },
                 return_run_details: true
             }
