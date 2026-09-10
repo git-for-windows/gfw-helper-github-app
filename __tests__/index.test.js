@@ -175,7 +175,7 @@ The \`tag-git\` workflow run [was started](https://url-to-tag-git/)
 git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
-The \`git-artifacts-ucrt64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-mingw64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 `)
         return { html_url: 'https://github.com/git-for-windows/git/pull/4322#issuecomment-1450703020' }
     }
@@ -463,7 +463,7 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
             'git-artifacts-x86_64': 13010015190,
             'git-artifacts-i686': 13010015938,
             'git-artifacts-aarch64': 13010016895,
-            'git-artifacts-ucrt64': 13010017042
+            'git-artifacts-mingw64': 13010017042
         }[checkRunName]
         const output = {
             title: 'Build Git v2.48.0-rc2.windows.1-472-g0c796d3013-20250128120446 artifacts',
@@ -501,7 +501,7 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
                 'git-artifacts-x86_64': 8664,
                 'git-artifacts-i686': 686,
                 'git-artifacts-aarch64':64,
-                'git-artifacts-ucrt64': 64064
+                'git-artifacts-mingw64': 64064
             }[checkRunName]
             const output = {
                 title: 'Build already-tagged artifacts',
@@ -597,10 +597,10 @@ testIssueComment('/deploy mingw-w64-curl', {
     expect(await index(context, context.req)).toBeUndefined()
     expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
 
-The [i686](dispatched-workflow-build-and-deploy.yml), the [x86_64](dispatched-workflow-build-and-deploy.yml), the [ucrt64](dispatched-workflow-build-and-deploy.yml) and the [arm64](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
+The [i686](dispatched-workflow-build-and-deploy.yml), the [x86_64](dispatched-workflow-build-and-deploy.yml), the [mingw64](dispatched-workflow-build-and-deploy.yml) and the [arm64](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(4)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(4)
-    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', 'ucrt64', 'x86_64', 'i686'])
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', 'mingw64', 'x86_64', 'i686'])
 })
 
 testIssueComment('/deploy git-extra', {
@@ -619,10 +619,10 @@ testIssueComment('/deploy git-extra', {
     expect(await index(context, context.req)).toBeUndefined()
     expect(context.res.body).toEqual(`I edited the comment: appended-comment-body-existing comment body
 
-The [i686](dispatched-workflow-build-and-deploy.yml), the [x86_64](dispatched-workflow-build-and-deploy.yml), the [ucrt64](dispatched-workflow-build-and-deploy.yml) and the [arm64](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
+The [i686](dispatched-workflow-build-and-deploy.yml), the [x86_64](dispatched-workflow-build-and-deploy.yml), the [mingw64](dispatched-workflow-build-and-deploy.yml) and the [arm64](dispatched-workflow-build-and-deploy.yml) workflow runs were started.`)
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(4)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(4)
-    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', 'ucrt64', 'x86_64', 'i686'])
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', 'mingw64', 'x86_64', 'i686'])
     expect(dispatchedWorkflows.map(e => e.payload.inputs.package)).toEqual(['git-extra', 'git-extra', 'git-extra', 'git-extra'])
 })
 
@@ -858,7 +858,7 @@ test('a completed `tag-git` run triggers `git-artifacts` runs', async () => {
             body: `git-artifacts-x86_64 run already exists at <url-to-existing-x86_64-run>.
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
-The \`git-artifacts-ucrt64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-mingw64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 `,
             headers: undefined,
             status: undefined
@@ -929,7 +929,7 @@ The \`tag-git\` workflow run [was started](dispatched-workflow-tag-git.yml)`,
 The \`git-artifacts-x86_64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 The \`git-artifacts-i686\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 The \`git-artifacts-aarch64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
-The \`git-artifacts-ucrt64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
+The \`git-artifacts-mingw64\` workflow run [was started](dispatched-workflow-git-artifacts.yml).
 `,
         headers: undefined,
         status: undefined
@@ -939,7 +939,7 @@ The \`git-artifacts-ucrt64\` workflow run [was started](dispatched-workflow-git-
     expect(dispatchedWorkflows).toHaveLength(4)
     expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
-        architecture: 'ucrt64',
+        architecture: 'mingw64',
         tag_git_workflow_run_id: "341"
     })
     expect(dispatchedWorkflows[1].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
@@ -1086,7 +1086,7 @@ test('the fourth completed `git-artifacts-<arch>` check-run triggers an `upload-
                     git_artifacts_aarch64_workflow_run_id: "13010016895",
                     git_artifacts_i686_workflow_run_id: "13010015938",
                     git_artifacts_x86_64_workflow_run_id: "13010015190",
-                    git_artifacts_ucrt64_workflow_run_id: "13010017042"
+                    git_artifacts_mingw64_workflow_run_id: "13010017042"
                 },
                 return_run_details: true
             }
