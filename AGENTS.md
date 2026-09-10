@@ -67,7 +67,7 @@ must stay in sync across both repositories:
    `cascading-runs.js`). These patterns must remain stable on both sides:
 
    - Check-run names: `deploy`, `deploy_<arch>` (e.g. `deploy_x86_64`,
-     `deploy_ucrt64`, `deploy_aarch64`), `tag-git`,
+     `deploy_mingw64`, `deploy_aarch64`), `tag-git`,
      `git-artifacts-<arch>` (`x86_64`/`i686`/`aarch64`), `upload-snapshot`.
    - Summary patterns parsed in `cascading-runs.js`:
      `Tag Git <version> @<sha>` and
@@ -109,7 +109,7 @@ from `component-updates.js`:
   at once, so they must not be split.
 - **`mingw-w64-llvm`**: only the `aarch64` run.
 - **All other MINGW packages (and `git-extra`)**: separate `i686`,
-  `x86_64`, `ucrt64` and `aarch64` runs, so they build in parallel. The
+  `x86_64`, `mingw64` and `aarch64` runs, so they build in parallel. The
   set of `MINGW_ARCH`s the dispatched workflow builds for each pseudo
   architecture lives in `build-and-deploy.yml` over in
   `git-for-windows-automation`.
@@ -195,8 +195,8 @@ tests, keep these harness facts in mind:
   in a test needs its own `pulls/<number>` entry** returning
   `{ head: { sha: ... } }`, or the mock throws "Unhandled GET ...".
 - `dispatchedWorkflows` is built with `unshift`, so it is in **reverse**
-  dispatch order. A `/deploy` that dispatches `i686, x86_64, ucrt64,
-  aarch64` yields `['aarch64', 'ucrt64', 'x86_64', 'i686']`.
+  dispatch order. A `/deploy` that dispatches `i686, x86_64, mingw64,
+  aarch64` yields `['aarch64', 'mingw64', 'x86_64', 'i686']`.
 - The user-facing comment text is assembled in `slash-commands.js`: a
   single dispatch reads "The workflow run [was started]"; multiple
   dispatches read "The [<arch>](...), the [<arch>](...) and the

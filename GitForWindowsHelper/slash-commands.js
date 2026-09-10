@@ -212,14 +212,14 @@ module.exports = async (context, req) => {
                 // `clangarm64`) for these packages; see the predicate's
                 // definition for details.
                 toTrigger.push(
-                    { displayArchitecture: 'i686/x86_64/ucrt64/arm64' }
+                    { displayArchitecture: 'i686/x86_64/mingw64/arm64' }
                 )
             } else {
                 if (package_name !== 'mingw-w64-llvm') {
                     toTrigger.push(
                         { architecture: 'i686' },
                         { architecture: 'x86_64' },
-                        { architecture: 'ucrt64' }
+                        { architecture: 'mingw64' }
                     )
                 }
                 toTrigger.push(

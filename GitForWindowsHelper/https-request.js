@@ -1,5 +1,17 @@
 const gently = require('./gently')
 
+const isBigNumber = num => !Number.isSafeInteger(+num)
+
+const enquoteBigNumber = (jsonString, bigNumChecker) =>
+    jsonString
+        .replaceAll(
+            /([:\s[,]*)(\d+)([\s,\]]*)/g,
+            (matchingSubstr, prefix, bigNum, suffix) =>
+                bigNumChecker(bigNum)
+                    ? `${prefix}"${bigNum}"${suffix}`
+                    : matchingSubstr
+        )
+
 const httpsRequest = async (context, hostname, method, requestPath, body, headers) => {
     headers = {
         'User-Agent': 'GitForWindowsHelper/0.0',
@@ -57,7 +69,10 @@ const httpsRequest = async (context, hostname, method, requestPath, body, header
                         return
                     }
                     try {
-                        resolve(JSON.parse(json))
+                        resolve(JSON.parse(enquoteBigNumber(json, isBigNumber))) /* , (key, value) =>
+            !isNaN(value) && bigNumChecker(value)
+                ? BigInt(value)
+                : value)) */
                     } catch {
                         reject(`Invalid JSON: ${json}`)
                     }
