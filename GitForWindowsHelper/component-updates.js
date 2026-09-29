@@ -2,9 +2,11 @@ const { activeOrg } = require('./org')
 
 const guessComponentUpdateDetails = (title, body) => {
     let [ , package_name, version ] =
+        title.match(/^\[New (pcre2) version\] PCRE2 (\d\S*)/) ||
         title.match(/^\[New (\S+) version\] (?:[^0-9]+\s+)?(\S+(?:\s+patch\s+\d+)?)(?! new items)/) ||
         title.match(/^(\S+): update to v?(\d[0-9.]\S*)/) ||
         title.match(/^(msys2-runtime): update to ([0-9a-f]{40,64})/) ||
+        body.match(/^# \[New (pcre2) version\] PCRE2 (\d\S*)/) ||
         body.match(/^# \[New (\S+) version\] (?:[^0-9]+\s+)?(\S+(?:\s+patch\s+\d+)?)/) ||
         []
     if (!package_name || !version) throw new Error(`Could not guess component-update details from title '${title}'`)

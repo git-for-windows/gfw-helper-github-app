@@ -33,6 +33,7 @@ test('guessComponentUpdateDetails()', () => {
         ['[New curl version] curl-8_1_1', 'curl', '8.1.1'],
         ['[New mintty version] 3.6.3', 'mintty', '3.6.3'],
         ['[New pcre2 version] PCRE2-10.42', 'pcre2', '10.42'],
+        ['[New pcre2 version] PCRE2 10.49', 'pcre2', '10.49'],
         ['[New git-lfs version] v3.3.0', 'mingw-w64-git-lfs', '3.3.0'],
         ['[New heimdal version] Heimdal 7.7.1 - Security Fix Release', 'heimdal', '7.7.1'],
         ['[New gnutls version] GnuTLS 3.8.0', 'gnutls', '3.8.0'],
@@ -48,6 +49,10 @@ test('guessComponentUpdateDetails()', () => {
         package_name: 'bash',
         version: '5.2.15'
     })
+    expect(guessComponentUpdateDetails(
+        '[New pcre2 version] 3 new items',
+        '# [New pcre2 version] PCRE2 10.49'
+    )).toEqual({ package_name: 'pcre2', version: '10.49' })
 })
 
 let mockGithubApiRequest = jest.fn(() => {
