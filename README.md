@@ -35,6 +35,8 @@ For convenience, the command can be abbreviated as `/add relnote <type> <message
 
 For PCRE2, the workflow prepares updates for upstream MSYS2 rather than
 opening PRs in the Git for Windows package forks.
+If MSYS2 already has the version, the App reports that on the issue
+without starting a workflow.
 
 ### `/updpkgsums`
 

@@ -412,6 +412,7 @@ testIssueComment('/open pr', {
     }
 }, async (context) => {
     await index(context, context.req)
+    expect(mockFetchHTML).toHaveBeenCalledTimes(2)
     expect(mockSearchIssues).not.toHaveBeenCalled()
     expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([
         {
@@ -422,6 +423,35 @@ testIssueComment('/open pr', {
             package: 'pcre2', version: '10.49',
             actor: 'statler and waldorf', upstream: 'true', issue_number: '6447'
         }
+    ])
+})
+
+testIssueComment({ comment: '/open pr', note: 'upstream already updated' }, {
+    issue: {
+        number: 6447,
+        title: '[New pcre2 version] PCRE2 10.49',
+        body: '\nhttps://github.com/PCRE2Project/pcre2/releases/tag/pcre2-10.49'
+    }
+}, async (context) => {
+    mockFetchHTML.mockReturnValueOnce('pkgver=10.49\n')
+        .mockReturnValueOnce('pkgver=10.50\n')
+    await index(context, context.req)
+    expect(dispatchedWorkflows).toHaveLength(0)
+    expect(mockSearchIssues).not.toHaveBeenCalled()
+    const urls = [
+        'https://raw.githubusercontent.com/msys2/MSYS2-packages/master/' +
+            'pcre2/PKGBUILD',
+        'https://raw.githubusercontent.com/msys2/MINGW-packages/master/' +
+            'mingw-w64-pcre2/PKGBUILD'
+    ]
+    expect(mockFetchHTML.mock.calls.map(c => c[0])).toEqual(urls)
+    const comments = mockGitHubApiRequest.mock.calls.filter(c =>
+        c[2] === 'POST' &&
+        c[3] === '/repos/git-for-windows/git/issues/6447/comments'
+    )
+    expect(comments.map(c => c[4].body)).toEqual([
+        `Upstream [pcre2](${urls[0]}) is already at 10.49.`,
+        `Upstream [mingw-w64-pcre2](${urls[1]}) is already at 10.50.`
     ])
 })
 
@@ -783,8 +813,9 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
 
 const missingURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz'
 const mockDoesURLReturn404 = jest.fn(url => url === missingURL)
+const mockFetchHTML = jest.fn(() => 'pkgver=10.48\n')
 jest.mock('../GitForWindowsHelper/https-request', () => {
-    return { doesURLReturn404: mockDoesURLReturn404 }
+    return { doesURLReturn404: mockDoesURLReturn404, fetchHTML: mockFetchHTML }
 })
 
 testIssueComment('/add release note', {
