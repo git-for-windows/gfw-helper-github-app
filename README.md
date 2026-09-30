@@ -37,6 +37,8 @@ For PCRE2, the workflow prepares updates for upstream MSYS2 rather than
 opening PRs in the Git for Windows package forks.
 If MSYS2 already has the version, the App reports that on the issue
 without starting a workflow.
+Otherwise, it checks open upstream PRs for a `PKGBUILD` change containing
+the requested version and reports an existing PR on the issue.
 
 ### `/updpkgsums`
 

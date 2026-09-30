@@ -72,9 +72,9 @@ module.exports = async (context, req) => {
 
             const upstream = package_name === 'pcre2'
             const openPR = async (package_name, packageType) => {
+                const upstreamRepo = isMSYSPackage(package_name)
+                    ? 'MSYS2-packages' : 'MINGW-packages'
                 if (upstream) {
-                    const upstreamRepo = isMSYSPackage(package_name)
-                        ? 'MSYS2-packages' : 'MINGW-packages'
                     const url = 'https://raw.githubusercontent.com/msys2/' +
                         `${upstreamRepo}/master/${package_name}/PKGBUILD`
                     const { fetchHTML } = require('./https-request')
@@ -98,13 +98,60 @@ module.exports = async (context, req) => {
                 }
                 const { searchIssues } = require('./search')
                 const prTitle = `${package_name}: update to ${version}`
-                const items = upstream ? [] : await searchIssues(
-                    context, `org:${activeOrg} is:pr "${prTitle}" in:title`
-                )
-                const alreadyOpenedPR = items.filter(e => e.title === prTitle)
+                const upstreamName = package_name.replace(/^mingw-w64-/, '')
+                const searchTerms = upstream
+                    ? `repo:msys2/${upstreamRepo} is:pr is:open ${upstreamName}`
+                    : `org:${activeOrg} is:pr "${prTitle}" in:title`
+                const items = await searchIssues(context, searchTerms)
+                const alreadyOpenedPR = upstream
+                    ? [] : items.filter(e => e.title === prTitle)
+                if (upstream) {
+                    const githubApiRequest = require('./github-api-request')
+                    const prefix = `/repos/msys2/${upstreamRepo}/pulls`
+                    const pkgbuild = `${package_name}/PKGBUILD`
+                    for (const item of items) {
+                        const path = `${prefix}/${item.number}/files`
+                        for (let page = 1; ; page++) {
+                            const files = await githubApiRequest(
+                                context, null, 'GET',
+                                `${path}?per_page=100&page=${page}`
+                            )
+                            const file = files.find(f =>
+                                f.filename === pkgbuild
+                            )
+                            if (file) {
+                                if (!file.patch) {
+                                    throw new Error(
+                                        `Missing patch in ${item.html_url}`
+                                    )
+                                }
+                                if (file.patch.split('\n').some(line =>
+                                    line.startsWith('+') &&
+                                    !line.startsWith('+++') &&
+                                    line.includes(version)
+                                )) {
+                                    alreadyOpenedPR.push(item)
+                                }
+                                break
+                            }
+                            if (files.length < 100) break
+                        }
+                        if (alreadyOpenedPR.length) break
+                    }
+                }
 
                 const { appendToIssueComment } = require('./issues');
                 if (alreadyOpenedPR.length > 0) {
+                    if (upstream) {
+                        const { addIssueComment } = require('./issues')
+                        const comment = await addIssueComment(
+                            context, await getToken(), owner, repo, issueNumber,
+                            `[Upstream PR](${alreadyOpenedPR[0].html_url}) ` +
+                                `proposes ${package_name} ${version}.`
+                        )
+                        commentURL = comment.html_url
+                        return
+                    }
                     ({ html_url: commentURL, id: commentId } =
                       await appendToIssueComment(
                           context,
