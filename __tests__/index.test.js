@@ -404,6 +404,27 @@ The workflow run [was started](dispatched-workflow-open-pr.yml)`
     })
 })
 
+testIssueComment('/open pr', {
+    issue: {
+        number: 6447,
+        title: '[New pcre2 version] PCRE2 10.49',
+        body: '\nhttps://github.com/PCRE2Project/pcre2/releases/tag/pcre2-10.49'
+    }
+}, async (context) => {
+    await index(context, context.req)
+    expect(mockSearchIssues).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([
+        {
+            package: 'mingw-w64-pcre2', version: '10.49',
+            actor: 'statler and waldorf', upstream: 'true', issue_number: '6447'
+        },
+        {
+            package: 'pcre2', version: '10.49',
+            actor: 'statler and waldorf', upstream: 'true', issue_number: '6447'
+        }
+    ])
+})
+
 testIssueComment('/updpkgsums', {
     issue: {
         number: 104,

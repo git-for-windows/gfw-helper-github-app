@@ -33,6 +33,9 @@ For convenience, the command can be abbreviated as `/add relnote <type> <message
 
 **What does it do?** Meant to handle tickets labeled as `component-update` (typically created by [the `Monitor component updates` GitHub workflow](https://github.com/git-for-windows/git/actions/workflows/monitor-components.yml)) that notify the Git for Windows project when new versions are available of software that is shipped with Git for Windows, this command starts a [GitHub workflow run to open the corresponding Pull Request](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/open-pr.yml).
 
+For PCRE2, the workflow prepares updates for upstream MSYS2 rather than
+opening PRs in the Git for Windows package forks.
+
 ### `/updpkgsums`
 
 **Where can it be called?** In Pull Requests of Git for Windows' [`build-extra`](https://github.com/git-for-windows/build-extra), [`MINGW-packages`](https://github.com/git-for-windows/MINGW-packages) and [`MSYS2-packages`](https://github.com/git-for-windows/MSYS2-packages) repositories.

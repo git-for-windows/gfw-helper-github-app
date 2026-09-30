@@ -67,10 +67,13 @@ module.exports = async (context, req) => {
 
             await thumbsUp()
 
+            const upstream = package_name === 'pcre2'
             const openPR = async (package_name, packageType) => {
                 const { searchIssues } = require('./search')
                 const prTitle = `${package_name}: update to ${version}`
-                const items = await searchIssues(context, `org:${activeOrg} is:pull-request "${prTitle}" in:title`)
+                const items = upstream ? [] : await searchIssues(
+                    context, `org:${activeOrg} is:pr "${prTitle}" in:title`
+                )
                 const alreadyOpenedPR = items.filter(e => e.title === prTitle)
 
                 const { appendToIssueComment } = require('./issues');
@@ -90,17 +93,20 @@ module.exports = async (context, req) => {
                 }
 
                 const triggerWorkflowDispatch = require('./trigger-workflow-dispatch')
+                const inputs = {
+                    package: package_name, version, actor: commenter
+                }
+                if (upstream) {
+                    inputs.upstream = 'true'
+                    inputs.issue_number = String(issueNumber)
+                }
                 const answer = await triggerWorkflowDispatch(
                     context,
                     await getToken(),
                     activeOrg,
                     'git-for-windows-automation',
                     'open-pr.yml',
-                    'main', {
-                        package: package_name,
-                        version,
-                        actor: commenter
-                    }
+                    'main', inputs
                 );
                 ({ html_url: commentURL, id: commentId } = await appendToIssueComment(context, await getToken(), owner, repo, commentId, `The${packageType ? ` ${packageType}` : ''} workflow run [was started](${answer.html_url})`))
             }
