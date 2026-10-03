@@ -151,6 +151,24 @@ let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, paylo
     if (method === 'GET' && requestPath.endsWith('/pulls/210')) return {
         head: { sha: '9e7e7a1' }
     }
+    if (method === 'GET' && requestPath ===
+        '/repos/msys2/MSYS2-packages/pulls/201/files' +
+        '?per_page=100&page=1') return [
+        { filename: 'other/PKGBUILD', patch: '+pkgver=10.49' }
+    ]
+    if (method === 'GET' && requestPath ===
+        '/repos/msys2/MSYS2-packages/pulls/202/files' +
+        '?per_page=100&page=1') return [
+        { filename: 'pcre2/PKGBUILD', patch: '+pkgver=10.48' }
+    ]
+    if (method === 'GET' && requestPath ===
+        '/repos/msys2/MINGW-packages/pulls/203/files' +
+        '?per_page=100&page=1') return [
+        {
+            filename: 'mingw-w64-pcre2/PKGBUILD',
+            patch: '-pkgver=10.48\n+pkgver=10.49'
+        }
+    ]
     if (method === 'PATCH' && requestPath.endsWith('/git/refs/heads/main')) {
         if (payload.sha !== 'c0ffee1ab7e') throw new Error(`Unexpected sha: ${payload.sha}`)
         if (payload.force !== false) throw new Error(`Unexpected force value: ${payload.force}`)
@@ -402,6 +420,93 @@ The workflow run [was started](dispatched-workflow-open-pr.yml)`,
 
 The workflow run [was started](dispatched-workflow-open-pr.yml)`
     })
+})
+
+testIssueComment('/open pr', {
+    issue: {
+        number: 6447,
+        title: '[New pcre2 version] PCRE2 10.49',
+        body: '\nhttps://github.com/PCRE2Project/pcre2/releases/tag/pcre2-10.49'
+    }
+}, async (context) => {
+    await index(context, context.req)
+    expect(mockFetchHTML).toHaveBeenCalledTimes(2)
+    expect(mockSearchIssues.mock.calls.map(c => c[1])).toEqual([
+        'repo:msys2/MSYS2-packages is:pr is:open pcre2',
+        'repo:msys2/MINGW-packages is:pr is:open pcre2'
+    ])
+    expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([
+        {
+            package: 'mingw-w64-pcre2', version: '10.49',
+            actor: 'statler and waldorf', upstream: 'true', issue_number: '6447'
+        },
+        {
+            package: 'pcre2', version: '10.49',
+            actor: 'statler and waldorf', upstream: 'true', issue_number: '6447'
+        }
+    ])
+})
+
+testIssueComment({ comment: '/open pr', note: 'upstream already updated' }, {
+    issue: {
+        number: 6447,
+        title: '[New pcre2 version] PCRE2 10.49',
+        body: '\nhttps://github.com/PCRE2Project/pcre2/releases/tag/pcre2-10.49'
+    }
+}, async (context) => {
+    mockFetchHTML.mockReturnValueOnce('pkgver=10.49\n')
+        .mockReturnValueOnce('pkgver=10.50\n')
+    await index(context, context.req)
+    expect(dispatchedWorkflows).toHaveLength(0)
+    expect(mockSearchIssues).not.toHaveBeenCalled()
+    const urls = [
+        'https://raw.githubusercontent.com/msys2/MSYS2-packages/master/' +
+            'pcre2/PKGBUILD',
+        'https://raw.githubusercontent.com/msys2/MINGW-packages/master/' +
+            'mingw-w64-pcre2/PKGBUILD'
+    ]
+    expect(mockFetchHTML.mock.calls.map(c => c[0])).toEqual(urls)
+    const comments = mockGitHubApiRequest.mock.calls.filter(c =>
+        c[2] === 'POST' &&
+        c[3] === '/repos/git-for-windows/git/issues/6447/comments'
+    )
+    expect(comments.map(c => c[4].body)).toEqual([
+        `Upstream [pcre2](${urls[0]}) is already at 10.49.`,
+        `Upstream [mingw-w64-pcre2](${urls[1]}) is already at 10.50.`
+    ])
+})
+
+testIssueComment({ comment: '/open pr', note: 'upstream PR diff' }, {
+    issue: {
+        number: 6447,
+        title: '[New pcre2 version] PCRE2 10.49',
+        body: '\nhttps://github.com/PCRE2Project/pcre2/releases/tag/pcre2-10.49'
+    }
+}, async (context) => {
+    mockSearchIssues.mockImplementationOnce(() => [
+        { number: 201, title: 'Update pcre2', html_url: 'unused' },
+        { number: 202, title: 'Fix pcre2 security issues', html_url: 'unused' }
+    ]).mockImplementationOnce(() => [
+        {
+            number: 203, title: 'Refresh pcre2 recipes',
+            html_url: 'https://github.com/msys2/MINGW-packages/pull/203'
+        }
+    ])
+    await index(context, context.req)
+    const packages = dispatchedWorkflows.map(e => e.payload.inputs.package)
+    expect(packages).toEqual(['pcre2'])
+    expect(mockSearchIssues.mock.calls.map(c => c[1])).toEqual([
+        'repo:msys2/MSYS2-packages is:pr is:open pcre2',
+        'repo:msys2/MINGW-packages is:pr is:open pcre2'
+    ])
+    const comments = mockGitHubApiRequest.mock.calls.filter(c =>
+        c[2] === 'POST' &&
+        c[3] === '/repos/git-for-windows/git/issues/6447/comments'
+    )
+    expect(comments.map(c => c[4].body)).toEqual([
+        '[Upstream PR](https://github.com/msys2/MINGW-packages/pull/203) ' +
+            'proposes mingw-w64-pcre2 10.49.'
+    ])
 })
 
 testIssueComment('/updpkgsums', {
@@ -762,8 +867,9 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
 
 const missingURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz'
 const mockDoesURLReturn404 = jest.fn(url => url === missingURL)
+const mockFetchHTML = jest.fn(() => 'pkgver=10.48\n')
 jest.mock('../GitForWindowsHelper/https-request', () => {
-    return { doesURLReturn404: mockDoesURLReturn404 }
+    return { doesURLReturn404: mockDoesURLReturn404, fetchHTML: mockFetchHTML }
 })
 
 testIssueComment('/add release note', {
