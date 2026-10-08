@@ -159,6 +159,11 @@ let mockGitHubApiRequest = vi.fn((
     if (method === 'GET' && requestPath.endsWith('/pulls/4322')) return {
         head: { sha: 'c8edb521bdabec14b07e9142e48cab77a40ba339' }
     }
+    if (method === 'GET' && requestPath.endsWith('/pulls/6468')) return {
+        head: { sha: 'deadbeef' },
+        merge_commit_sha: snapshotMergeSHA,
+        mergeable: true
+    }
     if (method === 'GET' && requestPath.endsWith('/pulls/4328')) return {
         head: { sha: 'this-will-be-rc2' }
     }
@@ -610,7 +615,11 @@ let mockListCheckRunsForCommit = vi.fn((
             output: {
                 title: 'Tag Git -rc1½',
                 summary: `Tag Git -rc1½ @${rev}`,
-                text: 'For details, see [this run](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/341).'
+                text: 'For details, see [this run](https://github.com/' +
+                    'git-for-windows/git-for-windows-automation/' +
+                    'actions/runs/341).' +
+                    ' Requested in [this PR comment](https://github.com/' +
+                    'git-for-windows/git/pull/4323#issuecomment-1234).'
             },
             app,
         }]
@@ -1091,7 +1100,50 @@ test.each([
     expect(mockGitHubApiRequest).not.toHaveBeenCalled()
 })
 
+testIssueComment('/snapshot', {
+    comment: {
+        id: 6048048886,
+        html_url: snapshotCommentURL
+    },
+    issue: {
+        number: 6468,
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/git/pull/6468'
+        }
+    }
+}, async context => {
+    expect(await index(context, context.req)).toBeUndefined()
+    expect(context.res).toEqual({
+        body: `I edited the comment: ${snapshotCommentURL}`,
+        headers: undefined,
+        status: undefined
+    })
+    expect(dispatchedWorkflows).toHaveLength(1)
+    expect(dispatchedWorkflows[0].payload.inputs).toEqual({
+        owner: 'git-for-windows',
+        repo: 'git',
+        rev: snapshotMergeSHA,
+        snapshot: 'true',
+        pr_comment_url: snapshotCommentURL
+    })
+    expect(mockGitHubApiRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        'installation-access-token',
+        'PATCH',
+        '/repos/git-for-windows/git/issues/comments/6048048886',
+        {
+            body: `${snapshotCommentBody}\n\nThe \`tag-git\` workflow run ` +
+                '[was started](dispatched-workflow-tag-git.yml) ' +
+                `for merge commit ${snapshotMergeSHA}`
+        }
+    )
+})
+
 testIssueComment('/git-artifacts', {
+    comment: {
+        html_url: 'https://github.com/git-for-windows/git/' +
+            'pull/4322#issuecomment-0'
+    },
     issue: {
         number: 4322,
         title: 'Rebase to v2.40.0-rc1',
@@ -1116,7 +1168,8 @@ The \`tag-git\` workflow run [was started](dispatched-workflow-tag-git.yml)`,
         owner: 'git-for-windows',
         repo: 'git',
         rev: 'c8edb521bdabec14b07e9142e48cab77a40ba339',
-        snapshot: 'false'
+        snapshot: 'false',
+        pr_comment_url: context.req.body.comment.html_url
     })
 
     vi.clearAllMocks()
@@ -1130,6 +1183,8 @@ The \`tag-git\` workflow run [was started](dispatched-workflow-tag-git.yml)`,
             html_url: 'https://github.com/git-for-windows/git/pull/4323'
         }
     }
+    context.req.body.comment.html_url =
+        'https://github.com/git-for-windows/git/pull/4323#issuecomment-0'
 
     expect(await index(context, context.req)).toBeUndefined()
     expect(context.res).toEqual({
@@ -1149,22 +1204,26 @@ The \`git-artifacts-mingw64\` workflow run [was started](dispatched-workflow-git
     expect(dispatchedWorkflows[0].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[0].payload.inputs).toEqual({
         architecture: 'mingw64',
-        tag_git_workflow_run_id: "341"
+        tag_git_workflow_run_id: "341",
+        pr_comment_url: context.req.body.comment.html_url
     })
     expect(dispatchedWorkflows[1].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[1].payload.inputs).toEqual({
         architecture: 'aarch64',
-        tag_git_workflow_run_id: "341"
+        tag_git_workflow_run_id: "341",
+        pr_comment_url: context.req.body.comment.html_url
     })
     expect(dispatchedWorkflows[2].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[2].payload.inputs).toEqual({
         architecture: 'i686',
-        tag_git_workflow_run_id: "341"
+        tag_git_workflow_run_id: "341",
+        pr_comment_url: context.req.body.comment.html_url
     })
     expect(dispatchedWorkflows[3].html_url).toEqual('dispatched-workflow-git-artifacts.yml')
     expect(dispatchedWorkflows[3].payload.inputs).toEqual({
         architecture: 'x86_64',
-        tag_git_workflow_run_id: "341"
+        tag_git_workflow_run_id: "341",
+        pr_comment_url: context.req.body.comment.html_url
     })
 })
 
