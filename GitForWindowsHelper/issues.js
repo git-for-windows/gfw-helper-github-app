@@ -23,7 +23,23 @@ const getIssueComment = async (context, token, owner, repo, comment_id) => {
     return await sendGitHubAPIRequest(context, token, 'GET', `/repos/${owner}/${repo}/issues/comments/${comment_id}`)
 }
 
-const getGitArtifactsCommentID = async (context, token, owner, repo, headSHA, tagGitWorkflowRunURL) => {
+const getGitArtifactsCommentID = async (
+    context, token, owner, repo, headSHA, tagGitWorkflowRunURL, prCommentURL
+) => {
+    if (prCommentURL) {
+        const prefix = `https://github.com/${owner}/${repo}/pull/`
+        const match = prCommentURL.startsWith(prefix)
+            && prCommentURL.slice(prefix.length)
+                .match(/^\d+#issuecomment-(\d+)$/)
+        if (!match) {
+            throw new Error(
+                `Unexpected PR comment URL for ${owner}/${repo}: ` +
+                prCommentURL
+            )
+        }
+        return match[1]
+    }
+
     const answer = await sendGitHubAPIRequest(context, token, 'GET', `/search/issues?q=repo:${owner}/${repo}+${headSHA}+type:pr+%22git-artifacts%22`, null, {
         Accept: 'application/vnd.github.text-match+json'
     })

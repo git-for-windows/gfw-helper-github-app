@@ -61,6 +61,15 @@ mockRequire(
 )
 
 const dispatchedWorkflows = []
+const snapshotCommentURL = 'https://github.com/git-for-windows/git/' +
+    'pull/6468#issuecomment-6048048886'
+const snapshotMergeSHA = 'b601e0ecdf258ebee673c55cbd3df7639449f1f7'
+const snapshotTagRunURL = 'https://github.com/git-for-windows/' +
+    'git-for-windows-automation/actions/runs/37695668511'
+const snapshotVersion = 'v2.56.0.windows.2-3-gb601e0ecdf-20261007222622'
+const snapshotCommentBody = '/snapshot\n\nThe `tag-git` workflow run ' +
+    `[was started](${snapshotTagRunURL}) ` +
+    `for merge commit ${snapshotMergeSHA}`
 let mockGitHubApiRequest = vi.fn((
     _context, _token, method, requestPath, payload
 ) => {
@@ -74,6 +83,15 @@ let mockGitHubApiRequest = vi.fn((
     if (method === 'PATCH' && requestPath.endsWith('/comments/0')) return {
         id: 0,
         html_url: `appended-comment-body-${payload.body}`
+    }
+    if (method === 'GET' && requestPath ===
+        '/repos/git-for-windows/git/issues/comments/6048048886') return {
+        body: snapshotCommentBody
+    }
+    if (method === 'PATCH' && requestPath ===
+        '/repos/git-for-windows/git/issues/comments/6048048886') return {
+        id: 6048048886,
+        html_url: snapshotCommentURL
     }
     if (method === 'GET' && requestPath.endsWith('/comments/654321')) return {
         body: 'The `release-git` workflow run [was started](https://github.com/git-for-windows/git-for-windows-automation/actions/runs/54321)'
@@ -992,6 +1010,85 @@ The \`git-artifacts-mingw64\` workflow run [was started](dispatched-workflow-git
         context.log.mock.calls.forEach(e => console.log(e[0]))
         throw e;
     }
+})
+
+test('saved snapshot comments receive all cascading build links', async () => {
+    const context = makeContext({
+        action: 'completed',
+        check_run: {
+            id: 113046648194,
+            name: 'tag-git',
+            head_sha: snapshotMergeSHA,
+            status: 'completed',
+            conclusion: 'success',
+            details_url: snapshotTagRunURL,
+            output: {
+                title: `Tag Git ${snapshotVersion} @${snapshotMergeSHA}`,
+                summary: `Tag Git ${snapshotVersion} @${snapshotMergeSHA}`,
+                text: `For details, see [this run](${snapshotTagRunURL}).` +
+                    ' Requested in [this PR comment](' +
+                    `${snapshotCommentURL}).\n` +
+                    `Tagged Git ${snapshotVersion}\nDone!.`
+            },
+            app: {
+                slug: 'gitforwindowshelper'
+            }
+        },
+        repository: {
+            name: 'git',
+            owner: { login: 'git-for-windows' },
+            full_name: 'git-for-windows/git'
+        }
+    }, { 'x-github-event': 'check_run' })
+
+    expect(await index(context, context.req)).toBeUndefined()
+    const architectures = ['x86_64', 'i686', 'aarch64', 'mingw64']
+    const links = architectures.map(architecture =>
+        `The \`git-artifacts-${architecture}\` workflow run ` +
+        '[was started](dispatched-workflow-git-artifacts.yml).\n'
+    ).join('')
+    expect(context.res).toEqual({
+        body: links,
+        headers: undefined,
+        status: undefined
+    })
+    expect(dispatchedWorkflows.map(run => run.payload.inputs)).toEqual(
+        architectures.slice().reverse().map(architecture => ({
+            architecture,
+            tag_git_workflow_run_id: '37695668511',
+            pr_comment_url: snapshotCommentURL
+        }))
+    )
+    expect(mockGitHubApiRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        'installation-access-token',
+        'PATCH',
+        '/repos/git-for-windows/git/issues/comments/6048048886',
+        { body: `${snapshotCommentBody}\n\n${links}` }
+    )
+    expect(mockGitHubApiRequest.mock.calls
+        .some(([, , , requestPath]) => requestPath.startsWith('/search/'))
+    ).toBe(false)
+})
+
+test.each([
+    snapshotCommentURL.replace('github.com', 'example.com'),
+    snapshotCommentURL.replace('git-for-windows/git', 'other/git'),
+    snapshotCommentURL.replace('/git/pull/', '/other/pull/'),
+    snapshotCommentURL.replace('/pull/', '/issues/'),
+    snapshotCommentURL.replace('#issuecomment-', '#discussion_r'),
+    snapshotCommentURL.replace('https://', 'http://')
+])('rejects a recorded PR comment URL outside its namespace: %s', async url => {
+    const { getGitArtifactsCommentID } = require(
+        '../GitForWindowsHelper/issues'
+    )
+    await expect(getGitArtifactsCommentID(
+        console, 'installation-access-token', 'git-for-windows', 'git',
+        snapshotMergeSHA, snapshotTagRunURL, url
+    )).rejects.toThrow(
+        `Unexpected PR comment URL for git-for-windows/git: ${url}`
+    )
+    expect(mockGitHubApiRequest).not.toHaveBeenCalled()
 })
 
 testIssueComment('/git-artifacts', {
