@@ -145,50 +145,48 @@ GitForWindowsHelper/        # the Azure Function code
 ├── https-request.js / search.js / gently.js / org.js
 └── validate-github-webhook.js
 
-__tests__/                  # Jest tests for the App (index + component-updates)
+__tests__/                  # Vitest tests (index + component-updates)
 .github/workflows/deploy.yml # deploys the Function to Azure on push to main
-embargoed-builds/           # SEPARATE git worktree (see below) -- do not edit here
 ```
 
-## The `embargoed-builds` Worktree
+## Secondary worktrees
 
-`embargoed-builds/` is **not** part of the `main` branch. It is a separate
-long-lived branch (`embargoed-builds`) that is typically checked out as a
-[git worktree](https://git-scm.com/docs/git-worktree) nested in the
-working directory. It is a parallel variant of this App used to build
-**embargoed security releases**: it deploys to private Azure Blob Storage
-(`wingit.blob.core.windows.net`) instead of the public `pacman-repo`, and
-relies on self-hosted Windows/ARM64 runners.
+There might be `vitest/`, `embargoed-builds/` and other worktrees that are
+**not** part of the `main` branch. These are separate, and not to be
+touched by you.
 
 Consequences for agents:
 
-- When working on `main`, **do not edit files under `embargoed-builds/`**.
-  It belongs to a different branch and is maintained separately; the two
-  variants are reconciled deliberately, not by editing both at once.
-- Because Jest's default `testMatch` is `**/__tests__/**`, running
-  `npm test` from the repo root also collects
-  `embargoed-builds/__tests__/` when that worktree is present (you will
-  see four suites instead of two). To run only this App's tests, scope it:
-  `npx jest __tests__/`.
+- When working on `main`, **do not edit files under `vitest/**`,
+  `embargoed-builds/**` or any other nested worktree. They belong to
+  separate work, and you must focus on the current work.
+- Vitest collects only root `__tests__/*.test.js` files, so `npm test`
+  does not collect tests from any nested worktree.
 
 ## Building, Testing and Linting
 
-There is no build step; the Function is deployed as-is. Verified commands:
+There is no build step; the Function is deployed as-is. Use Node.js 24 for
+test tooling, matching the PR check workflow. Verified commands:
 
 - `npm run lint` — ESLint over `**/*.js` (config in `eslint.config.js`).
 - `npm run lint:fix` — ESLint with `--fix`.
-- `npm test` — Jest. To restrict to this App (excluding the
-  `embargoed-builds` worktree), use `npx jest __tests__/`.
+- `npm test` -- Vitest, in non-watch mode, scoped to this App's tests.
+- `npm test -- __tests__/index.test.js` -- Run only the webhook suite.
 
 Always run lint and tests before committing.
 
 ## Testing Conventions
 
+Import test APIs explicitly from `vitest`; the Function remains CommonJS.
+Use `createMockRequire()` from `__tests__/mock-require.js` to load its
+modules and install mock exports via `mockRequire()`. The fixture isolates
+the Function's CommonJS cache and restores it after each suite.
+
 The tests in `__tests__/index.test.js` exercise the webhook handler
 end-to-end with heavily mocked dependencies. When adding `/deploy`-style
 tests, keep these harness facts in mind:
 
-- `afterEach` calls `jest.clearAllMocks()` and empties `dispatchedWorkflows`,
+- `afterEach` calls `vi.clearAllMocks()` and empties `dispatchedWorkflows`,
   so `toHaveBeenCalledTimes(...)` counts are per-test.
 - The GitHub API is mocked in `mockGitHubApiRequest`. Looking up a PR's
   head SHA goes through `GET .../pulls/<number>`, so **each PR number used
@@ -232,9 +230,9 @@ one-time setup.
 
 ## Validating Changes
 
-1. **Lint and test**: `npm run lint` and `npx jest __tests__/`.
+1. **Lint and test**: `npm run lint` and `npm test`.
 2. **Dispatch contracts**: if you change a dispatched workflow filename or
    a queued check-run name/summary, update `git-for-windows-automation`
    (and re-check its `AGENTS.md`) in lockstep.
-3. **Leave `embargoed-builds/` alone** unless you are deliberately working
-   on that branch.
+3. **Leave nested worktrees alone** unless you are deliberately working
+   on their branch.

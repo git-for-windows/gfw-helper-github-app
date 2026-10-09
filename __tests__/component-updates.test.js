@@ -1,3 +1,7 @@
+import { expect, test, vi } from 'vitest'
+import { createMockRequire } from './mock-require.js'
+
+const { require, mockRequire } = createMockRequire()
 const {
     guessComponentUpdateDetails,
     guessReleaseNotes,
@@ -55,13 +59,11 @@ test('guessComponentUpdateDetails()', () => {
     )).toEqual({ package_name: 'pcre2', version: '10.49' })
 })
 
-let mockGithubApiRequest = jest.fn(() => {
+let mockGithubApiRequest = vi.fn(() => {
     return {
     }
 })
-jest.mock('../GitForWindowsHelper/github-api-request', () => {
-    return mockGithubApiRequest
-})
+mockRequire('../GitForWindowsHelper/github-api-request', mockGithubApiRequest)
 
 const mockFetchHTML = {
     'https://cygwin.com': `<div>
@@ -95,7 +97,7 @@ const bogus32BitMSYS2RuntimeURL = 'https://raw.githubusercontent.com/git-for-win
 const bogus64BitMSYS2RuntimeURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
 const missingOpenSSHURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/i686/openssh-9.5p1-1-i686.pkg.tar.xz'
 const missingBashURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/bash-5.2.020-1-x86_64.pkg.tar.xz'
-const mockDoesURLReturn404 = jest.fn(url => [
+const mockDoesURLReturn404 = vi.fn(url => [
     missingURL,
     missingAarch64URL,
     missingMinTTYURL,
@@ -104,16 +106,14 @@ const mockDoesURLReturn404 = jest.fn(url => [
     missingOpenSSHURL,
     missingBashURL
 ].includes(url))
-jest.mock('../GitForWindowsHelper/https-request', () => {
-    return {
-        doesURLReturn404: mockDoesURLReturn404,
-        fetchHTML: jest.fn(url => mockFetchHTML[url])
-    }
+mockRequire('../GitForWindowsHelper/https-request', {
+    doesURLReturn404: mockDoesURLReturn404,
+    fetchHTML: vi.fn(url => mockFetchHTML[url])
 })
 
 
 test('guessReleaseNotes()', async () => {
-    const context = { log: jest.fn() }
+    const context = { log: vi.fn() }
     expect(await guessReleaseNotes(context, {
         labels: [{ name: 'component-update' }],
         title: '[New bash version] 3 new items',
