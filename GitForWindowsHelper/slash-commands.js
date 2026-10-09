@@ -404,7 +404,8 @@ module.exports = async (context, req) => {
                         rev,
                         owner,
                         repo,
-                        snapshot: 'true'
+                        snapshot: 'true',
+                        pr_comment_url: commentURL
                     }
                 )
 
@@ -469,7 +470,9 @@ module.exports = async (context, req) => {
                 // There is already a `tag-git` workflow run; Trigger the `git-artifacts` runs directly
                 if (!latest.head_sha) latest.head_sha = rev
                 const { triggerGitArtifactsRuns } = require('./cascading-runs')
-                const res = await triggerGitArtifactsRuns(context, owner, repo, latest)
+                const res = await triggerGitArtifactsRuns(
+                    context, owner, repo, latest, commentURL
+                )
 
                 const { appendToIssueComment } = require('./issues')
                 const answer2 = await appendToIssueComment(
@@ -507,7 +510,8 @@ module.exports = async (context, req) => {
                         rev,
                         owner,
                         repo,
-                        snapshot: 'false'
+                        snapshot: 'false',
+                        pr_comment_url: commentURL
                     }
                 )
 

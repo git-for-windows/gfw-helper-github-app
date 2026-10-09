@@ -64,11 +64,15 @@ the requested version and reports an existing PR on the issue.
 
 **What does it do?** This command builds a snapshot from the PR's temporary merge commit. It triggers [`tag-git`](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/tag-git.yml) with the merge commit SHA and `snapshot: true`. The cascading `git-artifacts` runs will build installers for all architectures, but because the merge commit is not on `main`, no snapshot will be uploaded to `git-snapshots`.
 
+The requesting comment is updated with links to the tagging workflow and its cascading architecture workflows.
+
 ### `/git-artifacts`
 
 **Where can it be called?** In `git-for-windows/git`'s [Pull Requests](https://github.com/git-for-windows/git/pulls)
 
 **What does it do?** This command starts [the `git-artifacts` workflow](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/git-artifacts.yml) that builds all of the artifacts of a full Git for Windows release: installer, Portable Git, MinGit, etc
+
+The requesting comment receives links to the workflows started for it, including the cascading architecture workflows when a tag is reused.
 
 ### `/release`
 

@@ -21,7 +21,9 @@ const isAllowed = async (context, owner, repo, login) => {
     return ['ADMIN', 'MAINTAIN', 'WRITE'].includes(permission.toString())
 }
 
-const triggerGitArtifactsRuns = async (context, checkRunOwner, checkRunRepo, tagGitCheckRun) => {
+const triggerGitArtifactsRuns = async (
+    context, checkRunOwner, checkRunRepo, tagGitCheckRun, prCommentURL
+) => {
     const commitSHA = tagGitCheckRun.head_sha
     const conclusion = tagGitCheckRun.conclusion
     const text = tagGitCheckRun.output.text
@@ -102,7 +104,8 @@ const triggerGitArtifactsRuns = async (context, checkRunOwner, checkRunRepo, tag
             'git-artifacts.yml',
             'main', {
                 architecture,
-                tag_git_workflow_run_id: workflowRunId.toString()
+                tag_git_workflow_run_id: workflowRunId.toString(),
+                ...(prCommentURL ? { pr_comment_url: prCommentURL } : {})
             }
         )
         res = `${res}The \`git-artifacts-${architecture}\` workflow run [was started](${run.html_url}).\n`
@@ -128,7 +131,11 @@ const cascadingRuns = async (context, req) => {
 
             if (!await isAllowed(context, checkRunOwner, checkRunRepo, sender)) throw new Error(`${sender} is not allowed to do that`)
 
-            const comment = await triggerGitArtifactsRuns(context, checkRunOwner, checkRunRepo, checkRun)
+            const prCommentURL = checkRun.output.text
+                .match(/ Requested in \[this PR comment\]\(([^)]+)\)\./)?.[1]
+            const comment = await triggerGitArtifactsRuns(
+                context, checkRunOwner, checkRunRepo, checkRun, prCommentURL
+            )
 
             const token = await getToken(context, checkRunOwner, checkRunRepo)
             const { getGitArtifactsCommentID, appendToIssueComment } = require('./issues')
@@ -139,6 +146,7 @@ const cascadingRuns = async (context, req) => {
                 checkRunRepo,
                 req.body.check_run.head_sha,
                 checkRun.details_url,
+                prCommentURL
             )
 
             if (gitArtifactsCommentID) {
