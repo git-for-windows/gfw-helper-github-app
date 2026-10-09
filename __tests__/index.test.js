@@ -1,3 +1,7 @@
+import { afterEach, expect, test, vi } from 'vitest'
+import { createMockRequire } from './mock-require.js'
+
+const { require, mockRequire } = createMockRequire()
 const index = require('../GitForWindowsHelper/index')
 const crypto = require('crypto')
 
@@ -5,7 +9,7 @@ process.env['GITHUB_WEBHOOK_SECRET'] = 'for-testing'
 
 test('reject requests other than webhook payloads', async () => {
     const context = {
-        log: jest.fn(),
+        log: vi.fn(),
         req: {
             method: 'GET'
         }
@@ -26,7 +30,7 @@ test('reject requests other than webhook payloads', async () => {
 
     await expectInvalidWebhook('Unexpected method: GET')
 
-    context.log = jest.fn()
+    context.log = vi.fn()
     context.req.method = 'POST'
     context.req.headers = {
         'content-type': 'text/plain'
@@ -44,18 +48,22 @@ test('reject requests other than webhook payloads', async () => {
     await expectInvalidWebhook('Incorrect X-Hub-Signature')
 })
 
-let mockGetInstallationAccessToken = jest.fn(() => 'installation-access-token')
-jest.mock('../GitForWindowsHelper/get-installation-access-token', () => {
-    return mockGetInstallationAccessToken
-})
+let mockGetInstallationAccessToken = vi.fn(() => 'installation-access-token')
+mockRequire(
+    '../GitForWindowsHelper/get-installation-access-token',
+    mockGetInstallationAccessToken
+)
 
-let mockGitHubApiRequestAsApp = jest.fn()
-jest.mock('../GitForWindowsHelper/github-api-request-as-app', () => {
-    return mockGitHubApiRequestAsApp
-})
+let mockGitHubApiRequestAsApp = vi.fn()
+mockRequire(
+    '../GitForWindowsHelper/github-api-request-as-app',
+    mockGitHubApiRequestAsApp
+)
 
 const dispatchedWorkflows = []
-let mockGitHubApiRequest = jest.fn((_context, _token, method, requestPath, payload) => {
+let mockGitHubApiRequest = vi.fn((
+    _context, _token, method, requestPath, payload
+) => {
     if (method === 'POST' && requestPath.endsWith('/comments')) return {
         id: -124,
         html_url: `new-comment-url-${payload.body}`
@@ -207,12 +215,10 @@ The \`git-artifacts-mingw64\` workflow run [was started](dispatched-workflow-git
     }
     throw new Error(`Unhandled ${method}-${requestPath}-${JSON.stringify(payload)}`)
 })
-jest.mock('../GitForWindowsHelper/github-api-request', () => {
-    return mockGitHubApiRequest
-})
+mockRequire('../GitForWindowsHelper/github-api-request', mockGitHubApiRequest)
 
 afterEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     dispatchedWorkflows.splice(0, dispatchedWorkflows.length) // empty the array
 })
 
@@ -229,7 +235,7 @@ const makeContext = (body, headers) => {
     const rawBody = JSON.stringify(body)
     const sha256 = crypto.createHmac('sha256', process.env['GITHUB_WEBHOOK_SECRET']).update(rawBody).digest('hex')
     return {
-        log: jest.fn(),
+        log: vi.fn(),
         req: {
             body,
             headers: {
@@ -321,12 +327,13 @@ testIssueComment('/hi', async (context) => {
     ])
 })
 
-let mockGetInstallationIDForRepo = jest.fn(() => 'installation-id')
-jest.mock('../GitForWindowsHelper/get-installation-id-for-repo', () => {
-    return mockGetInstallationIDForRepo
-})
+let mockGetInstallationIDForRepo = vi.fn(() => 'installation-id')
+mockRequire(
+    '../GitForWindowsHelper/get-installation-id-for-repo',
+    mockGetInstallationIDForRepo
+)
 
-let mockSearchIssues = jest.fn((_context, searchTerms) => {
+let mockSearchIssues = vi.fn((_context, searchTerms) => {
     if (searchTerms.indexOf('release-git') > 0) return [{
         number: 765,
         author_association: 'MEMBER',
@@ -336,10 +343,8 @@ let mockSearchIssues = jest.fn((_context, searchTerms) => {
     }]
     return []
 })
-jest.mock('../GitForWindowsHelper/search', () => {
-    return {
-        searchIssues: mockSearchIssues
-    }
+mockRequire('../GitForWindowsHelper/search', {
+    searchIssues: mockSearchIssues
 })
 
 testIssueComment('/open pr', {
@@ -544,9 +549,11 @@ The workflow run [was started](dispatched-workflow-updpkgsums.yml).`
     })
 })
 
-let mockQueueCheckRun = jest.fn(() => 'check-run-id')
-let mockUpdateCheckRun = jest.fn()
-let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, checkRunName) => {
+let mockQueueCheckRun = vi.fn(() => 'check-run-id')
+let mockUpdateCheckRun = vi.fn()
+let mockListCheckRunsForCommit = vi.fn((
+    _context, _token, _owner, _repo, rev, checkRunName
+) => {
     const app = {
         slug: 'gitforwindowshelper'
     }
@@ -627,12 +634,10 @@ let mockListCheckRunsForCommit = jest.fn((_context, _token, _owner, _repo, rev, 
     }]
     return []
 })
-jest.mock('../GitForWindowsHelper/check-runs', () => {
-    return {
-        queueCheckRun: mockQueueCheckRun,
-        updateCheckRun: mockUpdateCheckRun,
-        listCheckRunsForCommit: mockListCheckRunsForCommit
-    }
+mockRequire('../GitForWindowsHelper/check-runs', {
+    queueCheckRun: mockQueueCheckRun,
+    updateCheckRun: mockUpdateCheckRun,
+    listCheckRunsForCommit: mockListCheckRunsForCommit
 })
 
 testIssueComment('/deploy', {
@@ -866,10 +871,11 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
 })
 
 const missingURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz'
-const mockDoesURLReturn404 = jest.fn(url => url === missingURL)
-const mockFetchHTML = jest.fn(() => 'pkgver=10.48\n')
-jest.mock('../GitForWindowsHelper/https-request', () => {
-    return { doesURLReturn404: mockDoesURLReturn404, fetchHTML: mockFetchHTML }
+const mockDoesURLReturn404 = vi.fn(url => url === missingURL)
+const mockFetchHTML = vi.fn(() => 'pkgver=10.48\n')
+mockRequire('../GitForWindowsHelper/https-request', {
+    doesURLReturn404: mockDoesURLReturn404,
+    fetchHTML: mockFetchHTML
 })
 
 testIssueComment('/add release note', {
@@ -1016,7 +1022,7 @@ The \`tag-git\` workflow run [was started](dispatched-workflow-tag-git.yml)`,
         snapshot: 'false'
     })
 
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     dispatchedWorkflows.splice(0, dispatchedWorkflows.length) // empty the array
 
     // with existing `tag-git` run
