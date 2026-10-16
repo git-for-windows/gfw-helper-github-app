@@ -1,7 +1,7 @@
 {
   "devDependencies": {
     "eslint": "^9.39.1",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.4"
   },
   "scripts": {
     "lint": "eslint -c eslint.config.js '**/*.js'",
