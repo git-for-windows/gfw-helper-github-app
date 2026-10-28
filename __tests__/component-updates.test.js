@@ -97,6 +97,8 @@ const bogus32BitMSYS2RuntimeURL = 'https://raw.githubusercontent.com/git-for-win
 const bogus64BitMSYS2RuntimeURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
 const missingOpenSSHURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/i686/openssh-9.5p1-1-i686.pkg.tar.xz'
 const missingBashURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/bash-5.2.020-1-x86_64.pkg.tar.xz'
+const missingMINGW64GCMURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-x86_64-git-credential-manager-3.0.2-1-any.pkg.tar.xz'
+const missingUCRT64GCMURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-ucrt-x86_64-git-credential-manager-3.0.2-1-any.pkg.tar.xz'
 const mockDoesURLReturn404 = vi.fn(url => [
     missingURL,
     missingAarch64URL,
@@ -104,7 +106,9 @@ const mockDoesURLReturn404 = vi.fn(url => [
     bogus32BitMSYS2RuntimeURL,
     bogus64BitMSYS2RuntimeURL,
     missingOpenSSHURL,
-    missingBashURL
+    missingBashURL,
+    missingMINGW64GCMURL,
+    missingUCRT64GCMURL
 ].includes(url))
 mockRequire('../GitForWindowsHelper/https-request', {
     doesURLReturn404: mockDoesURLReturn404,
@@ -235,4 +239,5 @@ test('getMissingDeployments()', async () => {
     expect(await getMissingDeployments('msys2-runtime-3.3', '3.3.7')).toEqual([])
     expect(await getMissingDeployments('openssh', '9.5.P1')).toEqual([missingOpenSSHURL])
     expect(await getMissingDeployments('bash', '5.2.20')).toEqual([missingBashURL])
+    expect(await getMissingDeployments('mingw-w64-git-credential-manager', '3.0.2')).toEqual([missingUCRT64GCMURL])
 })
