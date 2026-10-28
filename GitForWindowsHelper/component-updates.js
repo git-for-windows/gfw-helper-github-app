@@ -171,7 +171,7 @@ const getMissingDeployments = async (package_name, version) => {
     if (package_name === 'bash') version = version.replace(/\d+$/, n => n.padStart(3, '0'))
 
     const architectures = ['i686', 'x86_64']
-    if (package_name === 'msys2-runtime') architectures.shift()
+    if (['msys2-runtime', 'mingw-w64-git-credential-manager'].includes(package_name)) architectures.shift()
     else if (package_name === 'msys2-runtime-3.3') architectures.pop()
 
     const mingwArchitectures = [...architectures, 'aarch64']

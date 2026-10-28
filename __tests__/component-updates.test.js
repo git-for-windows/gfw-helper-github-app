@@ -97,6 +97,7 @@ const bogus32BitMSYS2RuntimeURL = 'https://raw.githubusercontent.com/git-for-win
 const bogus64BitMSYS2RuntimeURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/msys2-runtime-3.3-3.3.7-1-x86_64.pkg.tar.xz'
 const missingOpenSSHURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/i686/openssh-9.5p1-1-i686.pkg.tar.xz'
 const missingBashURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/bash-5.2.020-1-x86_64.pkg.tar.xz'
+const missingMINGW32GCMURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/i686/mingw-w64-i686-git-credential-manager-3.0.2-1-any.pkg.tar.xz'
 const missingMINGW64GCMURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-x86_64-git-credential-manager-3.0.2-1-any.pkg.tar.xz'
 const missingUCRT64GCMURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-ucrt-x86_64-git-credential-manager-3.0.2-1-any.pkg.tar.xz'
 const mockDoesURLReturn404 = vi.fn(url => [
@@ -107,6 +108,7 @@ const mockDoesURLReturn404 = vi.fn(url => [
     bogus64BitMSYS2RuntimeURL,
     missingOpenSSHURL,
     missingBashURL,
+    missingMINGW32GCMURL,
     missingMINGW64GCMURL,
     missingUCRT64GCMURL
 ].includes(url))
