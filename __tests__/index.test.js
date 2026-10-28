@@ -897,7 +897,7 @@ The workflow run [was started](dispatched-workflow-build-and-deploy.yml).`)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686'])
 })
 
-const missingURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz'
+const missingURL = 'https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-ucrt-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz'
 const mockDoesURLReturn404 = vi.fn(url => url === missingURL)
 const mockFetchHTML = vi.fn(() => 'pkgver=10.48\n')
 mockRequire('../GitForWindowsHelper/https-request', {
@@ -947,7 +947,7 @@ testIssueComment({ comment: '/add release note', note: 'missing deployment' }, {
     expect(context.res).toEqual({
         body: `The following deployment(s) are missing:
 
-* https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz`,
+* https://raw.githubusercontent.com/git-for-windows/pacman-repo/refs/heads/x86_64/mingw-w64-ucrt-x86_64-git-lfs-3.4.0-1-any.pkg.tar.xz`,
         headers: undefined,
         status: 500
     })

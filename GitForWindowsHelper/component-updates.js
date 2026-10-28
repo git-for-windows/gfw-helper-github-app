@@ -150,10 +150,15 @@ const pacmanRepositoryBaseURL = 'https://raw.githubusercontent.com/git-for-windo
 
 const pacmanRepositoryURLs = (package_name, version, architectures) =>
     architectures.map(arch => {
+        const archPrefix = {
+            'i686': '',
+            'x86_64': 'ucrt-',
+            'aarch64': 'clang-'
+        }
         const fileName = isMSYSPackage(package_name)
             ? `${package_name}-${version}-1-${arch}.pkg.tar.xz`
             : `${package_name.replace(/^mingw-w64/,
-                `$&-${arch === 'aarch64' ? `clang-${arch}` : arch}`)}-${version}-1-any.pkg.tar.xz`
+                `$&-${archPrefix[arch]}${arch}`)}-${version}-1-any.pkg.tar.xz`
         return `${pacmanRepositoryBaseURL}${arch}/${fileName}`
     })
 
@@ -166,7 +171,7 @@ const getMissingDeployments = async (package_name, version) => {
     if (package_name === 'bash') version = version.replace(/\d+$/, n => n.padStart(3, '0'))
 
     const architectures = ['i686', 'x86_64']
-    if (package_name === 'msys2-runtime') architectures.shift()
+    if (['msys2-runtime', 'mingw-w64-git-credential-manager'].includes(package_name)) architectures.shift()
     else if (package_name === 'msys2-runtime-3.3') architectures.pop()
 
     const mingwArchitectures = [...architectures, 'aarch64']
