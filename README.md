@@ -33,12 +33,19 @@ For convenience, the command can be abbreviated as `/add relnote <type> <message
 
 **What does it do?** Meant to handle tickets labeled as `component-update` (typically created by [the `Monitor component updates` GitHub workflow](https://github.com/git-for-windows/git/actions/workflows/monitor-components.yml)) that notify the Git for Windows project when new versions are available of software that is shipped with Git for Windows, this command starts a [GitHub workflow run to open the corresponding Pull Request](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/open-pr.yml).
 
-For PCRE2, the workflow prepares updates for upstream MSYS2 rather than
+For PCRE2 and OpenSSL release trains newer than 3.5.* (including 3.6.*
+and 4.x), the workflow prepares updates for upstream MSYS2 rather than
 opening PRs in the Git for Windows package forks.
 If MSYS2 already has the version, the App reports that on the issue
 without starting a workflow.
 Otherwise, it checks open upstream PRs for a `PKGBUILD` change containing
 the requested version and reports an existing PR on the issue.
+When an update is needed, the workflow posts a pre-populated link for
+opening the upstream PR; a human must still follow that link.
+
+For example, `/open pr` on a `[New openssl version] OpenSSL 3.6.1` issue
+handles both the MSYS and MinGW upstream packages. OpenSSL 3.5.* updates
+still open downstream PRs; versions older than 3.5.0 are refused.
 
 ### `/updpkgsums`
 

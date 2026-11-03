@@ -412,6 +412,110 @@ The MINGW workflow run [was started](dispatched-workflow-open-pr.yml)`
     })
 })
 
+testIssueComment({ comment: '/open pr', note: 'OpenSSL downstream' }, {
+    issue: {
+        title: '[New openssl version] OpenSSL_3_5_1',
+        body: ''
+    }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(mockFetchHTML).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([
+        {
+            package: 'mingw-w64-openssl', version: '3.5.1',
+            actor: 'statler and waldorf'
+        },
+        {
+            package: 'openssl', version: '3.5.1',
+            actor: 'statler and waldorf'
+        }
+    ])
+})
+
+for (const version of ['3.6.1', '4.1.0', '10.0.0']) {
+    testIssueComment({ comment: '/open pr', note: `OpenSSL ${version} upstream` }, {
+        issue: {
+            number: 6490,
+            title: `[New openssl version] OpenSSL ${version}`,
+            body: ''
+        }
+    }, async (context) => {
+        mockFetchHTML.mockReturnValueOnce('pkgver=3.6.0\n')
+            .mockReturnValueOnce('pkgver=3.6.0\n')
+        await index(context, context.req)
+        expect(context.res.status).toBeUndefined()
+        expect(mockFetchHTML.mock.calls.map(c => c[0])).toEqual([
+            'https://raw.githubusercontent.com/msys2/MSYS2-packages/master/openssl/PKGBUILD',
+            'https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-openssl/PKGBUILD'
+        ])
+        expect(mockSearchIssues.mock.calls.map(c => c[1])).toEqual([
+            'repo:msys2/MSYS2-packages is:pr is:open openssl',
+            'repo:msys2/MINGW-packages is:pr is:open openssl'
+        ])
+        expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([
+            {
+                package: 'mingw-w64-openssl', version,
+                actor: 'statler and waldorf', upstream: 'true', issue_number: '6490'
+            },
+            {
+                package: 'openssl', version,
+                actor: 'statler and waldorf', upstream: 'true', issue_number: '6490'
+            }
+        ])
+    })
+}
+
+testIssueComment({ comment: '/open pr', note: 'MinGW OpenSSL upstream' }, {
+    issue: {
+        number: 6490,
+        title: 'mingw-w64-openssl: update to v3.6.1',
+        body: ''
+    }
+}, async (context) => {
+    mockFetchHTML.mockReturnValueOnce('pkgver=3.6.0\n')
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([{
+        package: 'mingw-w64-openssl', version: '3.6.1',
+        actor: 'statler and waldorf', upstream: 'true', issue_number: '6490'
+    }])
+})
+
+testIssueComment({ comment: '/open pr', note: 'OpenSSL MSYS already updated' }, {
+    issue: {
+        number: 6490,
+        title: '[New openssl version] OpenSSL 3.6.1',
+        body: ''
+    }
+}, async (context) => {
+    mockFetchHTML.mockReturnValueOnce('pkgver=3.6.1\n')
+        .mockReturnValueOnce('pkgver=3.6.0\n')
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.package))
+        .toEqual(['mingw-w64-openssl'])
+    expect(mockGitHubApiRequest.mock.calls.some(c =>
+        c[2] === 'POST' && c[4]?.body?.includes('is already at 3.6.1.')
+    )).toBe(true)
+})
+
+for (const packageName of ['openssl', 'mingw-w64-openssl']) {
+    testIssueComment({ comment: '/open pr', note: `${packageName} unsupported train` }, {
+        issue: {
+            title: `${packageName}: update to 3.4.1`,
+            body: ''
+        }
+    }, async (context) => {
+        await index(context, context.req)
+        expect(context.res.status).toBe(500)
+        expect(context.res.body).toContain('Only OpenSSL 3.5.* updates are maintained downstream')
+        expect(mockSearchIssues).not.toHaveBeenCalled()
+        expect(mockFetchHTML).not.toHaveBeenCalled()
+        expect(dispatchedWorkflows).toHaveLength(0)
+    })
+}
+
 testIssueComment('/open pr', {
     repository: {
         name: 'msys2-runtime'

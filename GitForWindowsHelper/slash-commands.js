@@ -68,9 +68,15 @@ module.exports = async (context, req) => {
                 }
                 : guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
+            const isOpenSSL = package_name.replace(/^mingw-w64-/, '') === 'openssl'
+            if (isOpenSSL && version.localeCompare('3.5.0', undefined, { numeric: true }) < 0) {
+                throw new Error('Only OpenSSL 3.5.* updates are maintained downstream; /open pr routes newer release trains to upstream MSYS2 and refuses older versions.')
+            }
+
             await thumbsUp()
 
-            const upstream = package_name === 'pcre2'
+            const upstream = package_name === 'pcre2' ||
+                (isOpenSSL && !version.startsWith('3.5.'))
             const openPR = async (package_name, packageType) => {
                 const upstreamRepo = isMSYSPackage(package_name)
                     ? 'MSYS2-packages' : 'MINGW-packages'
