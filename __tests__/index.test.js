@@ -800,6 +800,111 @@ The [x86_64](dispatched-workflow-build-and-deploy.yml) and the [i686](dispatched
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['i686', 'x86_64'])
 })
 
+for (const command of ['/deploy', '/deploy mingw-w64-openssl']) {
+    testIssueComment({ comment: command, note: 'OpenSSL i686 only' }, {
+        issue: {
+            number: 74,
+            title: 'mingw-w64-openssl: update to v3.5.1',
+            body: '',
+            pull_request: {
+                html_url: 'https://github.com/git-for-windows/MINGW-packages/pull/74'
+            }
+        },
+        repository: { name: 'MINGW-packages' }
+    }, async (context) => {
+        await index(context, context.req)
+        expect(context.res.status).toBeUndefined()
+        expect(context.res.body).toContain('The workflow run [was started]')
+        expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+        expect(mockQueueCheckRun.mock.calls[0][5]).toBe('deploy_i686')
+        expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+        expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([{
+            package: 'mingw-w64-openssl', repo: 'MINGW-packages',
+            ref: 'a7e4b90', architecture: 'i686',
+            actor: 'statler and waldorf'
+        }])
+    })
+}
+
+for (const [command, packageName, repo, version] of [
+    ['/deploy', 'openssl', 'MSYS2-packages', '3.6.1'],
+    ['/deploy mingw-w64-openssl', 'mingw-w64-openssl', 'MINGW-packages', '3.6.1'],
+    ['/deploy mingw-w64-openssl', 'mingw-w64-openssl', 'MINGW-packages', '4.1.0']
+]) {
+    testIssueComment({ comment: command, note: `${packageName} ${version} upstream-only train` }, {
+        issue: {
+            number: 74,
+            title: `${packageName}: update to ${version}`,
+            body: '',
+            pull_request: {
+                html_url: `https://github.com/git-for-windows/${repo}/pull/74`
+            }
+        },
+        repository: { name: repo }
+    }, async (context) => {
+        await index(context, context.req)
+        expect(context.res.status).toBe(500)
+        expect(context.res.body).toContain('Only OpenSSL 3.5.* can be deployed downstream')
+        expect(mockQueueCheckRun).not.toHaveBeenCalled()
+        expect(mockUpdateCheckRun).not.toHaveBeenCalled()
+        expect(dispatchedWorkflows).toHaveLength(0)
+        expect(mockGitHubApiRequest.mock.calls.some(c =>
+            c[2] === 'GET' && c[3].endsWith('/pulls/74')
+        )).toBe(false)
+    })
+}
+
+testIssueComment({ comment: '/deploy mingw-w64-openssl', note: 'unknown version' }, {
+    issue: {
+        number: 74,
+        title: 'Rebuild OpenSSL',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/MINGW-packages/pull/74'
+        }
+    },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBe(500)
+    expect(context.res.body).toContain('Could not guess component-update details')
+    expect(mockQueueCheckRun).not.toHaveBeenCalled()
+    expect(dispatchedWorkflows).toHaveLength(0)
+})
+
+for (const [command, titlePrefix] of [
+    ['/deploy', ''],
+    ['/deploy openssl', ''],
+    ['/deploy openssl', 'i686: ']
+]) {
+    testIssueComment({
+        comment: command,
+        note: `MSYS OpenSSL i686 only${titlePrefix ? ' (prefixed title)' : ''}`
+    }, {
+        issue: {
+            number: 74,
+            title: `${titlePrefix}openssl: update to 3.5.1`,
+            body: '# [New openssl version] OpenSSL_3_5_1',
+            pull_request: {
+                html_url: 'https://github.com/git-for-windows/MSYS2-packages/pull/74'
+            }
+        },
+        repository: { name: 'MSYS2-packages' }
+    }, async (context) => {
+        await index(context, context.req)
+        expect(context.res.status).toBeUndefined()
+        expect(context.res.body).toContain('The workflow run [was started]')
+        expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([{
+            package: 'openssl', repo: 'MSYS2-packages',
+            ref: 'a7e4b90', architecture: 'i686',
+            actor: 'statler and waldorf'
+        }])
+        expect(mockQueueCheckRun).toHaveBeenCalledTimes(1)
+        expect(mockQueueCheckRun.mock.calls[0][5]).toBe('deploy_i686')
+        expect(mockUpdateCheckRun).toHaveBeenCalledTimes(1)
+    })
+}
+
 testIssueComment('/deploy mingw-w64-git-credential-manager', {
     issue: {
         number: 500,

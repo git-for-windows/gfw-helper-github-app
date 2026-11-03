@@ -108,6 +108,9 @@ from `component-updates.js`:
   as pre-built artifacts for every architecture (including `clangarm64`)
   at once, so they must not be split.
 - **`mingw-w64-llvm`**: only the `aarch64` run.
+- **`openssl`, `mingw-w64-openssl`**: only the `i686` run, restricted
+  to the downstream 3.5.* release train. This applies to both MSYS and
+  MinGW packages, retaining the libraries needed by 32-bit MinGit.
 - **All other MINGW packages (and `git-extra`)**: separate `i686`,
   `x86_64`, `mingw64` and `aarch64` runs, so they build in parallel. The
   set of `MINGW_ARCH`s the dispatched workflow builds for each pseudo

@@ -59,6 +59,12 @@ still open downstream PRs; versions older than 3.5.0 are refused.
 
 **What does it do?** This triggers one ore more [GitHub workflow runs](https://github.com/git-for-windows/git-for-windows-automation/actions/workflows/build-and-deploy.yml) to build and deploy Git for Windows' [Pacman packages](https://gitforwindows.org/package-management).
 
+Downstream OpenSSL deployment is restricted to 3.5.*, using the version
+from the PR title or body even when `<package>` is specified explicitly.
+Both MSYS and MinGW OpenSSL deploy only for `i686`; 64-bit environments
+consume upstream MSYS2 packages. The downstream i686 libraries remain
+available for 32-bit MinGit, including its bundled OpenSSH.
+
 ### `/synchronize-sdks`
 
 **Where can it be called?** In Issues and Pull Requests of Git for Windows' repositories.
