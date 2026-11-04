@@ -68,9 +68,15 @@ module.exports = async (context, req) => {
                 }
                 : guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
+            const isOpenSSL = package_name.replace(/^mingw-w64-/, '') === 'openssl'
+            if (isOpenSSL && version.localeCompare('3.5.0', undefined, { numeric: true }) < 0) {
+                throw new Error('Only OpenSSL 3.5.* updates are maintained downstream; /open pr routes newer release trains to upstream MSYS2 and refuses older versions.')
+            }
+
             await thumbsUp()
 
-            const upstream = package_name === 'pcre2'
+            const upstream = package_name === 'pcre2' ||
+                (isOpenSSL && !version.startsWith('3.5.'))
             const openPR = async (package_name, packageType) => {
                 const upstreamRepo = isMSYSPackage(package_name)
                     ? 'MSYS2-packages' : 'MINGW-packages'
@@ -239,6 +245,14 @@ module.exports = async (context, req) => {
                 ? { package_name: deployMatch[2] }
                 : guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
 
+            const isOpenSSL = package_name.replace(/^mingw-w64-/, '') === 'openssl'
+            if (isOpenSSL) {
+                const { version } = guessComponentUpdateDetails(req.body.issue.title, req.body.issue.body)
+                if (!version.startsWith('3.5.')) {
+                    throw new Error('Only OpenSSL 3.5.* can be deployed downstream; newer OpenSSL updates belong in upstream MSYS2.')
+                }
+            }
+
             // The commit hash of the tip commit is sadly not part of the
             // "comment.created" webhook's payload. Therefore, we have to get it
             // "by hand"
@@ -277,7 +291,11 @@ module.exports = async (context, req) => {
                 )
 
             const toTrigger = []
-            if (isMSYSPackage(package_name)) {
+            if (isOpenSSL) {
+                toTrigger.push(
+                    { architecture: 'i686' }
+                )
+            } else if (isMSYSPackage(package_name)) {
                 if (package_name !== 'msys2-runtime-3.3' && !req.body.issue.title.startsWith('i686:')) {
                     toTrigger.push(
                         { architecture: 'x86_64' }
