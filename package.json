@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "eslint": "^9.39.1",
+    "eslint": "^10.14.0",
     "vitest": "^5.1.0"
   },
   "scripts": {
