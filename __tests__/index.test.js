@@ -905,6 +905,35 @@ for (const [command, titlePrefix] of [
     })
 }
 
+for (const [command, packageName] of [
+    ['/deploy', 'openssh'],
+    ['/deploy libfido2', 'libfido2'],
+    ['/deploy heimdal', 'heimdal']
+]) {
+    testIssueComment({ comment: command, note: `${packageName} i686 only` }, {
+        issue: {
+            number: 74,
+            title: `${packageName}: update to 1.2.3`,
+            body: '',
+            pull_request: {
+                html_url: 'https://github.com/git-for-windows/' +
+                    'MSYS2-packages/pull/74'
+            }
+        },
+        repository: { name: 'MSYS2-packages' }
+    }, async (context) => {
+        await index(context, context.req)
+        expect(context.res.status).toBeUndefined()
+        expect(mockQueueCheckRun.mock.calls.map(c => c[5]))
+            .toEqual(['deploy_i686'])
+        expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([{
+            package: packageName, repo: 'MSYS2-packages',
+            ref: 'a7e4b90', architecture: 'i686',
+            actor: 'statler and waldorf'
+        }])
+    })
+}
+
 testIssueComment('/deploy mingw-w64-git-credential-manager', {
     issue: {
         number: 500,

@@ -296,7 +296,10 @@ module.exports = async (context, req) => {
                     { architecture: 'i686' }
                 )
             } else if (isMSYSPackage(package_name)) {
-                if (package_name !== 'msys2-runtime-3.3' && !req.body.issue.title.startsWith('i686:')) {
+                if (![
+                    'msys2-runtime-3.3', 'openssh', 'libfido2', 'heimdal'
+                ].includes(package_name) &&
+                    !req.body.issue.title.startsWith('i686:')) {
                     toTrigger.push(
                         { architecture: 'x86_64' }
                     )
