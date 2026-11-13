@@ -908,7 +908,9 @@ for (const [command, titlePrefix] of [
 for (const [command, packageName] of [
     ['/deploy', 'openssh'],
     ['/deploy libfido2', 'libfido2'],
-    ['/deploy heimdal', 'heimdal']
+    ['/deploy heimdal', 'heimdal'],
+    ['/deploy', 'libcbor'],
+    ['/deploy libcbor', 'libcbor']
 ]) {
     testIssueComment({ comment: command, note: `${packageName} i686 only` }, {
         issue: {
@@ -933,6 +935,24 @@ for (const [command, packageName] of [
         }])
     })
 }
+
+testIssueComment({ comment: '/deploy libcbor', note: 'MinGW alias' }, {
+    issue: {
+        number: 74,
+        title: 'mingw-w64-libcbor: update to 1.2.3',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/' +
+                'MINGW-packages/pull/74'
+        }
+    },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture))
+        .toEqual(['i686', 'x86_64'])
+})
 
 testIssueComment('/deploy mingw-w64-git-credential-manager', {
     issue: {
@@ -1176,6 +1196,16 @@ testIssueComment('/add relnote feature update', {
 
 testIssueComment('/add relnote feature update curl', {
     issue: { title: 'mingw-w64-curl: update to 8.23.0', body: '' },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.path))
+        .toEqual(['.github/workflows/add-release-note.yml'])
+})
+
+testIssueComment('/add relnote feature update libcbor', {
+    issue: { title: 'libcbor: update to 1.2.3', body: '' },
     repository: { name: 'MINGW-packages' }
 }, async (context) => {
     await index(context, context.req)

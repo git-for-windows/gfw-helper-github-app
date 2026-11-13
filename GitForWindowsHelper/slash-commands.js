@@ -299,6 +299,8 @@ module.exports = async (context, req) => {
                 if (![
                     'msys2-runtime-3.3', 'openssh', 'libfido2', 'heimdal'
                 ].includes(package_name) &&
+                    !(repo === 'MSYS2-packages' &&
+                        package_name === 'libcbor') &&
                     !req.body.issue.title.startsWith('i686:')) {
                     toTrigger.push(
                         { architecture: 'x86_64' }
@@ -710,8 +712,10 @@ module.exports = async (context, req) => {
             }
             if (req.body.issue.title.startsWith('i686:') || [
                 'msys2-runtime-3.3', 'openssl', 'mingw-w64-openssl',
-                'openssh', 'libfido2', 'heimdal', 'libcbor'
+                'openssh', 'libfido2', 'heimdal'
             ].includes(package_name) ||
+                (package_name === 'libcbor' &&
+                    ['git', 'MSYS2-packages'].includes(repo)) ||
                 (repo === 'MSYS2-packages' && package_name === 'curl')) {
                 throw new Error(
                     'Release notes are not added for i686-only builds.'
