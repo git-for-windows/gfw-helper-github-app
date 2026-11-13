@@ -1143,6 +1143,56 @@ mockRequire('../GitForWindowsHelper/https-request', {
     fetchHTML: mockFetchHTML
 })
 
+for (const [command, packageName, repo] of [
+    ['/add release note', 'openssh', 'git'],
+    ['/add relnote', 'libfido2', 'MSYS2-packages'],
+    ['/add release note feature update', 'heimdal', 'MSYS2-packages'],
+    ['/add relnote feature update', 'libcbor', 'MSYS2-packages'],
+    ['/add relnote', 'openssl', 'MSYS2-packages'],
+    ['/add relnote', 'mingw-w64-openssl', 'MINGW-packages'],
+    ['/add relnote', 'msys2-runtime-3.3', 'MSYS2-packages'],
+    ['/add relnote', 'curl', 'MSYS2-packages']
+]) {
+    testIssueComment({ comment: command, note: `${packageName} i686 only` }, {
+        issue: { title: `${packageName}: update to 1.2.3`, body: '' },
+        repository: { name: repo }
+    }, async (context) => {
+        await index(context, context.req)
+        expect(context.res.status).toBe(500)
+        expect(context.res.body)
+            .toContain('Release notes are not added for i686-only builds.')
+        expect(dispatchedWorkflows).toHaveLength(0)
+    })
+}
+
+testIssueComment('/add relnote feature update', {
+    issue: { title: 'i686: update libksba', body: '' },
+    repository: { name: 'MSYS2-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBe(500)
+    expect(dispatchedWorkflows).toHaveLength(0)
+})
+
+testIssueComment('/add relnote feature update curl', {
+    issue: { title: 'mingw-w64-curl: update to 8.23.0', body: '' },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.path))
+        .toEqual(['.github/workflows/add-release-note.yml'])
+})
+
+testIssueComment('/add relnote bug fix a problem', {
+    issue: { title: 'Fix a problem', body: '' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.path))
+        .toEqual(['.github/workflows/add-release-note.yml'])
+})
+
 testIssueComment('/add release note', {
     issue: {
         number: 4281,

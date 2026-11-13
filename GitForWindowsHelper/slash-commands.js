@@ -697,6 +697,27 @@ module.exports = async (context, req) => {
 
             await checkPermissions()
 
+            const {
+                guessComponentUpdateDetails
+            } = require('./component-updates')
+            let package_name
+            try {
+                ({ package_name } = guessComponentUpdateDetails(
+                    req.body.issue.title, req.body.issue.body
+                ))
+            } catch {
+                // Manual release notes can be written for non-package issues.
+            }
+            if (req.body.issue.title.startsWith('i686:') || [
+                'msys2-runtime-3.3', 'openssl', 'mingw-w64-openssl',
+                'openssh', 'libfido2', 'heimdal', 'libcbor'
+            ].includes(package_name) ||
+                (repo === 'MSYS2-packages' && package_name === 'curl')) {
+                throw new Error(
+                    'Release notes are not added for i686-only builds.'
+                )
+            }
+
             const { appendToIssueComment } = require('./issues')
             let [ , , , type, message ] = relNotesMatch
             if (!type) {
