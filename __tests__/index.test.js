@@ -905,6 +905,57 @@ for (const [command, titlePrefix] of [
     })
 }
 
+for (const [command, packageName] of [
+    ['/deploy', 'openssh'],
+    ['/deploy libfido2', 'libfido2'],
+    ['/deploy heimdal', 'heimdal'],
+    ['/deploy', 'libcbor'],
+    ['/deploy libcbor', 'libcbor'],
+    ['/deploy', 'curl'],
+    ['/deploy curl', 'curl']
+]) {
+    testIssueComment({ comment: command, note: `${packageName} i686 only` }, {
+        issue: {
+            number: 74,
+            title: `${packageName}: update to 1.2.3`,
+            body: '',
+            pull_request: {
+                html_url: 'https://github.com/git-for-windows/' +
+                    'MSYS2-packages/pull/74'
+            }
+        },
+        repository: { name: 'MSYS2-packages' }
+    }, async (context) => {
+        await index(context, context.req)
+        expect(context.res.status).toBeUndefined()
+        expect(mockQueueCheckRun.mock.calls.map(c => c[5]))
+            .toEqual(['deploy_i686'])
+        expect(dispatchedWorkflows.map(e => e.payload.inputs)).toEqual([{
+            package: packageName, repo: 'MSYS2-packages',
+            ref: 'a7e4b90', architecture: 'i686',
+            actor: 'statler and waldorf'
+        }])
+    })
+}
+
+testIssueComment({ comment: '/deploy libcbor', note: 'MinGW alias' }, {
+    issue: {
+        number: 74,
+        title: 'mingw-w64-libcbor: update to 1.2.3',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/' +
+                'MINGW-packages/pull/74'
+        }
+    },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture))
+        .toEqual(['i686', 'x86_64'])
+})
+
 testIssueComment('/deploy mingw-w64-git-credential-manager', {
     issue: {
         number: 500,
@@ -947,6 +998,24 @@ The [i686](dispatched-workflow-build-and-deploy.yml), the [x86_64](dispatched-wo
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(4)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(4)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', 'mingw64', 'x86_64', 'i686'])
+})
+
+testIssueComment({ comment: '/deploy curl', note: 'MinGW alias' }, {
+    issue: {
+        number: 74,
+        title: 'mingw-w64-curl: update to 8.0.1',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/' +
+                'MINGW-packages/pull/74'
+        }
+    },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture))
+        .toEqual(['i686', 'x86_64'])
 })
 
 testIssueComment('/deploy git-extra', {
@@ -1112,6 +1181,88 @@ const mockFetchHTML = vi.fn(() => 'pkgver=10.48\n')
 mockRequire('../GitForWindowsHelper/https-request', {
     doesURLReturn404: mockDoesURLReturn404,
     fetchHTML: mockFetchHTML
+})
+
+for (const [command, packageName, repo] of [
+    ['/add release note', 'openssh', 'git'],
+    ['/add relnote', 'libfido2', 'MSYS2-packages'],
+    ['/add release note feature update', 'heimdal', 'MSYS2-packages'],
+    ['/add relnote feature update', 'libcbor', 'MSYS2-packages'],
+    ['/add relnote', 'openssl', 'MSYS2-packages'],
+    ['/add relnote', 'mingw-w64-openssl', 'MINGW-packages'],
+    ['/add relnote', 'msys2-runtime-3.3', 'MSYS2-packages'],
+    ['/add relnote', 'curl', 'MSYS2-packages']
+]) {
+    testIssueComment({ comment: command, note: `${packageName} i686 only` }, {
+        issue: { title: `${packageName}: update to 1.2.3`, body: '' },
+        repository: { name: repo }
+    }, async (context) => {
+        await index(context, context.req)
+        expect(context.res.status).toBe(500)
+        expect(context.res.body)
+            .toContain('Release notes are not added for i686-only builds.')
+        expect(dispatchedWorkflows).toHaveLength(0)
+    })
+}
+
+testIssueComment('/add relnote feature update', {
+    issue: { title: 'i686: update libksba', body: '' },
+    repository: { name: 'MSYS2-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBe(500)
+    expect(dispatchedWorkflows).toHaveLength(0)
+})
+
+testIssueComment('/add relnote feature update curl', {
+    issue: { title: 'mingw-w64-curl: update to 8.23.0', body: '' },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.path))
+        .toEqual(['.github/workflows/add-release-note.yml'])
+})
+
+testIssueComment({ comment: '/add release note', note: 'MinGW curl' }, {
+    issue: {
+        number: 74,
+        title: 'mingw-w64-curl: update to 8.0.1',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/' +
+                'MINGW-packages/pull/74'
+        }
+    },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.path))
+        .toEqual(['.github/workflows/add-release-note.yml'])
+    expect(mockDoesURLReturn404).toHaveBeenCalledTimes(4)
+    expect(mockDoesURLReturn404.mock.calls.some(([url]) =>
+        url.includes('/x86_64/curl-')
+    )).toBe(false)
+})
+
+testIssueComment('/add relnote feature update libcbor', {
+    issue: { title: 'libcbor: update to 1.2.3', body: '' },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.path))
+        .toEqual(['.github/workflows/add-release-note.yml'])
+})
+
+testIssueComment('/add relnote bug fix a problem', {
+    issue: { title: 'Fix a problem', body: '' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.path))
+        .toEqual(['.github/workflows/add-release-note.yml'])
 })
 
 testIssueComment('/add release note', {
