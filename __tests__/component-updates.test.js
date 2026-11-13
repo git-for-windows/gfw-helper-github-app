@@ -235,7 +235,20 @@ http://www.gnutls.org/news.html#2023-02-10`
 })
 
 test('getMissingDeployments()', async () => {
-    expect(await getMissingDeployments('curl', '8.1.2')).toEqual([missingURL, missingAarch64URL])
+    const curlURLPrefix = 'https://raw.githubusercontent.com/git-for-windows/' +
+        'pacman-repo/refs/heads/'
+    for (const packageName of ['curl', 'mingw-w64-curl']) {
+        mockDoesURLReturn404.mockClear()
+        expect(await getMissingDeployments(packageName, '8.1.2'))
+            .toEqual([missingAarch64URL])
+        expect(mockDoesURLReturn404.mock.calls.map(([url]) => url)).toEqual([
+            `${curlURLPrefix}i686/curl-8.1.2-1-i686.pkg.tar.xz`,
+            `${curlURLPrefix}i686/mingw-w64-i686-curl-8.1.2-1-any.pkg.tar.xz`,
+            `${curlURLPrefix}x86_64/` +
+                'mingw-w64-ucrt-x86_64-curl-8.1.2-1-any.pkg.tar.xz',
+            missingAarch64URL
+        ])
+    }
     expect(await getMissingDeployments('mintty', '3.6.5')).toEqual([missingMinTTYURL])
     expect(await getMissingDeployments('msys2-runtime', '3.4.9')).toEqual([])
     expect(await getMissingDeployments('msys2-runtime-3.3', '3.3.7')).toEqual([])

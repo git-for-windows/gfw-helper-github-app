@@ -300,7 +300,7 @@ module.exports = async (context, req) => {
                     'msys2-runtime-3.3', 'openssh', 'libfido2', 'heimdal'
                 ].includes(package_name) &&
                     !(repo === 'MSYS2-packages' &&
-                        package_name === 'libcbor') &&
+                        ['libcbor', 'curl'].includes(package_name)) &&
                     !req.body.issue.title.startsWith('i686:')) {
                     toTrigger.push(
                         { architecture: 'x86_64' }

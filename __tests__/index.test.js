@@ -910,7 +910,9 @@ for (const [command, packageName] of [
     ['/deploy libfido2', 'libfido2'],
     ['/deploy heimdal', 'heimdal'],
     ['/deploy', 'libcbor'],
-    ['/deploy libcbor', 'libcbor']
+    ['/deploy libcbor', 'libcbor'],
+    ['/deploy', 'curl'],
+    ['/deploy curl', 'curl']
 ]) {
     testIssueComment({ comment: command, note: `${packageName} i686 only` }, {
         issue: {
@@ -996,6 +998,24 @@ The [i686](dispatched-workflow-build-and-deploy.yml), the [x86_64](dispatched-wo
     expect(mockQueueCheckRun).toHaveBeenCalledTimes(4)
     expect(mockUpdateCheckRun).toHaveBeenCalledTimes(4)
     expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture)).toEqual(['aarch64', 'mingw64', 'x86_64', 'i686'])
+})
+
+testIssueComment({ comment: '/deploy curl', note: 'MinGW alias' }, {
+    issue: {
+        number: 74,
+        title: 'mingw-w64-curl: update to 8.0.1',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/' +
+                'MINGW-packages/pull/74'
+        }
+    },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.payload.inputs.architecture))
+        .toEqual(['i686', 'x86_64'])
 })
 
 testIssueComment('/deploy git-extra', {
@@ -1202,6 +1222,28 @@ testIssueComment('/add relnote feature update curl', {
     expect(context.res.status).toBeUndefined()
     expect(dispatchedWorkflows.map(e => e.path))
         .toEqual(['.github/workflows/add-release-note.yml'])
+})
+
+testIssueComment({ comment: '/add release note', note: 'MinGW curl' }, {
+    issue: {
+        number: 74,
+        title: 'mingw-w64-curl: update to 8.0.1',
+        body: '',
+        pull_request: {
+            html_url: 'https://github.com/git-for-windows/' +
+                'MINGW-packages/pull/74'
+        }
+    },
+    repository: { name: 'MINGW-packages' }
+}, async (context) => {
+    await index(context, context.req)
+    expect(context.res.status).toBeUndefined()
+    expect(dispatchedWorkflows.map(e => e.path))
+        .toEqual(['.github/workflows/add-release-note.yml'])
+    expect(mockDoesURLReturn404).toHaveBeenCalledTimes(4)
+    expect(mockDoesURLReturn404.mock.calls.some(([url]) =>
+        url.includes('/x86_64/curl-')
+    )).toBe(false)
 })
 
 testIssueComment('/add relnote feature update libcbor', {
