@@ -1,16 +1,10 @@
 const gently = require('./gently')
 
-const isBigNumber = num => !Number.isSafeInteger(+num)
-
-const enquoteBigNumber = (jsonString, bigNumChecker) =>
-    jsonString
-        .replaceAll(
-            /([:\s[,]*)(\d+)([\s,\]]*)/g,
-            (matchingSubstr, prefix, bigNum, suffix) =>
-                bigNumChecker(bigNum)
-                    ? `${prefix}"${bigNum}"${suffix}`
-                    : matchingSubstr
-        )
+const isBigNumber = num => num && /^-?\d+$/.test(num) && !Number.isSafeInteger(+num)
+const parseJSON = text => JSON.parse(
+    text,
+    (_, value, context) => isBigNumber(context?.source) ? BigInt(context.source) : value
+)
 
 const httpsRequest = async (context, hostname, method, requestPath, body, headers) => {
     headers = {
@@ -64,15 +58,12 @@ const httpsRequest = async (context, hostname, method, requestPath, body, header
                             requestMethod: options.method,
                             requestPath: options.path,
                             body: json,
-                            json: gently(() => JSON.parse(json))
+                            json: gently(() => parseJSON(json))
                         })
                         return
                     }
                     try {
-                        resolve(JSON.parse(enquoteBigNumber(json, isBigNumber))) /* , (key, value) =>
-            !isNaN(value) && bigNumChecker(value)
-                ? BigInt(value)
-                : value)) */
+                        resolve(parseJSON(json))
                     } catch {
                         reject(`Invalid JSON: ${json}`)
                     }
