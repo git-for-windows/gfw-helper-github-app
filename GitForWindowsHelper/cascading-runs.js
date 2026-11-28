@@ -54,7 +54,7 @@ const triggerGitArtifactsRuns = async (
 
     const architecturesToTrigger = []
     const { listCheckRunsForCommit, queueCheckRun } = require('./check-runs')
-    for (const architecture of ['x86_64', 'i686', 'aarch64', 'mingw64']) {
+    for (const architecture of ['x86_64', 'i686', 'aarch64']) {
         const workflowName = `git-artifacts-${architecture}`
         const runs = await listCheckRunsForCommit(
             context,
@@ -202,7 +202,7 @@ const cascadingRuns = async (context, req) => {
 
             const workFlowRunIDs = {}
             const { listCheckRunsForCommit, queueCheckRun } = require('./check-runs')
-            for (const architecture of ['x86_64', 'i686', 'aarch64', 'mingw64']) {
+            for (const architecture of ['x86_64', 'i686', 'aarch64']) {
                 const workflowName = `git-artifacts-${architecture}`
                 const runs = name === workflowName ? [req.body.check_run] : await listCheckRunsForCommit(
                     context,
@@ -266,7 +266,6 @@ const cascadingRuns = async (context, req) => {
                     git_artifacts_x86_64_workflow_run_id: workFlowRunIDs['x86_64'],
                     git_artifacts_i686_workflow_run_id: workFlowRunIDs['i686'],
                     git_artifacts_aarch64_workflow_run_id: workFlowRunIDs['aarch64'],
-                    git_artifacts_mingw64_workflow_run_id: workFlowRunIDs['mingw64'],
                 }
             )
 
@@ -401,7 +400,7 @@ const handlePush = async (context, req) => {
 
     try {
         const workFlowRunIDs = {}
-        for (const architecture of ['x86_64', 'i686', 'aarch64', 'mingw64']) {
+        for (const architecture of ['x86_64', 'i686', 'aarch64']) {
             const workflowName = `git-artifacts-${architecture}`
             const runs = await listCheckRunsForCommit(
                 context,
@@ -447,7 +446,6 @@ const handlePush = async (context, req) => {
                 git_artifacts_x86_64_workflow_run_id: workFlowRunIDs['x86_64'],
                 git_artifacts_i686_workflow_run_id: workFlowRunIDs['i686'],
                 git_artifacts_aarch64_workflow_run_id: workFlowRunIDs['aarch64'],
-                git_artifacts_mingw64_workflow_run_id: workFlowRunIDs['mingw64'],
             }
         )
 
